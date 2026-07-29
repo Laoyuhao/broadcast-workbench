@@ -1,0 +1,3516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>播音主持艺考班主任工作台</title>
+<style>
+/* ========== 全局变量与基础 ========== */
+:root {
+  --primary: #6C5CE7;
+  --primary-light: #A29BFE;
+  --primary-dark: #4834D4;
+  --accent: #FD79A8;
+  --success: #00B894;
+  --warning: #FDCB6E;
+  --danger: #FF7675;
+  --info: #74B9FF;
+  --bg: #F0F0F5;
+  --card-bg: #FFFFFF;
+  --text: #2D3436;
+  --text-secondary: #636E72;
+  --text-light: #B2BEC3;
+  --border: #DFE6E9;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+/* ========== 布局 ========== */
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 220px;
+  background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary) 100%);
+  color: #fff;
+  padding: 0;
+  flex-shrink: 0;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+  transition: var(--transition);
+}
+.sidebar-header {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.sidebar-header h1 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.sidebar-header p {
+  font-size: 11px;
+  opacity: 0.7;
+}
+.nav { padding: 12px 0; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 13px;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.nav-item.active {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border-left-color: var(--accent);
+  font-weight: 600;
+}
+.nav-icon { font-size: 18px; width: 24px; text-align: center; }
+.main {
+  margin-left: 220px;
+  flex: 1;
+  padding: 24px 32px;
+  min-height: 100vh;
+}
+.page-header {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.page-header h2 { font-size: 22px; font-weight: 700; }
+.page-header p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+/* ========== 卡片 ========== */
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .icon { font-size: 18px; }
+/* ========== 统计卡片 ========== */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: var(--transition);
+}
+.stat-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.stat-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.stat-icon.purple { background: rgba(108,92,231,0.15); color: var(--primary); }
+.stat-icon.pink { background: rgba(253,121,168,0.15); color: var(--accent); }
+.stat-icon.green { background: rgba(0,184,148,0.15); color: var(--success); }
+.stat-icon.blue { background: rgba(116,185,255,0.15); color: var(--info); }
+.stat-icon.orange { background: rgba(253,203,110,0.15); color: var(--warning); }
+.stat-icon.red { background: rgba(255,118,117,0.15); color: var(--danger); }
+.stat-info h3 { font-size: 26px; font-weight: 700; }
+.stat-info p { font-size: 12px; color: var(--text-secondary); }
+/* ========== 表格 ========== */
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: #F8F9FA;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody tr:hover { background: #F8F9FF; }
+tbody tr:last-child td { border-bottom: none; }
+/* ========== 按钮 ========== */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { opacity: 0.9; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { opacity: 0.9; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  padding: 0;
+  justify-content: center;
+}
+/* ========== 表单 ========== */
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.form-group label .required { color: var(--danger); }
+input, select, textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  transition: var(--transition);
+  background: #fff;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(108,92,231,0.1);
+}
+textarea { resize: vertical; min-height: 60px; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+/* ========== 模态框 ========== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 640px;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.3s ease;
+}
+.modal.modal-lg { max-width: 900px; }
+.modal.modal-sm { max-width: 480px; }
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h3 { font-size: 17px; font-weight: 600; }
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: var(--transition);
+  line-height: 1;
+}
+.modal-close:hover { color: var(--danger); }
+.modal-body { padding: 24px; max-height: 65vh; overflow-y: auto; }
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+/* ========== 标签/徽章 ========== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-success { background: rgba(0,184,148,0.15); color: var(--success); }
+.badge-warning { background: rgba(253,203,110,0.2); color: #E17055; }
+.badge-danger { background: rgba(255,118,117,0.15); color: var(--danger); }
+.badge-info { background: rgba(116,185,255,0.15); color: var(--info); }
+.badge-purple { background: rgba(108,92,231,0.15); color: var(--primary); }
+.badge-pink { background: rgba(253,121,168,0.15); color: var(--accent); }
+/* ========== 进度条 ========== */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #EEE;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+/* ========== 空状态 ========== */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-light);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+/* ========== 工具栏 ========== */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.toolbar-left { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.toolbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.search-box {
+  position: relative;
+  min-width: 200px;
+}
+.search-box input { padding-left: 32px; }
+.search-box::before {
+  content: "🔍";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+}
+select.filter-select { min-width: 120px; }
+/* ========== Tab ========== */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.tab {
+  padding: 10px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.tab:hover { color: var(--primary); }
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+/* ========== 时间线 ========== */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+  padding-left: 20px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--primary);
+}
+.timeline-item.done::before { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+.timeline-item.ongoing::before { background: var(--warning); box-shadow: 0 0 0 2px var(--warning); }
+.timeline-date { font-size: 12px; color: var(--text-light); }
+.timeline-title { font-size: 14px; font-weight: 600; margin: 2px 0; }
+.timeline-desc { font-size: 13px; color: var(--text-secondary); }
+/* ========== 图表容器 ========== */
+.chart-container { width: 100%; }
+/* ========== 学生卡片网格 ========== */
+.student-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.student-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  transition: var(--transition);
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+.student-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); border-color: var(--primary-light); }
+.student-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.student-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.student-name { font-size: 15px; font-weight: 600; }
+.student-meta { font-size: 12px; color: var(--text-secondary); }
+.student-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+/* ========== 提示框 ========== */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.alert-info { background: rgba(116,185,255,0.1); color: #0984E3; border: 1px solid rgba(116,185,255,0.3); }
+.alert-warning { background: rgba(253,203,110,0.15); color: #E17055; border: 1px solid rgba(253,203,110,0.4); }
+.alert-success { background: rgba(0,184,148,0.1); color: var(--success); border: 1px solid rgba(0,184,148,0.3); }
+/* ========== 页面切换 ========== */
+.page { display: none; }
+.page.active { display: block; }
+/* ========== 滚动条 ========== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-light); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+/* ========== Toast ========== */
+.toast-container {
+  position: fixed;
+  top: 20px; right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toast {
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideIn 0.3s ease;
+  border-left: 4px solid var(--primary);
+  min-width: 200px;
+}
+.toast.success { border-left-color: var(--success); }
+.toast.error { border-left-color: var(--danger); }
+.toast.warning { border-left-color: var(--warning); }
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+/* ========== 雷达图容器 ========== */
+.radar-container { display: flex; justify-content: center; }
+/* ========== 日历视图 ========== */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.calendar-nav h3 { font-size: 18px; font-weight: 700; min-width: 140px; text-align: center; }
+.calendar-mode-switch {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.calendar-mode-switch button {
+  padding: 6px 16px;
+  border: none;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 500;
+}
+.calendar-mode-switch button.active {
+  background: var(--primary);
+  color: #fff;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.calendar-weekday {
+  background: #F8F9FA;
+  padding: 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.calendar-weekday.weekend { color: var(--accent); }
+.calendar-day {
+  background: #fff;
+  min-height: 90px;
+  padding: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.calendar-day:hover { background: #F8F9FF; }
+.calendar-day.other-month { background: #FAFAFA; color: var(--text-light); }
+.calendar-day.today { box-shadow: inset 0 0 0 2px var(--primary); }
+.calendar-day.has-lessons { background: #F0EDFF; }
+.calendar-day-date {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.calendar-day-date.weekend { color: var(--accent); }
+.calendar-day-lessons {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+.calendar-lesson-tag {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+.calendar-lesson-tag.completed { background: rgba(0,184,148,0.15); color: var(--success); }
+.calendar-lesson-tag.upcoming { background: rgba(116,185,255,0.15); color: var(--info); }
+.calendar-lesson-tag.cancelled { background: rgba(178,188,195,0.15); color: var(--text-light); text-decoration: line-through; }
+.calendar-lesson-tag.training { border-left: 3px solid var(--accent); }
+.calendar-day-more {
+  font-size: 10px;
+  color: var(--text-light);
+  text-align: center;
+  margin-top: 2px;
+}
+/* 集训模式 */
+.training-day-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.training-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.training-day-title { font-size: 16px; font-weight: 700; }
+.training-day-title.weekend { color: var(--accent); }
+.training-slot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.training-slot {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  min-height: 100px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+.training-slot:hover { border-color: var(--primary); background: #F8F9FF; }
+.training-slot.filled { border-style: solid; border-color: var(--primary-light); background: #F8F9FF; }
+.training-slot.filled.completed { border-color: var(--success); background: rgba(0,184,148,0.05); }
+.training-slot.filled.cancelled { border-color: var(--text-light); opacity: 0.6; }
+.training-slot-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.training-slot-content { font-size: 13px; }
+.training-slot-empty { font-size: 12px; color: var(--text-light); text-align: center; padding: 16px 0; }
+.training-slot-add { font-size: 20px; color: var(--text-light); text-align: center; }
+/* 快速排课面板 */
+.quick-schedule {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.quick-schedule label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.quick-schedule select, .quick-schedule input {
+  width: auto;
+  min-width: 120px;
+}
+/* ========== 打印 ========== */
+@media print {
+  .sidebar, .toolbar, .btn { display: none !important; }
+  .main { margin-left: 0; }
+}
+/* ========== 响应式 ========== */
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar-header h1, .sidebar-header p, .nav-item span:not(.nav-icon) { display: none; }
+  .nav-item { justify-content: center; padding: 12px; }
+  .main { margin-left: 60px; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ========== 侧边栏 ========== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>🎙️ 播音主持艺考</h1>
+      <p>班主任工作台</p>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>数据总览</span></div>
+      <div class="nav-item" data-page="students"><span class="nav-icon">👥</span><span>学生档案</span></div>
+      <div class="nav-item" data-page="analysis"><span class="nav-icon">🔬</span><span>成绩分析</span></div>
+      <div class="nav-item" data-page="training"><span class="nav-icon">🎤</span><span>专业训练</span></div>
+      <div class="nav-item" data-page="exams"><span class="nav-icon">📝</span><span>模考成绩</span></div>
+      <div class="nav-item" data-page="artexam"><span class="nav-icon">📅</span><span>艺考流程</span></div>
+      <div class="nav-item" data-page="status"><span class="nav-icon">💚</span><span>学生状态</span></div>
+      <div class="nav-item" data-page="lessons"><span class="nav-icon">📚</span><span>课时工作台</span></div>
+      <div class="nav-item" data-page="review"><span class="nav-icon">📈</span><span>教学复盘</span></div>
+      <div class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span>数据管理</span></div>
+    </nav>
+  </aside>
+
+  <!-- ========== 主内容区 ========== -->
+  <main class="main">
+    <!-- ====== 数据总览页 ====== -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <h2>📊 数据总览</h2>
+          <p>班级整体情况一览</p>
+        </div>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="exportData()">📥 导出数据</button>
+          <button class="btn btn-primary btn-sm" onclick="navToSettings()">📊 Excel导入</button>
+        </div>
+      </div>
+      <div class="stat-grid" id="dashboardStats"></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;" id="dashboardCharts">
+        <div class="card">
+          <div class="card-title"><span class="icon">📉</span>模考成绩趋势（班级均分）</div>
+          <div class="chart-container"><canvas id="chartExamTrend" height="200"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">🎯</span>专业技能雷达图（班级均分）</div>
+          <div class="radar-container"><canvas id="chartSkillRadar" height="200"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">⚠️</span>需关注学生</div>
+        <div id="dashboardAlerts"></div>
+      </div>
+    </div>
+
+    <!-- ====== 学生档案页 ====== -->
+    <div class="page" id="page-students">
+      <div class="page-header">
+        <div>
+          <h2>👥 学生档案</h2>
+          <p>管理学生基本信息、专业背景与目标院校</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box"><input type="text" id="studentSearch" placeholder="搜索姓名..." oninput="renderStudents()"></div>
+          <select class="filter-select" id="studentFilterClass" onchange="renderStudents()">
+            <option value="">全部班级</option>
+          </select>
+          <select class="filter-select" id="studentFilterLevel" onchange="renderStudents()">
+            <option value="">全部水平</option>
+            <option value="优秀">优秀</option>
+            <option value="良好">良好</option>
+            <option value="一般">一般</option>
+            <option value="薄弱">薄弱</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary" onclick="showStudentModal()">➕ 添加学生</button>
+        </div>
+      </div>
+      <div class="student-grid" id="studentGrid"></div>
+    </div>
+
+    <!-- ====== 专业训练页 ====== -->
+    <div class="page" id="page-training">
+      <div class="page-header">
+        <div>
+          <h2>🎤 专业训练跟踪</h2>
+          <p>新闻播读 · 文学作品朗诵 · 即兴评述 · 模拟主持</p>
+        </div>
+      </div>
+      <div class="tabs" id="trainingTabs">
+        <div class="tab active" data-tab="news">📰 新闻播读</div>
+        <div class="tab" data-tab="literature">📖 文学朗诵</div>
+        <div class="tab" data-tab="comment">💬 即兴评述</div>
+        <div class="tab" data-tab="host">🎬 模拟主持</div>
+        <div class="tab" data-tab="voice">🎵 发声训练</div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <select class="filter-select" id="trainingStudentFilter" onchange="renderTraining()"></select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary" onclick="showTrainingModal()">➕ 记录训练</button>
+        </div>
+      </div>
+      <div id="trainingContent"></div>
+    </div>
+
+    <!-- ====== 模考成绩页 ====== -->
+    <div class="page" id="page-exams">
+      <div class="page-header">
+        <div>
+          <h2>📝 模考成绩分析</h2>
+          <p>模考成绩录入 · 趋势追踪 · 弱项诊断</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <select class="filter-select" id="examStudentFilter" onchange="renderExams()"></select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary" onclick="showExamModal()">➕ 录入模考成绩</button>
+        </div>
+      </div>
+      <div id="examContent"></div>
+    </div>
+
+    <!-- ====== 成绩分析页 ====== -->
+    <div class="page" id="page-analysis">
+      <div class="page-header">
+        <div>
+          <h2>🔬 学生成绩分析</h2>
+          <p>基于历次模考成绩，自动生成优劣势诊断与发展建议</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <select class="filter-select" id="analysisStudentSelect" onchange="renderAnalysis()" style="min-width:160px;"></select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-outline btn-sm" onclick="exportAnalysisReport()">📄 导出分析报告</button>
+        </div>
+      </div>
+      <div id="analysisContent"></div>
+    </div>
+
+    <!-- ====== 艺考流程页 ====== -->
+    <div class="page" id="page-artexam">
+      <div class="page-header">
+        <div>
+          <h2>📅 艺考全流程</h2>
+          <p>联考 · 校考 · 报名 · 备考 · 带考 · 成绩追踪</p>
+        </div>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showArtExamTimelineModal()">📅 查看时间轴</button>
+          <button class="btn btn-primary btn-sm" onclick="showArtExamModal()">➕ 添加考试</button>
+        </div>
+      </div>
+      <div class="tabs" id="artexamTabs">
+        <div class="tab active" data-tab="artexam-list">考试安排</div>
+        <div class="tab" data-tab="artexam-progress">备考进度</div>
+      </div>
+      <div id="artexamContent"></div>
+    </div>
+
+    <!-- ====== 学生状态页 ====== -->
+    <div class="page" id="page-status">
+      <div class="page-header">
+        <div>
+          <h2>💚 学生状态关怀</h2>
+          <p>心理状态 · 学习态度 · 家校沟通 · 压力管理</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <select class="filter-select" id="statusStudentFilter" onchange="renderStatus()"></select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary" onclick="showStatusModal()">➕ 记录状态</button>
+        </div>
+      </div>
+      <div id="statusContent"></div>
+    </div>
+
+    <!-- ====== 课时工作台页 ====== -->
+    <div class="page" id="page-lessons">
+      <div class="page-header">
+        <div>
+          <h2>📚 课时工作台</h2>
+          <p>点击日期直接排课 · 日常/集训两种模式 · 每课2课时</p>
+        </div>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showLessonModal()">➕ 快速添加</button>
+        </div>
+      </div>
+      <div class="tabs" id="lessonTabs">
+        <div class="tab active" data-tab="lesson-calendar">📅 日历排课</div>
+        <div class="tab" data-tab="lesson-list">📋 课程列表</div>
+        <div class="tab" data-tab="lesson-stats">📊 课时统计</div>
+      </div>
+      <div id="lessonContent"></div>
+    </div>
+
+    <!-- ====== 教学复盘页 ====== -->
+    <div class="page" id="page-review">
+      <div class="page-header">
+        <div>
+          <h2>📈 教学成果复盘</h2>
+          <p>教学质量 · 训练完成率 · 成绩提升 · 录取结果</p>
+        </div>
+      </div>
+      <div id="reviewContent"></div>
+    </div>
+
+    <!-- ====== 数据管理页 ====== -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div>
+          <h2>⚙️ 数据管理</h2>
+          <p>导入导出 · 示例数据 · 清空数据</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">💾</span>数据导入导出</div>
+        <p style="margin-bottom:16px; color:var(--text-secondary); font-size:13px;">数据存储在浏览器本地，建议定期导出备份。导入时会覆盖现有数据。</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="exportData()">📥 导出全部数据(JSON)</button>
+          <button class="btn btn-outline" onclick="showImportModal()">📤 导入JSON数据</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">📊</span>Excel 导入</div>
+        <p style="margin-bottom:12px; color:var(--text-secondary); font-size:13px;">支持直接上传 <b>.xlsx / .xls / .csv</b> 格式的Excel表格，自动匹配列名导入学生信息和模考成绩。</p>
+        <div class="alert alert-info" style="margin-bottom:16px;">
+          <span>💡 <b>智能匹配</b>：系统会自动识别常见列名（如"姓名""新闻""朗诵"等），无需完全一致。建议先下载模板查看格式。</span>
+        </div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <button class="btn btn-success" onclick="downloadExcelTemplate()">📋 下载导入模板</button>
+          <button class="btn btn-primary" onclick="document.getElementById('excelImportFile').click()">📊 选择Excel文件导入</button>
+          <input type="file" id="excelImportFile" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleExcelImport(this)">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">📋</span>示例数据</div>
+        <p style="margin-bottom:16px; color:var(--text-secondary); font-size:13px;">加载示例数据以便快速了解工作台功能（会覆盖现有数据）。</p>
+        <button class="btn btn-success" onclick="loadSampleData()">加载示例数据</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">🗑️</span>清空数据</div>
+        <p style="margin-bottom:16px; color:var(--text-secondary); font-size:13px;">清空所有学生、训练、成绩、考试、状态、课时记录。此操作不可撤销，请先导出备份。</p>
+        <button class="btn btn-danger" onclick="confirmClearData()">🗑️ 清空全部数据</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">📖</span>使用说明</div>
+        <div style="font-size:13px; color:var(--text-secondary); line-height:1.8;">
+          <p>• <b>数据总览</b>：查看班级整体数据、成绩趋势、需关注学生</p>
+          <p>• <b>学生档案</b>：添加/编辑/删除学生信息，点击学生卡片查看详情</p>
+          <p>• <b>成绩分析</b>：选择学生查看个人成绩分析报告（优劣势、趋势、智能建议）</p>
+          <p>• <b>专业训练</b>：分5个专业方向记录每次训练成绩与点评</p>
+          <p>• <b>模考成绩</b>：录入模考成绩，自动生成趋势图与弱项分析</p>
+          <p>• <b>艺考流程</b>：管理联考/校考安排，追踪备考进度</p>
+          <p>• <b>学生状态</b>：记录心理状态、家校沟通，及时关注学生</p>
+          <p>• <b>课时工作台</b>：记录课程安排与上课情况，每课2课时，自动统计课时量</p>
+          <p>• <b>教学复盘</b>：统计训练完成率、成绩提升幅度、录取结果</p>
+          <p>• 数据自动保存在浏览器本地，关闭页面不丢失</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ========== 模态框容器 ========== -->
+<div id="modalContainer"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ========== 外部库动态加载 ==========
+(function(){
+  // Chart.js
+  var s1 = document.createElement('script');
+  s1.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+  s1.onload = function(){ window.chartLoaded = true; refreshCharts(); };
+  document.head.appendChild(s1);
+  // SheetJS (xlsx) - 用于Excel解析
+  var s2 = document.createElement('script');
+  s2.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  s2.onload = function(){ window.xlsxLoaded = true; };
+  document.head.appendChild(s2);
+})();
+</script>
+
+<!-- ========== 主脚本 ========== -->
+<script>
+// ============================================================
+//  第一部分：数据层
+// ============================================================
+const STORAGE_KEY = 'broadcast_art_workbench_v1';
+const AVATAR_COLORS = ['#6C5CE7','#FD79A8','#00B894','#74B9FF','#FDCB6E','#FF7675','#A29BFE','#55EFC4','#FF9FF3','#FECA57','#48DBFB','#1DD1A1'];
+const SKILL_TYPES = [
+  {key:'news', name:'新闻播读', icon:'📰', dims:['语音面貌','语言表达','新闻感','流畅度']},
+  {key:'literature', name:'文学作品朗诵', icon:'📖', dims:['情感表达','语言技巧','作品理解','声音塑造']},
+  {key:'comment', name:'即兴评述', icon:'💬', dims:['思维逻辑','观点深度','语言组织','即兴反应']},
+  {key:'host', name:'模拟主持', icon:'🎬', dims:['主持状态','控场能力','语言表达','创意表现']},
+  {key:'voice', name:'发声训练', icon:'🎵', dims:['气息控制','共鸣','咬字吐词','声音弹性']},
+];
+const LEVEL_COLORS = {'优秀':'#00B894','良好':'#74B9FF','一般':'#FDCB6E','薄弱':'#FF7675'};
+const STATUS_COLORS = {'良好':'#00B894','需关注':'#FDCB6E','重点关注':'#FF7675','紧急':'#d63031'};
+
+let DB = {
+  students: [],
+  trainings: [],
+  exams: [],
+  artexams: [],
+  statuses: [],
+  lessons: [],
+};
+
+function saveDB() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+}
+function loadDB() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; } catch(e) { DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[]}; }
+  }
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
+function getStudent(id) { return DB.students.find(s=>s.id===id); }
+function studentName(id) { const s=getStudent(id); return s?s.name:'未知'; }
+function studentAvatarColor(id) {
+  const idx = DB.students.findIndex(s=>s.id===id);
+  return AVATAR_COLORS[idx % AVATAR_COLORS.length] || '#6C5CE7';
+}
+function studentInitial(name) { return name ? name.charAt(0) : '?'; }
+function formatDate(d) {
+  if(!d) return '';
+  const dt = new Date(d);
+  return `${dt.getMonth()+1}月${dt.getDate()}日`;
+}
+function formatDateFull(d) {
+  if(!d) return '';
+  const dt = new Date(d);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+// ============================================================
+//  第二部分：Toast 提示
+// ============================================================
+function toast(msg, type='success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = {success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+  t.innerHTML = `<span>${icons[type]||'✅'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(100%)'; setTimeout(()=>t.remove(),300); }, 3000);
+}
+
+// ============================================================
+//  第三部分：页面导航
+// ============================================================
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    item.classList.add('active');
+    const page = item.dataset.page;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+page).classList.add('active');
+    // 渲染对应页面
+    if(page==='dashboard') renderDashboard();
+    if(page==='students') renderStudents();
+    if(page==='analysis') renderAnalysis();
+    if(page==='training') renderTraining();
+    if(page==='exams') renderExams();
+    if(page==='artexam') renderArtExam();
+    if(page==='status') renderStatus();
+    if(page==='lessons') renderLessons();
+    if(page==='review') renderReview();
+  });
+});
+
+// Tab 切换 - 训练
+document.querySelectorAll('#trainingTabs .tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('#trainingTabs .tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    renderTraining();
+  });
+});
+// Tab 切换 - 艺考
+document.querySelectorAll('#artexamTabs .tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('#artexamTabs .tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    renderArtExam();
+  });
+});
+// Tab 切换 - 课时
+document.querySelectorAll('#lessonTabs .tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('#lessonTabs .tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    renderLessons();
+  });
+});
+
+// ============================================================
+//  第四部分：数据总览页
+// ============================================================
+let charts = {};
+function refreshCharts() {
+  if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+}
+function renderDashboard() {
+  const total = DB.students.length;
+  const examAvg = DB.exams.length > 0 ? (DB.exams.reduce((s,e)=>s+(e.total||0),0)/DB.exams.length).toFixed(1) : '—';
+  const trainingCount = DB.trainings.length;
+  const alertCount = DB.statuses.filter(s=>s.level==='需关注'||s.level==='重点关注'||s.level==='紧急').length;
+  const upcomingExams = DB.artexams.filter(e=>new Date(e.date)>=new Date(new Date().toDateString())).length;
+  const levelDist = {优秀:0,良好:0,一般:0,薄弱:0};
+  DB.students.forEach(s=>{ if(s.level) levelDist[s.level]=(levelDist[s.level]||0)+1; });
+
+  document.getElementById('dashboardStats').innerHTML = `
+    <div class="stat-card"><div class="stat-icon purple">👥</div><div class="stat-info"><h3>${total}</h3><p>班级总人数</p></div></div>
+    <div class="stat-card"><div class="stat-icon blue">📝</div><div class="stat-info"><h3>${examAvg}</h3><p>模考均分</p></div></div>
+    <div class="stat-card"><div class="stat-icon green">🎤</div><div class="stat-info"><h3>${trainingCount}</h3><p>训练记录数</p></div></div>
+    <div class="stat-card"><div class="stat-icon orange">📅</div><div class="stat-info"><h3>${upcomingExams}</h3><p>待考科目</p></div></div>
+    <div class="stat-card"><div class="stat-icon red">⚠️</div><div class="stat-info"><h3>${alertCount}</h3><p>需关注学生</p></div></div>
+  `;
+
+  // 图表
+  Object.values(charts).forEach(c=>{ try{c.destroy();}catch(e){} });
+  charts = {};
+  if(window.chartLoaded && total>0) {
+    // 模考趋势
+    const examDates = [...new Set(DB.exams.map(e=>e.date))].sort();
+    if(examDates.length>0) {
+      const trendData = examDates.map(d=>{
+        const exams = DB.exams.filter(e=>e.date===d);
+        return (exams.reduce((s,e)=>s+(e.total||0),0)/exams.length).toFixed(1);
+      });
+      charts.trend = new Chart(document.getElementById('chartExamTrend'), {
+        type: 'line',
+        data: { labels: examDates.map(formatDate), datasets: [{ label:'班级均分', data:trendData, borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.1)', fill:true, tension:0.3, pointRadius:5, pointBackgroundColor:'#6C5CE7'}] },
+        options: { responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, max:100 } } }
+      });
+    }
+    // 技能雷达
+    const skillAvgs = SKILL_TYPES.map(sk=>{
+      const trs = DB.trainings.filter(t=>t.type===sk.key);
+      if(trs.length===0) return 0;
+      const allScores = trs.flatMap(t=>(t.scores||[]).map(s=>s.score));
+      if(allScores.length===0) return 0;
+      return (allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1);
+    });
+    charts.radar = new Chart(document.getElementById('chartSkillRadar'), {
+      type: 'radar',
+      data: { labels: SKILL_TYPES.map(s=>s.name), datasets: [{ label:'班级均分', data:skillAvgs, borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.2)', pointBackgroundColor:'#6C5CE7'}] },
+      options: { responsive:true, plugins:{ legend:{display:false} }, scales:{ r:{ beginAtZero:true, max:100 } } }
+    });
+  }
+
+  // 需关注学生
+  const alertStudents = DB.statuses
+    .filter(s=>s.level==='需关注'||s.level==='重点关注'||s.level==='紧急')
+    .sort((a,b)=>new Date(b.date)-new Date(a.date))
+    .slice(0,5);
+  const alertsHtml = alertStudents.length===0
+    ? '<div class="empty-state"><div class="icon">✅</div><p>暂无需关注的学生状态记录</p></div>'
+    : alertStudents.map(s=>{
+      const color = STATUS_COLORS[s.level]||'#FDCB6E';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div class="student-avatar" style="background:${studentAvatarColor(s.studentId)};width:36px;height:36px;font-size:14px;">${studentInitial(studentName(s.studentId))}</div>
+        <div style="flex:1;">
+          <div><b>${studentName(s.studentId)}</b> <span class="badge" style="background:${color}22;color:${color};">${s.level}</span></div>
+          <div style="font-size:12px;color:var(--text-secondary);">${s.note||''}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-light);">${formatDate(s.date)}</div>
+      </div>`;
+    }).join('');
+  document.getElementById('dashboardAlerts').innerHTML = alertsHtml;
+}
+
+// ============================================================
+//  第五部分：学生档案页
+// ============================================================
+function renderStudents() {
+  // 更新班级筛选项
+  updateClassFilter();
+  const keyword = (document.getElementById('studentSearch')?.value||'').trim();
+  const levelFilter = document.getElementById('studentFilterLevel')?.value||'';
+  const classFilter = document.getElementById('studentFilterClass')?.value||'';
+  let list = DB.students.filter(s=>{
+    if(keyword && !s.name.includes(keyword)) return false;
+    if(levelFilter && s.level!==levelFilter) return false;
+    if(classFilter && s.classNo!==classFilter) return false;
+    return true;
+  });
+  const grid = document.getElementById('studentGrid');
+  if(list.length===0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="icon">👥</div><p>暂无学生，点击右上角"添加学生"开始</p></div>';
+    return;
+  }
+
+  // 按班级分组
+  const classGroups = {};
+  list.forEach(s=>{
+    const cn = s.classNo || '未分班';
+    if(!classGroups[cn]) classGroups[cn] = [];
+    classGroups[cn].push(s);
+  });
+  const classNames = Object.keys(classGroups).sort((a,b)=> a==='未分班'?1: b==='未分班'?-1 : a.localeCompare(b,'zh'));
+
+  let html = '';
+  classNames.forEach(cn=>{
+    const group = classGroups[cn];
+    // 班级统计
+    const groupExams = group.flatMap(s=> DB.exams.filter(e=>e.studentId===s.id && e.total));
+    const groupAvg = groupExams.length>0 ? (groupExams.reduce((a,e)=>a+e.total,0)/groupExams.length).toFixed(1) : '—';
+    const groupCultures = group.map(s=>parseFloat(s.cultureScore)).filter(v=>!isNaN(v));
+    const cultureAvg = groupCultures.length>0 ? (groupCultures.reduce((a,b)=>a+b,0)/groupCultures.length).toFixed(0) : '—';
+    html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 16px;background:var(--card-bg);border-radius:var(--radius-sm);box-shadow:var(--shadow);">
+      <span style="font-size:16px;">🏫</span>
+      <span style="font-size:16px;font-weight:700;">${cn}</span>
+      <span class="badge badge-purple">${group.length}人</span>
+      <span style="font-size:13px;color:var(--text-secondary);">专业均分 <b style="color:var(--primary);">${groupAvg}</b></span>
+      <span style="font-size:13px;color:var(--text-secondary);">文化均分 <b style="color:var(--info);">${cultureAvg}</b></span>
+    </div>`;
+    html += `<div class="student-grid" style="margin-bottom:24px;">${group.map(s=>renderStudentCard(s)).join('')}</div>`;
+  });
+  grid.innerHTML = html;
+}
+
+function renderStudentCard(s) {
+    const color = LEVEL_COLORS[s.level]||'#B2BEC3';
+    const exams = DB.exams.filter(e=>e.studentId===s.id);
+    const avgScore = exams.length>0 ? (exams.reduce((a,e)=>a+(e.total||0),0)/exams.length).toFixed(1) : '—';
+    const trainings = DB.trainings.filter(t=>t.studentId===s.id).length;
+    const latestStatus = DB.statuses.filter(st=>st.studentId===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    const statusBadge = latestStatus ? `<span class="badge" style="background:${(STATUS_COLORS[latestStatus.level]||'#B2BEC3')}22;color:${STATUS_COLORS[latestStatus.level]||'#B2BEC3'};">${latestStatus.level}</span>` : '';
+    const cultureScore = s.cultureScore ? `<span class="badge badge-info">📚 ${s.cultureScore}分</span>` : '';
+    return `<div class="student-card" onclick="showStudentDetail('${s.id}')">
+      <div class="student-card-header">
+        <div class="student-avatar" style="background:${studentAvatarColor(s.id)};">${studentInitial(s.name)}</div>
+        <div style="flex:1;">
+          <div class="student-name">${s.name}</div>
+          <div class="student-meta">${s.age||'?'}岁 · ${s.source||'—'} ${s.classNo?'· '+s.classNo:''}</div>
+        </div>
+      </div>
+      <div class="student-tags">
+        <span class="badge" style="background:${color}22;color:${color};">${s.level||'未评'}</span>
+        ${statusBadge}
+        ${cultureScore}
+        ${s.targetSchools ? `<span class="badge badge-info">🎯 ${s.targetSchools}</span>` : ''}
+      </div>
+      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+        <div><div style="font-size:18px;font-weight:700;color:var(--primary);">${avgScore}</div><div style="font-size:11px;color:var(--text-secondary);">专业均分</div></div>
+        <div><div style="font-size:18px;font-weight:700;color:var(--info);">${s.cultureScore||'—'}</div><div style="font-size:11px;color:var(--text-secondary);">文化分</div></div>
+        <div><div style="font-size:18px;font-weight:700;color:var(--success);">${trainings}</div><div style="font-size:11px;color:var(--text-secondary);">训练次数</div></div>
+      </div>
+    </div>`;
+}
+
+// 更新班级筛选项
+function updateClassFilter() {
+  const sel = document.getElementById('studentFilterClass');
+  if(!sel) return;
+  const current = sel.value;
+  const classes = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh'));
+  sel.innerHTML = '<option value="">全部班级</option>' + classes.map(c=>`<option value="${c}">${c}</option>`).join('') + '<option value="未分班">未分班</option>';
+  sel.value = current;
+}
+
+function showStudentModal(id) {
+  const s = id ? getStudent(id) : {};
+  const isEdit = !!id;
+  const html = `<div class="modal-overlay show">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>${isEdit?'编辑学生':'添加学生'}</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>姓名 <span class="required">*</span></label><input id="s_name" value="${s.name||''}" placeholder="学生姓名"></div>
+          <div class="form-group"><label>性别</label><select id="s_gender"><option value="男" ${s.gender==='男'?'selected':''}>男</option><option value="女" ${s.gender==='女'?'selected':''}>女</option></select></div>
+          <div class="form-group"><label>年龄</label><input id="s_age" type="number" value="${s.age||''}" placeholder="如17"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>班级</label><input id="s_classNo" value="${s.classNo||''}" placeholder="如：1班、集训A班" list="classList"></div>
+          <datalist id="classList">${[...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].map(c=>`<option value="${c}">`).join('')}</datalist>
+          <div class="form-group"><label>文化分</label><input id="s_cultureScore" type="number" value="${s.cultureScore||''}" placeholder="如420" min="0" max="750"></div>
+          <div class="form-group"><label>综合水平</label><select id="s_level"><option value="">请选择</option><option value="优秀" ${s.level==='优秀'?'selected':''}>优秀</option><option value="良好" ${s.level==='良好'?'selected':''}>良好</option><option value="一般" ${s.level==='一般'?'selected':''}>一般</option><option value="薄弱" ${s.level==='薄弱'?'selected':''}>薄弱</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>生源地</label><input id="s_source" value="${s.source||''}" placeholder="如：河北石家庄"></div>
+          <div class="form-group"><label>联系电话</label><input id="s_phone" value="${s.phone||''}" placeholder="学生或家长电话"></div>
+          <div class="form-group"><label>嗓音类型</label><select id="s_voiceType"><option value="">请选择</option><option value="明亮" ${s.voiceType==='明亮'?'selected':''}>明亮</option><option value="浑厚" ${s.voiceType==='浑厚'?'selected':''}>浑厚</option><option value="柔和" ${s.voiceType==='柔和'?'selected':''}>柔和</option><option value="偏窄" ${s.voiceType==='偏窄'?'selected':''}>偏窄</option><option value="其他" ${s.voiceType==='其他'?'selected':''}>其他</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>身高(cm)</label><input id="s_height" type="number" value="${s.height||''}" placeholder="如170"></div>
+          <div class="form-group"><label>体重(kg)</label><input id="s_weight" type="number" value="${s.weight||''}" placeholder="如55"></div>
+        </div>
+        <div class="form-group"><label>目标院校</label><input id="s_targetSchools" value="${s.targetSchools||''}" placeholder="如：中传、浙传、上戏"></div>
+        <div class="form-row">
+          <div class="form-group"><label>专业特长</label><input id="s_specialty" value="${s.specialty||''}" placeholder="如：朗诵、新闻、主持"></div>
+          <div class="form-group"><label>薄弱项</label><input id="s_weakness" value="${s.weakness||''}" placeholder="如：即兴评述"></div>
+        </div>
+        <div class="form-group"><label>家长信息</label><input id="s_parent" value="${s.parent||''}" placeholder="如：张父 138xxxx0000"></div>
+        <div class="form-group"><label>备注</label><textarea id="s_remark" placeholder="其他需要记录的信息...">${s.remark||''}</textarea></div>
+      </div>
+      <div class="modal-footer">
+        ${isEdit?`<button class="btn btn-danger" onclick="deleteStudent('${id}')">删除</button>`:''}
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveStudent('${id||''}')">保存</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+function saveStudent(id) {
+  const name = document.getElementById('s_name').value.trim();
+  if(!name) { toast('请输入学生姓名','error'); return; }
+  const data = {
+    name, gender: val('s_gender'), age: parseInt(val('s_age'))||null,
+    classNo: val('s_classNo'), cultureScore: parseFloat(val('s_cultureScore'))||null,
+    source: val('s_source'), phone: val('s_phone'), level: val('s_level'),
+    height: parseInt(val('s_height'))||null, weight: parseInt(val('s_weight'))||null,
+    voiceType: val('s_voiceType'), targetSchools: val('s_targetSchools'),
+    specialty: val('s_specialty'), weakness: val('s_weakness'),
+    parent: val('s_parent'), remark: val('s_remark'),
+  };
+  if(id) {
+    Object.assign(getStudent(id), data);
+    toast('学生信息已更新');
+  } else {
+    data.id = genId();
+    data.createdAt = new Date().toISOString();
+    DB.students.push(data);
+    toast('学生已添加');
+  }
+  saveDB(); closeModal(); renderStudents();
+}
+function val(id) { return document.getElementById(id)?.value?.trim()||''; }
+
+function deleteStudent(id) {
+  if(!confirm('确定删除该学生？相关的训练、成绩、状态记录也会一并删除。')) return;
+  DB.students = DB.students.filter(s=>s.id!==id);
+  DB.trainings = DB.trainings.filter(t=>t.studentId!==id);
+  DB.exams = DB.exams.filter(e=>e.studentId!==id);
+  DB.statuses = DB.statuses.filter(s=>s.studentId!==id);
+  saveDB(); closeModal(); renderStudents(); toast('学生已删除','warning');
+}
+
+function showStudentDetail(id) {
+  const s = getStudent(id); if(!s) return;
+  const exams = DB.exams.filter(e=>e.studentId===id).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const trainings = DB.trainings.filter(t=>t.studentId===id);
+  const statuses = DB.statuses.filter(st=>st.studentId===id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const avgScore = exams.length>0 ? (exams.reduce((a,e)=>a+(e.total||0),0)/exams.length).toFixed(1) : '—';
+  const latestStatus = statuses[0];
+  const trainingByType = SKILL_TYPES.map(sk=>{
+    const trs = trainings.filter(t=>t.type===sk.key);
+    const scores = trs.flatMap(t=>(t.scores||[]).map(s=>s.score));
+    const avg = scores.length>0 ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : '—';
+    return {name:sk.name, icon:sk.icon, count:trs.length, avg};
+  });
+
+  const html = `<div class="modal-overlay show">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>👤 ${s.name} · 学生详情</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+          <div class="card" style="margin:0;">
+            <div class="card-title">基本信息</div>
+            <table>
+              <tr><td style="color:var(--text-secondary);">姓名</td><td>${s.name}</td></tr>
+              <tr><td style="color:var(--text-secondary);">班级</td><td>${s.classNo?`<span class="badge badge-purple">${s.classNo}</span>`:'未分班'}</td></tr>
+              <tr><td style="color:var(--text-secondary);">性别/年龄</td><td>${s.gender||'—'} / ${s.age||'—'}岁</td></tr>
+              <tr><td style="color:var(--text-secondary);">生源地</td><td>${s.source||'—'}</td></tr>
+              <tr><td style="color:var(--text-secondary);">身高/体重</td><td>${s.height||'—'}cm / ${s.weight||'—'}kg</td></tr>
+              <tr><td style="color:var(--text-secondary);">嗓音类型</td><td>${s.voiceType||'—'}</td></tr>
+              <tr><td style="color:var(--text-secondary);">联系电话</td><td>${s.phone||'—'}</td></tr>
+              <tr><td style="color:var(--text-secondary);">家长信息</td><td>${s.parent||'—'}</td></tr>
+            </table>
+          </div>
+          <div class="card" style="margin:0;">
+            <div class="card-title">专业信息</div>
+            <table>
+              <tr><td style="color:var(--text-secondary);">综合水平</td><td>${s.level?`<span class="badge" style="background:${LEVEL_COLORS[s.level]}22;color:${LEVEL_COLORS[s.level]};">${s.level}</span>`:'未评'}</td></tr>
+              <tr><td style="color:var(--text-secondary);">文化分</td><td>${s.cultureScore?`<b style="color:var(--info);font-size:16px;">${s.cultureScore}</b> / 750`:'—'}</td></tr>
+              <tr><td style="color:var(--text-secondary);">目标院校</td><td>${s.targetSchools||'—'}</td></tr>
+              <tr><td style="color:var(--text-secondary);">专业特长</td><td>${s.specialty||'—'}</td></tr>
+              <tr><td style="color:var(--text-secondary);">薄弱项</td><td>${s.weakness||'—'}</td></tr>
+              <tr><td style="color:var(--text-secondary);">专业模考均分</td><td><b style="color:var(--primary);font-size:16px;">${avgScore}</b></td></tr>
+              <tr><td style="color:var(--text-secondary);">训练次数</td><td>${trainings.length}次</td></tr>
+              <tr><td style="color:var(--text-secondary);">最新状态</td><td>${latestStatus?`<span class="badge" style="background:${(STATUS_COLORS[latestStatus.level]||'#B2BEC3')}22;color:${STATUS_COLORS[latestStatus.level]||'#B2BEC3'};">${latestStatus.level}</span>`:'—'}</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="card" style="margin:0 0 16px;">
+          <div class="card-title">🎯 各专业方向训练统计</div>
+          <table>
+            <thead><tr><th>方向</th><th>训练次数</th><th>平均分</th></tr></thead>
+            <tbody>${trainingByType.map(t=>`<tr><td>${t.icon} ${t.name}</td><td>${t.count}</td><td><b>${t.avg}</b></td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+        ${exams.length>0?`<div class="card" style="margin:0 0 16px;">
+          <div class="card-title">📝 模考记录</div>
+          <table><thead><tr><th>日期</th><th>考试名称</th><th>新闻</th><th>朗诵</th><th>评述</th><th>主持</th><th>总分</th><th>排名</th></tr></thead>
+          <tbody>${exams.map(e=>`<tr><td>${formatDate(e.date)}</td><td>${e.name||'—'}</td><td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td>${e.host||'—'}</td><td><b style="color:var(--primary);">${e.total||'—'}</b></td><td>${e.rank||'—'}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>`:''}
+        ${statuses.length>0?`<div class="card" style="margin:0;">
+          <div class="card-title">💚 状态记录</div>
+          ${statuses.slice(0,5).map(st=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;"><b>${formatDate(st.date)}</b><span class="badge" style="background:${(STATUS_COLORS[st.level]||'#B2BEC3')}22;color:${STATUS_COLORS[st.level]||'#B2BEC3'};">${st.level}</span></div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">${st.note||''}</div>
+          </div>`).join('')}
+        </div>`:''}
+        ${s.remark?`<div class="alert alert-info" style="margin-top:16px;">📝 ${s.remark}</div>`:''}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">关闭</button>
+        <button class="btn btn-primary" onclick="closeModal();showStudentModal('${id}')">编辑</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+// ============================================================
+//  第六部分：专业训练页
+// ============================================================
+function populateStudentFilters() {
+  const opts = '<option value="">全部学生</option>' + DB.students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  ['trainingStudentFilter','examStudentFilter','statusStudentFilter'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) { const v=el.value; el.innerHTML=opts; el.value=v; }
+  });
+  populateAnalysisStudentFilter();
+}
+
+function renderTraining() {
+  populateStudentFilters();
+  const activeTab = document.querySelector('#trainingTabs .tab.active')?.dataset.tab || 'news';
+  const skill = SKILL_TYPES.find(s=>s.key===activeTab);
+  const studentFilter = document.getElementById('trainingStudentFilter')?.value||'';
+  let list = DB.trainings.filter(t=>t.type===activeTab);
+  if(studentFilter) list = list.filter(t=>t.studentId===studentFilter);
+  list.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const content = document.getElementById('trainingContent');
+  if(list.length===0) {
+    content.innerHTML = `<div class="empty-state"><div class="icon">${skill.icon}</div><p>暂无${skill.name}训练记录</p></div>`;
+    return;
+  }
+  // 汇总
+  const allScores = list.flatMap(t=>(t.scores||[]).map(s=>s.score));
+  const avg = allScores.length>0 ? (allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1) : '—';
+  let html = `<div class="stat-grid" style="margin-bottom:16px;">
+    <div class="stat-card"><div class="stat-icon ${activeTab==='news'?'blue':activeTab==='literature'?'pink':activeTab==='comment'?'orange':activeTab==='host'?'purple':'green'}">${skill.icon}</div><div class="stat-info"><h3>${list.length}</h3><p>${skill.name}训练次数</p></div></div>
+    <div class="stat-card"><div class="stat-icon purple">📊</div><div class="stat-info"><h3>${avg}</h3><p>平均分</p></div></div>
+  </div>`;
+  html += `<div class="card"><div class="card-title">${skill.icon} ${skill.name}训练记录</div><div class="table-wrapper"><table>
+    <thead><tr><th>日期</th><th>学生</th>${skill.dims.map(d=>`<th>${d}</th>`).join('')}<th>均分</th><th>点评</th><th>操作</th></tr></thead>
+    <tbody>${list.map(t=>{
+      const scores = t.scores||[];
+      const scoreHtml = skill.dims.map((d,i)=>`<td>${scores[i]?scores[i].score:'—'}</td>`).join('');
+      const validScores = scores.filter(s=>s.score).map(s=>s.score);
+      const tAvg = validScores.length>0 ? (validScores.reduce((a,b)=>a+b,0)/validScores.length).toFixed(1) : '—';
+      return `<tr>
+        <td>${formatDate(t.date)}</td>
+        <td><div style="display:flex;align-items:center;gap:6px;"><div class="student-avatar" style="background:${studentAvatarColor(t.studentId)};width:24px;height:24px;font-size:11px;">${studentInitial(studentName(t.studentId))}</div>${studentName(t.studentId)}</div></td>
+        ${scoreHtml}
+        <td><b style="color:var(--primary);">${tAvg}</b></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${t.comment||''}">${t.comment||'—'}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="showTrainingModal('${t.id}')">编辑</button> <button class="btn btn-danger btn-sm" onclick="deleteTraining('${t.id}')">删除</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div></div>`;
+  content.innerHTML = html;
+}
+
+function showTrainingModal(id) {
+  const t = id ? DB.trainings.find(x=>x.id===id) : {};
+  const isEdit = !!id;
+  const activeTab = document.querySelector('#trainingTabs .tab.active')?.dataset.tab || 'news';
+  const skill = SKILL_TYPES.find(s=>s.key===activeTab);
+  const currentType = t.type || activeTab;
+  const currentSkill = SKILL_TYPES.find(s=>s.key===currentType);
+
+  const html = `<div class="modal-overlay show">
+    <div class="modal">
+      <div class="modal-header"><h3>${isEdit?'编辑训练记录':'记录训练'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>训练方向 <span class="required">*</span></label><select id="t_type" onchange="updateTrainingDims()">${SKILL_TYPES.map(s=>`<option value="${s.key}" ${currentType===s.key?'selected':''}>${s.icon} ${s.name}</option>`).join('')}</select></div>
+          <div class="form-group"><label>学生 <span class="required">*</span></label><select id="t_studentId">${DB.students.map(s=>`<option value="${s.id}" ${t.studentId===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+          <div class="form-group"><label>日期 <span class="required">*</span></label><input id="t_date" type="date" value="${t.date?formatDateFull(t.date):formatDateFull(new Date().toISOString())}"></div>
+        </div>
+        <div id="t_dims_container"></div>
+        <div class="form-group"><label>教师点评</label><textarea id="t_comment" placeholder="训练表现点评、改进建议...">${t.comment||''}</textarea></div>
+      </div>
+      <div class="modal-footer">
+        ${isEdit?`<button class="btn btn-danger" onclick="deleteTraining('${id}')">删除</button>`:''}
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveTraining('${id||''}')">保存</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+  updateTrainingDims(t.scores);
+}
+
+function updateTrainingDims(existingScores) {
+  const type = document.getElementById('t_type').value;
+  const skill = SKILL_TYPES.find(s=>s.key===type);
+  const scores = existingScores || (window._currentEditingScores||[]);
+  const container = document.getElementById('t_dims_container');
+  container.innerHTML = `<label style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;display:block;">评分维度（0-100分）</label>
+    <div class="form-row">${skill.dims.map((d,i)=>`<div class="form-group"><label>${d}</label><input id="t_dim_${i}" type="number" min="0" max="100" value="${scores[i]?scores[i].score:''}" placeholder="0-100"></div>`).join('')}</div>`;
+  window._currentEditingScores = null;
+}
+
+function saveTraining(id) {
+  const type = document.getElementById('t_type').value;
+  const skill = SKILL_TYPES.find(s=>s.key===type);
+  const studentId = document.getElementById('t_studentId').value;
+  const date = document.getElementById('t_date').value;
+  if(!studentId) { toast('请选择学生','error'); return; }
+  if(!date) { toast('请选择日期','error'); return; }
+  const scores = skill.dims.map((d,i)=>{
+    const v = document.getElementById('t_dim_'+i).value;
+    return { dim: d, score: v?parseFloat(v):null };
+  });
+  const data = { type, studentId, date, scores, comment: val('t_comment') };
+  if(id) { Object.assign(DB.trainings.find(t=>t.id===id), data); toast('训练记录已更新'); }
+  else { data.id = genId(); DB.trainings.push(data); toast('训练记录已添加'); }
+  saveDB(); closeModal(); renderTraining();
+}
+
+function deleteTraining(id) {
+  if(!confirm('确定删除该训练记录？')) return;
+  DB.trainings = DB.trainings.filter(t=>t.id!==id);
+  saveDB(); closeModal(); renderTraining(); toast('训练记录已删除','warning');
+}
+
+// ============================================================
+//  第七部分：模考成绩页
+// ============================================================
+function renderExams() {
+  populateStudentFilters();
+  const studentFilter = document.getElementById('examStudentFilter')?.value||'';
+  let list = studentFilter ? DB.exams.filter(e=>e.studentId===studentFilter) : [...DB.exams];
+  list.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const content = document.getElementById('examContent');
+  if(list.length===0) {
+    content.innerHTML = '<div class="empty-state"><div class="icon">📝</div><p>暂无模考成绩记录</p></div>';
+    return;
+  }
+  // 统计
+  const avgTotal = list.length>0 ? (list.reduce((s,e)=>s+(e.total||0),0)/list.length).toFixed(1) : '—';
+  const maxTotal = list.length>0 ? Math.max(...list.map(e=>e.total||0)) : '—';
+  const minTotal = list.length>0 ? Math.min(...list.map(e=>e.total||0)) : '—';
+
+  let html = `<div class="stat-grid" style="margin-bottom:16px;">
+    <div class="stat-card"><div class="stat-icon purple">📝</div><div class="stat-info"><h3>${list.length}</h3><p>模考记录数</p></div></div>
+    <div class="stat-card"><div class="stat-icon blue">📊</div><div class="stat-info"><h3>${avgTotal}</h3><p>平均总分</p></div></div>
+    <div class="stat-card"><div class="stat-icon green">📈</div><div class="stat-info"><h3>${maxTotal}</h3><p>最高分</p></div></div>
+    <div class="stat-card"><div class="stat-icon orange">📉</div><div class="stat-info"><h3>${minTotal}</h3><p>最低分</p></div></div>
+  </div>`;
+
+  // 成绩表
+  html += `<div class="card"><div class="card-title">📋 模考成绩明细</div><div class="table-wrapper"><table>
+    <thead><tr><th>日期</th><th>学生</th><th>考试名称</th><th>新闻播读</th><th>文学朗诵</th><th>即兴评述</th><th>模拟主持</th><th>总分</th><th>班级排名</th><th>操作</th></tr></thead>
+    <tbody>${list.map(e=>{
+      const total = e.total || ([e.news,e.literature,e.comment,e.host].filter(v=>v).reduce((a,b)=>a+b,0)||null);
+      return `<tr>
+        <td>${formatDate(e.date)}</td>
+        <td><div style="display:flex;align-items:center;gap:6px;"><div class="student-avatar" style="background:${studentAvatarColor(e.studentId)};width:24px;height:24px;font-size:11px;">${studentInitial(studentName(e.studentId))}</div>${studentName(e.studentId)}</div></td>
+        <td>${e.name||'—'}</td>
+        <td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td>${e.host||'—'}</td>
+        <td><b style="color:var(--primary);font-size:15px;">${total||'—'}</b></td>
+        <td>${e.rank||'—'}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="showExamModal('${e.id}')">编辑</button> <button class="btn btn-danger btn-sm" onclick="deleteExam('${e.id}')">删除</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div></div>`;
+
+  // 弱项分析
+  if(list.length>0 && studentFilter) {
+    const student = getStudent(studentFilter);
+    const dimAvgs = [
+      {name:'新闻播读', key:'news'},
+      {name:'文学朗诵', key:'literature'},
+      {name:'即兴评述', key:'comment'},
+      {name:'模拟主持', key:'host'},
+    ].map(d=>{
+      const scores = list.map(e=>e[d.key]).filter(v=>v);
+      const avg = scores.length>0 ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : null;
+      return {...d, avg, count:scores.length};
+    }).filter(d=>d.avg);
+    if(dimAvgs.length>0) {
+      const sorted = [...dimAvgs].sort((a,b)=>parseFloat(a.avg)-parseFloat(b.avg));
+      const weakest = sorted[0];
+      html += `<div class="card"><div class="card-title">🔍 弱项诊断 - ${student.name}</div>
+        <div class="alert alert-warning">最薄弱项：<b>${weakest.name}</b>（均分 ${weakest.avg}）</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+          ${dimAvgs.map(d=>{
+            const pct = parseFloat(d.avg);
+            const color = pct>=85?'#00B894':pct>=75?'#74B9FF':pct>=65?'#FDCB6E':'#FF7675';
+            return `<div><div style="font-size:13px;margin-bottom:4px;">${d.name}</div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color};"></div></div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">均分 ${d.avg}（${d.count}次）</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }
+  }
+
+  // 个人趋势图
+  if(list.length>=2 && studentFilter) {
+    const sorted = [...list].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    html += `<div class="card"><div class="card-title">📉 成绩趋势</div><div class="chart-container"><canvas id="chartExamPersonal" height="200"></canvas></div></div>`;
+    setTimeout(()=>{
+      if(window.chartLoaded) {
+        const ctx = document.getElementById('chartExamPersonal');
+        if(ctx) {
+          new Chart(ctx, {
+            type: 'line',
+            data: { labels: sorted.map(e=>formatDate(e.date)), datasets: [
+              {label:'总分', data:sorted.map(e=>e.total||0), borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.1)', fill:true, tension:0.3},
+              {label:'新闻播读', data:sorted.map(e=>e.news||null), borderColor:'#74B9FF', tension:0.3},
+              {label:'文学朗诵', data:sorted.map(e=>e.literature||null), borderColor:'#FD79A8', tension:0.3},
+              {label:'即兴评述', data:sorted.map(e=>e.comment||null), borderColor:'#FDCB6E', tension:0.3},
+              {label:'模拟主持', data:sorted.map(e=>e.host||null), borderColor:'#00B894', tension:0.3},
+            ]},
+            options: { responsive:true, scales:{ y:{beginAtZero:true, max:100} } }
+          });
+        }
+      }
+    }, 100);
+  }
+
+  content.innerHTML = html;
+}
+
+function showExamModal(id) {
+  const e = id ? DB.exams.find(x=>x.id===id) : {};
+  const isEdit = !!id;
+  const html = `<div class="modal-overlay show">
+    <div class="modal">
+      <div class="modal-header"><h3>${isEdit?'编辑模考成绩':'录入模考成绩'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>学生 <span class="required">*</span></label><select id="e_studentId">${DB.students.map(s=>`<option value="${s.id}" ${e.studentId===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+          <div class="form-group"><label>考试名称</label><input id="e_name" value="${e.name||''}" placeholder="如：第三次全真模拟考"></div>
+          <div class="form-group"><label>日期 <span class="required">*</span></label><input id="e_date" type="date" value="${e.date?formatDateFull(e.date):formatDateFull(new Date().toISOString())}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>新闻播读（0-100）</label><input id="e_news" type="number" min="0" max="100" value="${e.news||''}" placeholder="如82"></div>
+          <div class="form-group"><label>文学作品朗诵（0-100）</label><input id="e_literature" type="number" min="0" max="100" value="${e.literature||''}" placeholder="如85"></div>
+          <div class="form-group"><label>即兴评述（0-100）</label><input id="e_comment" type="number" min="0" max="100" value="${e.comment||''}" placeholder="如78"></div>
+          <div class="form-group"><label>模拟主持（0-100）</label><input id="e_host" type="number" min="0" max="100" value="${e.host||''}" placeholder="如80"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>总分</label><input id="e_total" type="number" value="${e.total||''}" placeholder="留空自动计算四科平均"></div>
+          <div class="form-group"><label>班级排名</label><input id="e_rank" type="number" value="${e.rank||''}" placeholder="如第5名"></div>
+        </div>
+        <div class="form-group"><label>备注</label><textarea id="e_remark" placeholder="考试表现、特殊情况...">${e.remark||''}</textarea></div>
+      </div>
+      <div class="modal-footer">
+        ${isEdit?`<button class="btn btn-danger" onclick="deleteExam('${id}')">删除</button>`:''}
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveExam('${id||''}')">保存</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+  // 自动计算总分
+  ['e_news','e_literature','e_comment','e_host'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', ()=>{
+      const vals = ['e_news','e_literature','e_comment','e_host'].map(x=>parseFloat(document.getElementById(x).value)).filter(v=>!isNaN(v));
+      if(vals.length>0) document.getElementById('e_total').value = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+    });
+  });
+}
+
+function saveExam(id) {
+  const studentId = document.getElementById('e_studentId').value;
+  const date = document.getElementById('e_date').value;
+  if(!studentId) { toast('请选择学生','error'); return; }
+  if(!date) { toast('请选择日期','error'); return; }
+  const data = {
+    studentId, date, name: val('e_name'),
+    news: parseFloat(val('e_news'))||null, literature: parseFloat(val('e_literature'))||null,
+    comment: parseFloat(val('e_comment'))||null, host: parseFloat(val('e_host'))||null,
+    total: parseFloat(val('e_total'))||null, rank: parseInt(val('e_rank'))||null,
+    remark: val('e_remark'),
+  };
+  if(id) { Object.assign(DB.exams.find(e=>e.id===id), data); toast('模考成绩已更新'); }
+  else { data.id = genId(); DB.exams.push(data); toast('模考成绩已录入'); }
+  saveDB(); closeModal(); renderExams();
+}
+function deleteExam(id) {
+  if(!confirm('确定删除该模考成绩？')) return;
+  DB.exams = DB.exams.filter(e=>e.id!==id);
+  saveDB(); closeModal(); renderExams(); toast('成绩已删除','warning');
+}
+
+// ============================================================
+//  第八部分：艺考全流程页
+// ============================================================
+function renderArtExam() {
+  populateStudentFilters();
+  const activeTab = document.querySelector('#artexamTabs .tab.active')?.dataset.tab || 'artexam-list';
+  const content = document.getElementById('artexamContent');
+  let list = [...DB.artexams].sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+  if(activeTab==='artexam-list') {
+    if(list.length===0) {
+      content.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>暂无考试安排</p></div>';
+      return;
+    }
+    const now = new Date();
+    let html = `<div class="card"><div class="card-title">📅 考试安排</div><div class="table-wrapper"><table>
+      <thead><tr><th>日期</th><th>考试名称</th><th>类型</th><th>学生</th><th>地点</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>${list.map(e=>{
+        const examDate = new Date(e.date);
+        let status, badgeClass;
+        if(e.status==='已完成') { status='已完成'; badgeClass='badge-success'; }
+        else if(e.status==='进行中'||e.status==='备考中') { status=e.status; badgeClass='badge-warning'; }
+        else if(examDate < now) { status='已结束'; badgeClass='badge-info'; }
+        else { status=e.status||'待考'; badgeClass='badge-purple'; }
+        const daysLeft = Math.ceil((examDate-now)/(1000*60*60*24));
+        const dayStr = daysLeft>0 ? `（${daysLeft}天后）` : daysLeft===0?'（今天）':'';
+        return `<tr>
+          <td>${formatDateFull(e.date)}<br><span style="font-size:11px;color:var(--text-light);">${dayStr}</span></td>
+          <td>${e.name||'—'}</td>
+          <td><span class="badge ${e.type==='联考'?'badge-info':e.type==='校考'?'badge-pink':'badge-purple'}">${e.type||'—'}</span></td>
+          <td>${e.studentId?studentName(e.studentId):'全班'}</td>
+          <td>${e.location||'—'}</td>
+          <td><span class="badge ${badgeClass}">${status}</span></td>
+          <td><button class="btn btn-outline btn-sm" onclick="showArtExamModal('${e.id}')">编辑</button> <button class="btn btn-danger btn-sm" onclick="deleteArtExam('${e.id}')">删除</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div></div>`;
+    content.innerHTML = html;
+  } else {
+    // 备考进度
+    const students = DB.students;
+    if(students.length===0) {
+      content.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>请先添加学生</p></div>';
+      return;
+    }
+    const upcoming = list.filter(e=>new Date(e.date)>=new Date(new Date().toDateString()));
+    let html = '';
+    if(upcoming.length>0) {
+      html += `<div class="card"><div class="card-title">⏰ 即将到来的考试</div>
+        <div class="timeline">${upcoming.map(e=>{
+          const daysLeft = Math.ceil((new Date(e.date)-new Date())/1000*60*60*24);
+          return `<div class="timeline-item ongoing">
+            <div class="timeline-date">${formatDateFull(e.date)} · ${daysLeft}天后</div>
+            <div class="timeline-title">${e.name||'未命名'} <span class="badge ${e.type==='联考'?'badge-info':'badge-pink'}">${e.type||'—'}</span></div>
+            <div class="timeline-desc">${e.location||''} ${e.studentId?'· '+studentName(e.studentId):'· 全班'}</div>
+          </div>`;
+        }).join('')}</div>
+      </div>`;
+    }
+    html += `<div class="card"><div class="card-title">📋 各学生备考情况</div><div class="table-wrapper"><table>
+      <thead><tr><th>学生</th><th>目标院校</th><th>综合水平</th><th>模考均分</th><th>训练次数</th><th>报名考试数</th><th>最新状态</th></tr></thead>
+      <tbody>${students.map(s=>{
+        const exams = DB.exams.filter(e=>e.studentId===s.id);
+        const avgScore = exams.length>0 ? (exams.reduce((a,e)=>a+(e.total||0),0)/exams.length).toFixed(1) : '—';
+        const trainings = DB.trainings.filter(t=>t.studentId===s.id).length;
+        const artExams = DB.artexams.filter(e=>e.studentId===s.id).length;
+        const latestStatus = DB.statuses.filter(st=>st.studentId===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+        return `<tr>
+          <td><div style="display:flex;align-items:center;gap:6px;"><div class="student-avatar" style="background:${studentAvatarColor(s.id)};width:24px;height:24px;font-size:11px;">${studentInitial(s.name)}</div>${s.name}</div></td>
+          <td>${s.targetSchools||'—'}</td>
+          <td>${s.level?`<span class="badge" style="background:${LEVEL_COLORS[s.level]}22;color:${LEVEL_COLORS[s.level]};">${s.level}</span>`:'未评'}</td>
+          <td><b style="color:var(--primary);">${avgScore}</b></td>
+          <td>${trainings}</td>
+          <td>${artExams}</td>
+          <td>${latestStatus?`<span class="badge" style="background:${(STATUS_COLORS[latestStatus.level]||'#B2BEC3')}22;color:${STATUS_COLORS[latestStatus.level]||'#B2BEC3'};">${latestStatus.level}</span>`:'—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div></div>`;
+    content.innerHTML = html;
+  }
+}
+
+function showArtExamModal(id) {
+  const e = id ? DB.artexams.find(x=>x.id===id) : {};
+  const isEdit = !!id;
+  const html = `<div class="modal-overlay show">
+    <div class="modal">
+      <div class="modal-header"><h3>${isEdit?'编辑考试安排':'添加考试安排'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>考试名称 <span class="required">*</span></label><input id="a_name" value="${e.name||''}" placeholder="如：河北省播音主持联考"></div>
+          <div class="form-group"><label>类型</label><select id="a_type"><option value="联考" ${e.type==='联考'?'selected':''}>联考</option><option value="校考" ${e.type==='校考'?'selected':''}>校考</option><option value="模拟考" ${e.type==='模拟考'?'selected':''}>模拟考</option><option value="其他" ${e.type==='其他'?'selected':''}>其他</option></select></div>
+          <div class="form-group"><label>日期 <span class="required">*</span></label><input id="a_date" type="date" value="${e.date?formatDateFull(e.date):''}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>报名学生</label><select id="a_studentId"><option value="">全班</option>${DB.students.map(s=>`<option value="${s.id}" ${e.studentId===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+          <div class="form-group"><label>考试地点</label><input id="a_location" value="${e.location||''}" placeholder="如：石家庄市XX中学"></div>
+          <div class="form-group"><label>状态</label><select id="a_status"><option value="待考" ${e.status==='待考'?'selected':''}>待考</option><option value="备考中" ${e.status==='备考中'?'selected':''}>备考中</option><option value="进行中" ${e.status==='进行中'?'selected':''}>进行中</option><option value="已完成" ${e.status==='已完成'?'selected':''}>已完成</option></select></div>
+        </div>
+        <div class="form-group"><label>备考内容/要求</label><textarea id="a_content" placeholder="考试内容、备考重点、注意事项...">${e.content||''}</textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>成绩</label><input id="a_score" value="${e.score||''}" placeholder="出分后填写"></div>
+          <div class="form-group"><label>结果</label><select id="a_result"><option value="">未出</option><option value="通过" ${e.result==='通过'?'selected':''}>通过</option><option value="未通过" ${e.result==='未通过'?'selected':''}>未通过</option><option value="待定" ${e.result==='待定'?'selected':''}>待定</option></select></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        ${isEdit?`<button class="btn btn-danger" onclick="deleteArtExam('${id}')">删除</button>`:''}
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveArtExam('${id||''}')">保存</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+function saveArtExam(id) {
+  const name = val('a_name');
+  const date = val('a_date');
+  if(!name) { toast('请输入考试名称','error'); return; }
+  if(!date) { toast('请选择日期','error'); return; }
+  const data = {
+    name, type: val('a_type'), date,
+    studentId: val('a_studentId'), location: val('a_location'),
+    status: val('a_status'), content: val('a_content'),
+    score: val('a_score'), result: val('a_result'),
+  };
+  if(id) { Object.assign(DB.artexams.find(e=>e.id===id), data); toast('考试安排已更新'); }
+  else { data.id = genId(); DB.artexams.push(data); toast('考试安排已添加'); }
+  saveDB(); closeModal(); renderArtExam();
+}
+function deleteArtExam(id) {
+  if(!confirm('确定删除该考试安排？')) return;
+  DB.artexams = DB.artexams.filter(e=>e.id!==id);
+  saveDB(); closeModal(); renderArtExam(); toast('已删除','warning');
+}
+
+function showArtExamTimelineModal() {
+  let list = [...DB.artexams].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const now = new Date();
+  const html = `<div class="modal-overlay show">
+    <div class="modal modal-lg">
+      <div class="modal-header"><h3>📅 艺考时间轴</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        ${list.length===0?'<div class="empty-state"><div class="icon">📅</div><p>暂无考试安排</p></div>':
+          `<div class="timeline">${list.map(e=>{
+            const examDate = new Date(e.date);
+            const isDone = e.status==='已完成' || examDate < now;
+            const isOngoing = e.status==='备考中' || e.status==='进行中';
+            const cls = isDone?'done':isOngoing?'ongoing':'';
+            return `<div class="timeline-item ${cls}">
+              <div class="timeline-date">${formatDateFull(e.date)}</div>
+              <div class="timeline-title">${e.name||'未命名'} <span class="badge ${e.type==='联考'?'badge-info':'badge-pink'}">${e.type||'—'}</span></div>
+              <div class="timeline-desc">${e.location||''} ${e.studentId?'· '+studentName(e.studentId):'· 全班'}</div>
+              ${e.content?`<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${e.content}</div>`:''}
+              ${e.result?`<div style="margin-top:4px;"><span class="badge ${e.result==='通过'?'badge-success':'badge-danger'}">${e.result}${e.score?' · '+e.score:''}</span></div>`:''}
+            </div>`;
+          }).join('')}</div>`}
+      </div>
+      <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">关闭</button></div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+// ============================================================
+//  第九部分：学生状态关怀页
+// ============================================================
+function renderStatus() {
+  populateStudentFilters();
+  const studentFilter = document.getElementById('statusStudentFilter')?.value||'';
+  let list = studentFilter ? DB.statuses.filter(s=>s.studentId===studentFilter) : [...DB.statuses];
+  list.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const content = document.getElementById('statusContent');
+  if(list.length===0) {
+    content.innerHTML = '<div class="empty-state"><div class="icon">💚</div><p>暂无状态记录</p></div>';
+    return;
+  }
+  // 统计
+  const levelCount = {};
+  list.forEach(s=>{ levelCount[s.level]=(levelCount[s.level]||0)+1; });
+  let html = `<div class="stat-grid" style="margin-bottom:16px;">
+    <div class="stat-card"><div class="stat-icon purple">💚</div><div class="stat-info"><h3>${list.length}</h3><p>状态记录总数</p></div></div>
+    ${['良好','需关注','重点关注','紧急'].map(l=>`<div class="stat-card"><div class="stat-icon ${l==='良好'?'green':l==='紧急'?'red':l==='重点关注'?'orange':'blue'}">●</div><div class="stat-info"><h3>${levelCount[l]||0}</h3><p>${l}</p></div></div>`).join('')}
+  </div>`;
+
+  // 状态列表
+  html += `<div class="card"><div class="card-title">📋 状态记录</div><div class="table-wrapper"><table>
+    <thead><tr><th>日期</th><th>学生</th><th>状态等级</th><th>类型</th><th>记录</th><th>沟通方式</th><th>跟进</th><th>操作</th></tr></thead>
+    <tbody>${list.map(s=>{
+      const color = STATUS_COLORS[s.level]||'#B2BEC3';
+      return `<tr>
+        <td>${formatDate(s.date)}</td>
+        <td><div style="display:flex;align-items:center;gap:6px;"><div class="student-avatar" style="background:${studentAvatarColor(s.studentId)};width:24px;height:24px;font-size:11px;">${studentInitial(studentName(s.studentId))}</div>${studentName(s.studentId)}</div></td>
+        <td><span class="badge" style="background:${color}22;color:${color};">${s.level}</span></td>
+        <td>${s.category||'—'}</td>
+        <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;" title="${s.note||''}">${s.note||'—'}</td>
+        <td>${s.communication||'—'}</td>
+        <td>${s.followup?`<span class="badge badge-warning">待跟进</span>`:'<span class="badge badge-success">已处理</span>'}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="showStatusModal('${s.id}')">编辑</button> <button class="btn btn-danger btn-sm" onclick="deleteStatus('${s.id}')">删除</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div></div>`;
+  content.innerHTML = html;
+}
+
+function showStatusModal(id) {
+  const s = id ? DB.statuses.find(x=>x.id===id) : {};
+  const isEdit = !!id;
+  const html = `<div class="modal-overlay show">
+    <div class="modal">
+      <div class="modal-header"><h3>${isEdit?'编辑状态记录':'记录学生状态'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>学生 <span class="required">*</span></label><select id="st_studentId">${DB.students.map(x=>`<option value="${x.id}" ${s.studentId===x.id?'selected':''}>${x.name}</option>`).join('')}</select></div>
+          <div class="form-group"><label>日期 <span class="required">*</span></label><input id="st_date" type="date" value="${s.date?formatDateFull(s.date):formatDateFull(new Date().toISOString())}"></div>
+          <div class="form-group"><label>状态等级 <span class="required">*</span></label><select id="st_level"><option value="良好" ${s.level==='良好'?'selected':''}>良好</option><option value="需关注" ${s.level==='需关注'?'selected':''}>需关注</option><option value="重点关注" ${s.level==='重点关注'?'selected':''}>重点关注</option><option value="紧急" ${s.level==='紧急'?'selected':''}>紧急</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>类型</label><select id="st_category"><option value="心理状态" ${s.category==='心理状态'?'selected':''}>心理状态</option><option value="学习态度" ${s.category==='学习态度'?'selected':''}>学习态度</option><option value="家庭沟通" ${s.category==='家庭沟通'?'selected':''}>家庭沟通</option><option value="压力管理" ${s.category==='压力管理'?'selected':''}>压力管理</option><option value="考勤纪律" ${s.category==='考勤纪律'?'selected':''}>考勤纪律</option><option value="其他" ${s.category==='其他'?'selected':''}>其他</option></select></div>
+          <div class="form-group"><label>沟通方式</label><select id="st_communication"><option value="" ${!s.communication?'selected':''}>—</option><option value="面谈" ${s.communication==='面谈'?'selected':''}>面谈</option><option value="电话" ${s.communication==='电话'?'selected':''}>电话</option><option value="微信" ${s.communication==='微信'?'selected':''}>微信</option><option value="家长沟通" ${s.communication==='家长沟通'?'selected':''}>家长沟通</option></select></div>
+          <div class="form-group"><label>是否需要跟进</label><select id="st_followup"><option value="false" ${!s.followup?'selected':''}>已处理</option><option value="true" ${s.followup?'selected':''}>待跟进</option></select></div>
+        </div>
+        <div class="form-group"><label>详细记录</label><textarea id="st_note" placeholder="学生状态描述、沟通内容、处理措施...">${s.note||''}</textarea></div>
+      </div>
+      <div class="modal-footer">
+        ${isEdit?`<button class="btn btn-danger" onclick="deleteStatus('${id}')">删除</button>`:''}
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveStatus('${id||''}')">保存</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+function saveStatus(id) {
+  const studentId = document.getElementById('st_studentId').value;
+  const date = document.getElementById('st_date').value;
+  if(!studentId) { toast('请选择学生','error'); return; }
+  if(!date) { toast('请选择日期','error'); return; }
+  const data = {
+    studentId, date, level: val('st_level'),
+    category: val('st_category'), communication: val('st_communication'),
+    followup: document.getElementById('st_followup').value==='true',
+    note: val('st_note'),
+  };
+  if(id) { Object.assign(DB.statuses.find(s=>s.id===id), data); toast('状态记录已更新'); }
+  else { data.id = genId(); DB.statuses.push(data); toast('状态记录已添加'); }
+  saveDB(); closeModal(); renderStatus();
+}
+function deleteStatus(id) {
+  if(!confirm('确定删除该状态记录？')) return;
+  DB.statuses = DB.statuses.filter(s=>s.id!==id);
+  saveDB(); closeModal(); renderStatus(); toast('已删除','warning');
+}
+
+// ============================================================
+//  第九部分B：学生成绩分析页
+// ============================================================
+let analysisCharts = {};
+
+function populateAnalysisStudentFilter() {
+  const sel = document.getElementById('analysisStudentSelect');
+  if(!sel) return;
+  const current = sel.value;
+  const opts = '<option value="">请选择学生...</option>' + DB.students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  sel.innerHTML = opts;
+  if(current && DB.students.find(s=>s.id===current)) sel.value = current;
+}
+
+function renderAnalysis() {
+  populateAnalysisStudentFilter();
+  const sid = document.getElementById('analysisStudentSelect')?.value;
+  const content = document.getElementById('analysisContent');
+
+  // 销毁旧图表
+  Object.values(analysisCharts).forEach(c=>{ try{c.destroy();}catch(e){} });
+  analysisCharts = {};
+
+  if(!sid) {
+    // 未选择学生时，显示班级整体分析概览
+    renderAnalysisOverview(content);
+    return;
+  }
+  const student = getStudent(sid);
+  if(!student) return;
+
+  const exams = DB.exams.filter(e=>e.studentId===sid).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const trainings = DB.trainings.filter(t=>t.studentId===sid);
+
+  if(exams.length===0) {
+    content.innerHTML = `<div class="empty-state"><div class="icon">🔬</div><p>${student.name} 暂无模考成绩数据</p><p style="font-size:13px;margin-top:8px;">请先在「模考成绩」中录入成绩</p></div>`;
+    return;
+  }
+
+  // === 计算各维度数据 ===
+  const dims = [
+    {key:'news', name:'新闻播读', icon:'📰'},
+    {key:'literature', name:'文学作品朗诵', icon:'📖'},
+    {key:'comment', name:'即兴评述', icon:'💬'},
+    {key:'host', name:'模拟主持', icon:'🎬'},
+  ];
+  const dimStats = dims.map(d=>{
+    const scores = exams.map(e=>e[d.key]).filter(v=>v!==null && v!==undefined && v!=='');
+    const avg = scores.length>0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
+    const max = scores.length>0 ? Math.max(...scores) : 0;
+    const min = scores.length>0 ? Math.min(...scores) : 0;
+    const latest = exams.length>0 ? (exams[exams.length-1][d.key]||0) : 0;
+    const first = exams.length>0 ? (exams[0][d.key]||0) : 0;
+    const trend = latest - first;
+    return {...d, scores, avg, max, min, latest, first, trend, count:scores.length};
+  });
+
+  // 优劣势排序
+  const sortedByAvg = [...dimStats].filter(d=>d.count>0).sort((a,b)=>b.avg-a.avg);
+  const strengths = sortedByAvg.slice(0, 2);
+  const weaknesses = sortedByAvg.slice(-2).reverse().filter(d=>d.count>0);
+
+  // 总分趋势
+  const totalScores = exams.map(e=>e.total).filter(v=>v);
+  const totalAvg = totalScores.length>0 ? totalScores.reduce((a,b)=>a+b,0)/totalScores.length : 0;
+  const totalLatest = totalScores.length>0 ? totalScores[totalScores.length-1] : 0;
+  const totalFirst = totalScores.length>0 ? totalScores[0] : 0;
+  const totalTrend = totalLatest - totalFirst;
+
+  // 班级排名
+  const ranks = exams.map(e=>e.rank).filter(v=>v);
+  const avgRank = ranks.length>0 ? (ranks.reduce((a,b)=>a+b,0)/ranks.length).toFixed(1) : '—';
+  const latestRank = ranks.length>0 ? ranks[ranks.length-1] : null;
+
+  // 稳定性分析（标准差）
+  const totalStd = totalScores.length>1 ? Math.sqrt(totalScores.reduce((s,v)=>s+Math.pow(v-totalAvg,2),0)/totalScores.length).toFixed(1) : '—';
+
+  // 生成分析报告文本
+  const report = generateAnalysisReport(student, dimStats, totalAvg, totalTrend, avgRank, latestRank, totalStd, exams.length);
+
+  // === 渲染 ===
+  let html = '';
+
+  // 学生概要
+  html += `<div class="card">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+      <div class="student-avatar" style="background:${studentAvatarColor(sid)};width:56px;height:56px;font-size:24px;">${studentInitial(student.name)}</div>
+      <div style="flex:1;">
+        <h3 style="font-size:18px;">${student.name} · 成绩分析报告</h3>
+        <p style="font-size:13px;color:var(--text-secondary);">${student.level||'未评级'} · ${exams.length}次模考 · 班级平均排名第${avgRank}名</p>
+      </div>
+    </div>
+    <div class="stat-grid" style="margin:0;">
+      <div class="stat-card" style="margin:0;"><div class="stat-icon purple">📊</div><div class="stat-info"><h3>${totalAvg.toFixed(1)}</h3><p>平均总分</p></div></div>
+      <div class="stat-card" style="margin:0;"><div class="stat-icon ${totalTrend>=0?'green':'red'}">${totalTrend>=0?'📈':'📉'}</div><div class="stat-info"><h3>${totalTrend>=0?'+':''}${totalTrend.toFixed(1)}</h3><p>成绩变化</p></div></div>
+      <div class="stat-card" style="margin:0;"><div class="stat-icon blue">🏆</div><div class="stat-info"><h3>${latestRank||'—'}</h3><p>最近排名</p></div></div>
+      <div class="stat-card" style="margin:0;"><div class="stat-icon orange">📐</div><div class="stat-info"><h3>${totalStd}</h3><p>成绩稳定性(标准差)</p></div></div>
+    </div>
+  </div>`;
+
+  // 优劣势分析卡片
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+    <div class="card" style="margin:0;border-left:4px solid var(--success);">
+      <div class="card-title" style="color:var(--success);"><span class="icon">💪</span>优势项</div>
+      ${strengths.length>0 ? strengths.map(d=>`
+        <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span><b>${d.icon} ${d.name}</b></span>
+            <span class="badge badge-success">均分 ${d.avg.toFixed(1)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">最高 ${d.max} · 最低 ${d.min} · ${d.trend>=0?'↑':'↓'} ${Math.abs(d.trend).toFixed(1)}</div>
+        </div>
+      `).join('') : '<p style="color:var(--text-light);">暂无数据</p>'}
+    </div>
+    <div class="card" style="margin:0;border-left:4px solid var(--danger);">
+      <div class="card-title" style="color:var(--danger);"><span class="icon">⚠️</span>薄弱项</div>
+      ${weaknesses.length>0 ? weaknesses.map(d=>`
+        <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span><b>${d.icon} ${d.name}</b></span>
+            <span class="badge badge-danger">均分 ${d.avg.toFixed(1)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">最高 ${d.max} · 最低 ${d.min} · ${d.trend>=0?'↑':'↓'} ${Math.abs(d.trend).toFixed(1)}</div>
+        </div>
+      `).join('') : '<p style="color:var(--text-light);">暂无数据</p>'}
+    </div>
+  </div>`;
+
+  // 图表区域
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+    <div class="card" style="margin:0;">
+      <div class="card-title"><span class="icon">📉</span>成绩趋势图</div>
+      <div class="chart-container"><canvas id="analysisTrendChart" height="200"></canvas></div>
+    </div>
+    <div class="card" style="margin:0;">
+      <div class="card-title"><span class="icon">🎯</span>各科能力雷达图</div>
+      <div class="radar-container"><canvas id="analysisRadarChart" height="200"></canvas></div>
+    </div>
+  </div>`;
+
+  // 各科详细分析
+  html += `<div class="card">
+    <div class="card-title"><span class="icon">📋</span>各科详细分析</div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>科目</th><th>首次成绩</th><th>最近成绩</th><th>平均分</th><th>最高分</th><th>最低分</th><th>变化趋势</th><th>稳定性</th></tr></thead>
+      <tbody>${dimStats.filter(d=>d.count>0).map(d=>{
+        const std = d.scores.length>1 ? Math.sqrt(d.scores.reduce((s,v)=>s+Math.pow(v-d.avg,2),0)/d.scores.length).toFixed(1) : '—';
+        const trendColor = d.trend>0?'var(--success)':d.trend<0?'var(--danger)':'var(--text-light)';
+        const trendIcon = d.trend>0?'↑':d.trend<0?'↓':'→';
+        return `<tr>
+          <td><b>${d.icon} ${d.name}</b></td>
+          <td>${d.first.toFixed(1)}</td>
+          <td><b style="color:var(--primary);">${d.latest.toFixed(1)}</b></td>
+          <td>${d.avg.toFixed(1)}</td>
+          <td>${d.max}</td>
+          <td>${d.min}</td>
+          <td style="color:${trendColor};font-weight:600;">${trendIcon} ${Math.abs(d.trend).toFixed(1)}</td>
+          <td>${std==='—'?'—':parseFloat(std)<3?'稳定':parseFloat(std)<6?'一般':'波动大'}</td>
+        </tr>`;
+      }).join('')}
+      <tr style="background:#F8F9FA;font-weight:600;">
+        <td>总分</td>
+        <td>${totalFirst.toFixed(1)}</td>
+        <td style="color:var(--primary);">${totalLatest.toFixed(1)}</td>
+        <td>${totalAvg.toFixed(1)}</td>
+        <td>${totalScores.length>0?Math.max(...totalScores).toFixed(1):'—'}</td>
+        <td>${totalScores.length>0?Math.min(...totalScores).toFixed(1):'—'}</td>
+        <td style="color:${totalTrend>=0?'var(--success)':'var(--danger)'};font-weight:600;">${totalTrend>=0?'↑':'↓'} ${Math.abs(totalTrend).toFixed(1)}</td>
+        <td>${totalStd==='—'?'—':parseFloat(totalStd)<3?'稳定':parseFloat(totalStd)<6?'一般':'波动大'}</td>
+      </tr>
+      </tbody>
+    </table></div>
+  </div>`;
+
+  // 智能分析报告
+  html += `<div class="card">
+    <div class="card-title"><span class="icon">🤖</span>智能分析报告</div>
+    ${report}
+  </div>`;
+
+  // 历次模考明细
+  html += `<div class="card">
+    <div class="card-title"><span class="icon">📝</span>历次模考成绩明细</div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>日期</th><th>考试名称</th><th>新闻</th><th>朗诵</th><th>评述</th><th>主持</th><th>总分</th><th>排名</th></tr></thead>
+      <tbody>${exams.map((e,i)=>{
+        const total = e.total || ([e.news,e.literature,e.comment,e.host].filter(v=>v).reduce((a,b)=>a+b,0)/( [e.news,e.literature,e.comment,e.host].filter(v=>v).length||1));
+        return `<tr>
+          <td>${formatDate(e.date)}</td>
+          <td>${e.name||'第'+(i+1)+'次模考'}</td>
+          <td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td>${e.host||'—'}</td>
+          <td><b style="color:var(--primary);">${total?total.toFixed(1):'—'}</b></td>
+          <td>${e.rank?'第'+e.rank+'名':'—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+
+  content.innerHTML = html;
+
+  // 绘制图表
+  if(window.chartLoaded) {
+    // 趋势图
+    const trendCtx = document.getElementById('analysisTrendChart');
+    if(trendCtx) {
+      const datasets = [
+        {label:'总分', data:exams.map(e=>e.total||null), borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.1)', fill:true, tension:0.3, borderWidth:3},
+        ...dims.map((d,i)=>({
+          label:d.name, data:exams.map(e=>e[d.key]||null),
+          borderColor:['#74B9FF','#FD79A8','#FDCB6E','#00B894'][i],
+          tension:0.3, borderWidth:1.5,
+        })),
+      ];
+      analysisCharts.trend = new Chart(trendCtx, {
+        type:'line',
+        data:{labels:exams.map(e=>formatDate(e.date)), datasets},
+        options:{responsive:true, scales:{y:{beginAtZero:true,max:100}}, plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}},
+      });
+    }
+    // 雷达图
+    const radarCtx = document.getElementById('analysisRadarChart');
+    if(radarCtx) {
+      analysisCharts.radar = new Chart(radarCtx, {
+        type:'radar',
+        data:{labels:dims.map(d=>d.name), datasets:[
+          {label:'平均分', data:dimStats.map(d=>d.avg.toFixed(1)), borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.2)', pointBackgroundColor:'#6C5CE7', borderWidth:2},
+          {label:'最近成绩', data:dimStats.map(d=>d.latest.toFixed(1)), borderColor:'#FD79A8', backgroundColor:'rgba(253,121,168,0.15)', pointBackgroundColor:'#FD79A8', borderWidth:2},
+        ]},
+        options:{responsive:true, scales:{r:{beginAtZero:true,max:100}}, plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}},
+      });
+    }
+  }
+}
+
+// 班级整体分析概览
+function renderAnalysisOverview(content) {
+  if(DB.students.length===0) {
+    content.innerHTML = '<div class="empty-state"><div class="icon">🔬</div><p>请先添加学生数据</p></div>';
+    return;
+  }
+  // 计算每个学生的平均总分
+  const studentStats = DB.students.map(s=>{
+    const exams = DB.exams.filter(e=>e.studentId===s.id && e.total);
+    if(exams.length===0) return {student:s, avgTotal:0, examCount:0, hasData:false};
+    const avg = exams.reduce((a,e)=>a+e.total,0)/exams.length;
+    const latest = exams.sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    const first = exams.sort((a,b)=>new Date(a.date)-new Date(b.date))[0];
+    return {student:s, avgTotal:avg, examCount:exams.length, latestRank:latest?.rank, trend:latest.total-first.total, hasData:true};
+  }).filter(st=>st.hasData).sort((a,b)=>b.avgTotal-a.avgTotal);
+
+  // 班级各科均分
+  const dimAvgs = [
+    {key:'news', name:'新闻播读'},
+    {key:'literature', name:'文学作品朗诵'},
+    {key:'comment', name:'即兴评述'},
+    {key:'host', name:'模拟主持'},
+  ].map(d=>{
+    const scores = DB.exams.map(e=>e[d.key]).filter(v=>v);
+    return {...d, avg: scores.length>0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0};
+  });
+
+  let html = `<div class="alert alert-info">💡 请在上方下拉框选择学生，查看个人成绩分析报告。下方为班级整体概览。</div>`;
+
+  // 班级排名
+  html += `<div class="card"><div class="card-title"><span class="icon">🏆</span>班级成绩排名</div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>排名</th><th>学生</th><th>模考次数</th><th>平均总分</th><th>最近排名</th><th>成绩变化</th><th>操作</th></tr></thead>
+      <tbody>${studentStats.map((st,i)=>{
+        const trendColor = st.trend>0?'var(--success)':st.trend<0?'var(--danger)':'var(--text-light)';
+        return `<tr>
+          <td><span class="badge ${i<3?'badge-success':'badge-info'}">第${i+1}名</span></td>
+          <td><div style="display:flex;align-items:center;gap:6px;"><div class="student-avatar" style="background:${studentAvatarColor(st.student.id)};width:24px;height:24px;font-size:11px;">${studentInitial(st.student.name)}</div>${st.student.name}</div></td>
+          <td>${st.examCount}次</td>
+          <td><b style="color:var(--primary);font-size:15px;">${st.avgTotal.toFixed(1)}</b></td>
+          <td>${st.latestRank?'第'+st.latestRank+'名':'—'}</td>
+          <td style="color:${trendColor};font-weight:600;">${st.trend>0?'↑':'↓'} ${Math.abs(st.trend).toFixed(1)}</td>
+          <td><button class="btn btn-primary btn-sm" onclick="selectAnalysisStudent('${st.student.id}')">查看分析</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+
+  // 班级各科均分
+  if(dimAvgs.some(d=>d.avg>0)) {
+    html += `<div class="card"><div class="card-title"><span class="icon">📊</span>班级各科平均分</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+        ${dimAvgs.map(d=>{
+          const pct = d.avg;
+          const color = pct>=85?'#00B894':pct>=75?'#74B9FF':pct>=65?'#FDCB6E':'#FF7675';
+          return `<div>
+            <div style="font-size:13px;margin-bottom:6px;">${d.name}</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="progress-bar" style="flex:1;"><div class="progress-fill" style="width:${pct}%;background:${color};"></div></div>
+              <span style="font-weight:600;font-size:15px;color:${color};">${d.avg.toFixed(1)}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  if(studentStats.length===0) {
+    html = '<div class="empty-state"><div class="icon">🔬</div><p>暂无学生模考成绩数据</p><p style="font-size:13px;margin-top:8px;">请先在「模考成绩」中录入成绩</p></div>';
+  }
+  content.innerHTML = html;
+}
+
+function selectAnalysisStudent(sid) {
+  document.getElementById('analysisStudentSelect').value = sid;
+  renderAnalysis();
+}
+
+// 生成智能分析报告文本
+function generateAnalysisReport(student, dimStats, totalAvg, totalTrend, avgRank, latestRank, std, examCount) {
+  const sorted = [...dimStats].filter(d=>d.count>0).sort((a,b)=>b.avg-a.avg);
+  const best = sorted[0];
+  const worst = sorted[sorted.length-1];
+  let report = '';
+
+  // 综合评价
+  report += `<div class="alert ${totalAvg>=80?'alert-success':totalAvg>=70?'alert-info':'alert-warning'}" style="margin-bottom:16px;">
+    <div><b>📌 综合评价：</b>${student.name}经过${examCount}次模考，平均总分${totalAvg.toFixed(1)}分`;
+  if(latestRank) report += `，班级平均排名约第${avgRank}名`;
+  report += `。`;
+  if(totalTrend>2) report += `成绩整体呈<b style="color:var(--success);">上升趋势</b>，较首次提升${totalTrend.toFixed(1)}分，学习效果显著。`;
+  else if(totalTrend<-2) report += `成绩较首次<b style="color:var(--danger);">有所下滑</b>，下降了${Math.abs(totalTrend).toFixed(1)}分，需重点关注原因。`;
+  else report += `成绩<b>相对稳定</b>，波动幅度不大。`;
+  report += `</div></div>`;
+
+  // 优势分析
+  if(best) {
+    report += `<div style="margin-bottom:12px;"><b style="color:var(--success);">💪 优势分析：</b>`;
+    report += `<b>${best.name}</b>是最强项，平均${best.avg.toFixed(1)}分`;
+    if(best.trend>0) report += `，且持续进步（+${best.trend.toFixed(1)}）`;
+    report += `。建议保持训练强度，可作为考试展示的亮点方向。`;
+    report += `</div>`;
+  }
+
+  // 薄弱分析
+  if(worst && worst !== best) {
+    report += `<div style="margin-bottom:12px;"><b style="color:var(--danger);">⚠️ 薄弱分析：</b>`;
+    report += `<b>${worst.name}</b>是最薄弱项，平均${worst.avg.toFixed(1)}分`;
+    if(worst.trend<0) report += `，且有下滑趋势（${worst.trend.toFixed(1)}）`;
+    report += `。建议增加专项训练频次，针对`;
+    if(worst.key==='news') report += `语音面貌和新闻感进行强化`;
+    else if(worst.key==='literature') report += `情感表达和作品理解进行深入`;
+    else if(worst.key==='comment') report += `思维逻辑和即兴反应进行重点突破`;
+    else if(worst.key==='host') report += `控场能力和创意表现进行提升`;
+    report += `。`;
+    report += `</div>`;
+  }
+
+  // 稳定性分析
+  report += `<div style="margin-bottom:12px;"><b style="color:var(--info);">📐 稳定性分析：</b>`;
+  if(std==='—') {
+    report += `模考次数较少，暂无法评估稳定性，建议持续参加模考积累数据。`;
+  } else if(parseFloat(std)<3) {
+    report += `成绩稳定性<b style="color:var(--success);">较好</b>（标准差${std}），发挥稳定，心理素质佳。`;
+  } else if(parseFloat(std)<6) {
+    report += `成绩稳定性<b style="color:var(--warning);">一般</b>（标准差${std}），存在一定波动，建议加强心理调适和考场应变能力。`;
+  } else {
+    report += `成绩<b style="color:var(--danger);">波动较大</b>（标准差${std}），可能受心理因素或准备充分度影响，建议加强模考训练以提升稳定性。`;
+  }
+  report += `</div>`;
+
+  // 各科均衡度
+  if(sorted.length>=2) {
+    const gap = sorted[0].avg - sorted[sorted.length-1].avg;
+    report += `<div style="margin-bottom:12px;"><b style="color:var(--primary);">⚖️ 均衡度分析：</b>`;
+    if(gap<5) {
+      report += `各科成绩较为均衡（差距${gap.toFixed(1)}分），综合能力较强，无明显短板。`;
+    } else if(gap<10) {
+      report += `各科存在一定差距（最高最低差${gap.toFixed(1)}分），建议在保持优势的同时补强薄弱项。`;
+    } else {
+      report += `各科差距较大（最高最低差${gap.toFixed(1)}分），存在明显偏科现象，需重点补强薄弱科目。`;
+    }
+    report += `</div>`;
+  }
+
+  // 备考建议
+  report += `<div><b style="color:var(--accent);">🎯 备考建议：</b><br>`;
+  report += `1. 继续保持<b>${best?best.name:'优势科目'}</b>的训练，巩固优势<br>`;
+  if(worst && worst!==best) report += `2. 增加<b>${worst.name}</b>专项训练，建议每周至少2次针对性练习<br>`;
+  report += `3. 增加全真模拟考频次，提升考场适应能力<br>`;
+  report += `4. 关注考前心理状态调整，确保稳定发挥`;
+  report += `</div>`;
+
+  return report;
+}
+
+// 导出分析报告（打印）
+function exportAnalysisReport() {
+  const sid = document.getElementById('analysisStudentSelect')?.value;
+  if(!sid) { toast('请先选择学生','warning'); return; }
+  window.print();
+}
+
+// ============================================================
+//  第九部分C：课时工作台
+// ============================================================
+const LESSON_STATUS_COLORS = {'已完成':'#00B894','未上':'#74B9FF','已取消':'#B2BEC3'};
+const LESSON_TYPE_COLORS = {'大课':'badge-purple','小组课':'badge-info','一对一':'badge-pink','模考':'badge-warning'};
+const LESSON_MODE_LABELS = {'daily':'日常','training':'集训'};
+const TRAINING_SLOTS = [
+  {key:'morning', label:'早上', icon:'🌅', defaultTime:'08:00-10:00'},
+  {key:'afternoon', label:'下午', icon:'☀️', defaultTime:'14:00-16:00'},
+  {key:'evening', label:'晚上', icon:'🌙', defaultTime:'19:00-21:00'},
+];
+let calendarCurrentDate = new Date(); // 日历当前月份
+let calendarMode = 'daily'; // 'daily' 日常 | 'training' 集训
+
+function renderLessons() {
+  const activeTab = document.querySelector('#lessonTabs .tab.active')?.dataset.tab || 'lesson-calendar';
+  const content = document.getElementById('lessonContent');
+
+  if(activeTab==='lesson-calendar') {
+    renderLessonCalendar(content);
+  } else if(activeTab==='lesson-list') {
+    renderLessonList(content);
+  } else {
+    renderLessonStats(content);
+  }
+}
+
+// ===== 日历视图 =====
+function renderLessonCalendar(content) {
+  const year = calendarCurrentDate.getFullYear();
+  const month = calendarCurrentDate.getMonth();
+
+  // 统计当月数据
+  const monthLessons = DB.lessons.filter(l=>{
+    const d = new Date(l.date);
+    return d.getFullYear()===year && d.getMonth()===month;
+  });
+  const monthCompleted = monthLessons.filter(l=>l.status==='已完成').length;
+  const monthHours = monthCompleted * 2;
+  const monthUpcoming = monthLessons.filter(l=>l.status==='未上').length;
+
+  // 生成日历
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month+1, 0);
+  const startWeekday = firstDay.getDay(); // 0=周日
+  const daysInMonth = lastDay.getDate();
+  const prevMonthDays = new Date(year, month, 0).getDate();
+  const today = new Date();
+  const todayStr = formatDateFull(today.toISOString());
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const weekdays = ['日','一','二','三','四','五','六'];
+
+  let html = `<div class="stat-grid" style="margin-bottom:16px;">
+    <div class="stat-card"><div class="stat-icon purple">📚</div><div class="stat-info"><h3>${monthLessons.length}</h3><p>本月课程</p></div></div>
+    <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h3>${monthCompleted}（${monthHours}课时）</h3><p>已完成</p></div></div>
+    <div class="stat-card"><div class="stat-icon blue">📋</div><div class="stat-info"><h3>${monthUpcoming}</h3><p>待上课</p></div></div>
+  </div>`;
+
+  // 模式切换 + 月份导航
+  html += `<div class="calendar-header">
+    <div class="calendar-mode-switch">
+      <button class="${calendarMode==='daily'?'active':''}" onclick="switchCalendarMode('daily')">📋 日常模式</button>
+      <button class="${calendarMode==='training'?'active':''}" onclick="switchCalendarMode('training')">🔥 集训模式</button>
+    </div>
+    <div class="calendar-nav">
+      <button class="btn btn-outline btn-sm" onclick="changeCalendarMonth(-1)">◀ 上月</button>
+      <h3>${year}年${monthNames[month]}</h3>
+      <button class="btn btn-outline btn-sm" onclick="changeCalendarMonth(1)">下月 ▶</button>
+      <button class="btn btn-outline btn-sm" onclick="goToToday()">今天</button>
+    </div>
+  </div>`;
+
+  if(calendarMode==='daily') {
+    // 日常模式：标准月历
+    html += `<div class="card" style="padding:12px;">
+      <div class="calendar-grid">
+        ${weekdays.map((w,i)=>`<div class="calendar-weekday ${i===0||i===6?'weekend':''}">周${w}</div>`).join('')}
+        ${generateCalendarDays(year, month, startWeekday, daysInMonth, prevMonthDays, todayStr)}
+      </div>
+    </div>`;
+    html += `<div class="alert alert-info" style="margin-top:12px;">💡 点击任意日期可直接添加课程，点击已有课程可编辑</div>`;
+  } else {
+    // 集训模式：按天显示早/中/晚三时段
+    html += generateTrainingView(year, month, daysInMonth, todayStr);
+    html += `<div class="alert alert-warning" style="margin-top:12px;">🔥 集训模式：每天分为早/中/晚三个时段，点击时段格子直接排课</div>`;
+  }
+
+  content.innerHTML = html;
+}
+
+function generateCalendarDays(year, month, startWeekday, daysInMonth, prevMonthDays, todayStr) {
+  let html = '';
+  // 上月填充
+  for(let i=startWeekday-1; i>=0; i--) {
+    html += `<div class="calendar-day other-month"><div class="calendar-day-date">${prevMonthDays-i}</div></div>`;
+  }
+  // 当月
+  for(let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayWeekday = new Date(year, month, d).getDay();
+    const isWeekend = dayWeekday===0 || dayWeekday===6;
+    const isToday = dateStr===todayStr;
+    const dayLessons = DB.lessons.filter(l=>l.date===dateStr);
+    const hasLessons = dayLessons.length>0;
+    let lessonTags = dayLessons.slice(0,3).map(l=>{
+      const cls = l.status==='已完成'?'completed':l.status==='已取消'?'cancelled':'upcoming';
+      const tCls = l.mode==='training'?' training':'';
+      return `<div class="calendar-lesson-tag ${cls}${tCls}" onclick="event.stopPropagation();showLessonModal('${l.id}')">${l.timeSlot?l.timeSlot.split('-')[0]+' ':''}${l.name||'课程'}</div>`;
+    }).join('');
+    const moreTag = dayLessons.length>3 ? `<div class="calendar-day-more">+${dayLessons.length-3}更多</div>` : '';
+    html += `<div class="calendar-day ${isToday?'today':''} ${hasLessons?'has-lessons':''}" onclick="quickAddLesson('${dateStr}')">
+      <div class="calendar-day-date ${isWeekend?'weekend':''}">${d}</div>
+      <div class="calendar-day-lessons">${lessonTags}${moreTag}</div>
+    </div>`;
+  }
+  // 下月填充
+  const totalCells = startWeekday + daysInMonth;
+  const remaining = (7 - totalCells % 7) % 7;
+  for(let i=1; i<=remaining; i++) {
+    html += `<div class="calendar-day other-month"><div class="calendar-day-date">${i}</div></div>`;
+  }
+  return html;
+}
+
+function generateTrainingView(year, month, daysInMonth, todayStr) {
+  let html = '';
+  for(let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayDate = new Date(year, month, d);
+    const dayWeekday = dayDate.getDay();
+    const isWeekend = dayWeekday===0 || dayWeekday===6;
+    const isToday = dateStr===todayStr;
+    const weekdayNames = ['周日','周一','周二','周三','周四','周五','周六'];
+
+    // 当天课程
+    const dayLessons = DB.lessons.filter(l=>l.date===dateStr);
+    const dayCompleted = dayLessons.filter(l=>l.status==='已完成').length;
+    const dayHours = dayCompleted * 2;
+
+    html += `<div class="training-day-card" ${isToday?'style="box-shadow:0 0 0 2px var(--primary);"':''}>
+      <div class="training-day-header">
+        <div>
+          <span class="training-day-title ${isWeekend?'weekend':''}">${month+1}月${d}日</span>
+          <span style="font-size:13px;color:var(--text-secondary);margin-left:8px;">${weekdayNames[dayWeekday]}</span>
+          ${isToday?'<span class="badge badge-purple" style="margin-left:8px;">今天</span>':''}
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);">
+          ${dayLessons.length>0?`共${dayLessons.length}节 · 已完成${dayCompleted}节 · ${dayHours}课时`:'暂无安排'}
+        </div>
+      </div>
+      <div class="training-slot-grid">
+        ${TRAINING_SLOTS.map(slot=>{
+          // 找该时段的课程（按timeSlot前缀或备注匹配）
+          const slotLessons = dayLessons.filter(l=>{
+            if(l.trainingSlot===slot.key) return true;
+            // 兼容：通过时间范围大致判断
+            if(!l.timeSlot) return false;
+            const hour = parseInt(l.timeSlot.split(':')[0]);
+            if(slot.key==='morning') return hour<12;
+            if(slot.key==='afternoon') return hour>=12 && hour<18;
+            if(slot.key==='evening') return hour>=18;
+            return false;
+          });
+          if(slotLessons.length>0) {
+            return slotLessons.map(l=>{
+              const cls = l.status==='已完成'?'completed':l.status==='已取消'?'cancelled':'filled';
+              return `<div class="training-slot filled ${cls}" onclick="showLessonModal('${l.id}')">
+                <div class="training-slot-label">${slot.icon} ${slot.label} · ${l.timeSlot||slot.defaultTime}</div>
+                <div class="training-slot-content">
+                  <b>${l.name||'课程'}</b>
+                  ${l.teacher?`<div style="font-size:12px;color:var(--text-secondary);">${l.teacher}</div>`:''}
+                  ${l.students?`<div style="font-size:12px;color:var(--text-secondary);">${l.students}</div>`:''}
+                  <div style="margin-top:4px;"><span class="badge ${LESSON_TYPE_COLORS[l.classType]||'badge-info'}" style="font-size:10px;">${l.classType||'—'}</span>
+                  <span class="badge" style="background:${(LESSON_STATUS_COLORS[l.status]||'#B2BEC3')}22;color:${LESSON_STATUS_COLORS[l.status]||'#B2BEC3'};font-size:10px;">${l.status}</span></div>
+                </div>
+              </div>`;
+            }).join('');
+          }
+          // 空时段
+          return `<div class="training-slot" onclick="quickAddTrainingLesson('${dateStr}','${slot.key}')">
+            <div class="training-slot-label">${slot.icon} ${slot.label}</div>
+            <div class="training-slot-content">
+              <div class="training-slot-empty">
+                <div class="training-slot-add">+</div>
+                <div style="font-size:11px;">点击排课</div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  return html;
+}
+
+function switchCalendarMode(mode) {
+  calendarMode = mode;
+  renderLessons();
+}
+
+function changeCalendarMonth(delta) {
+  calendarCurrentDate.setMonth(calendarCurrentDate.getMonth()+delta);
+  renderLessons();
+}
+
+function goToToday() {
+  calendarCurrentDate = new Date();
+  renderLessons();
+}
+
+// 快速添加课程（日常模式，指定日期）
+function quickAddLesson(dateStr) {
+  showLessonModal(null, {date: dateStr, mode: 'daily'});
+}
+
+// 快速添加课程（集训模式，指定日期和时段）
+function quickAddTrainingLesson(dateStr, slotKey) {
+  const slot = TRAINING_SLOTS.find(s=>s.key===slotKey);
+  showLessonModal(null, {date: dateStr, mode: 'training', trainingSlot: slotKey, timeSlot: slot.defaultTime});
+}
+
+// ===== 课程列表 =====
+function renderLessonList(content) {
+  let list = [...DB.lessons].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const completed = DB.lessons.filter(l=>l.status==='已完成');
+  const upcoming = DB.lessons.filter(l=>l.status==='未上');
+  const totalHours = completed.length * 2;
+
+  if(list.length===0) {
+    content.innerHTML = '<div class="empty-state"><div class="icon">📚</div><p>暂无课程记录</p></div>';
+    return;
+  }
+
+  let html = `<div class="stat-grid" style="margin-bottom:16px;">
+    <div class="stat-card"><div class="stat-icon purple">📚</div><div class="stat-info"><h3>${DB.lessons.length}</h3><p>课程总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h3>${completed.length}（${totalHours}课时）</h3><p>已完成</p></div></div>
+    <div class="stat-card"><div class="stat-icon blue">📋</div><div class="stat-info"><h3>${upcoming.length}</h3><p>待上课</p></div></div>
+  </div>`;
+
+  html += `<div class="toolbar" style="margin-bottom:12px;">
+    <div class="toolbar-left">
+      <select class="filter-select" id="lessonFilterStatus" onchange="renderLessonListFiltered()">
+        <option value="">全部状态</option>
+        <option value="已完成">已完成</option>
+        <option value="未上">未上</option>
+        <option value="已取消">已取消</option>
+      </select>
+      <select class="filter-select" id="lessonFilterMode" onchange="renderLessonListFiltered()">
+        <option value="">全部模式</option>
+        <option value="daily">日常</option>
+        <option value="training">集训</option>
+      </select>
+      <div class="search-box"><input type="text" id="lessonSearch" placeholder="搜索课程名..." oninput="renderLessonListFiltered()"></div>
+    </div>
+  </div>`;
+
+  html += `<div id="lessonListTable"></div>`;
+  content.innerHTML = html;
+  renderLessonListFiltered();
+}
+
+function renderLessonListFiltered() {
+  const keyword = (document.getElementById('lessonSearch')?.value||'').trim();
+  const statusFilter = document.getElementById('lessonFilterStatus')?.value||'';
+  const modeFilter = document.getElementById('lessonFilterMode')?.value||'';
+  let list = DB.lessons.filter(l=>{
+    if(keyword && !(l.name||'').includes(keyword)) return false;
+    if(statusFilter && l.status!==statusFilter) return false;
+    if(modeFilter && (l.mode||'daily')!==modeFilter) return false;
+    return true;
+  });
+  list.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const container = document.getElementById('lessonListTable');
+  if(list.length===0) {
+    container.innerHTML = '<div class="empty-state" style="padding:20px;"><p>没有符合条件的课程</p></div>';
+    return;
+  }
+  container.innerHTML = `<div class="card" style="margin:0;">
+    <div class="table-wrapper"><table>
+      <thead><tr><th>日期</th><th>时间</th><th>课程名称</th><th>模式</th><th>类型</th><th>授课对象</th><th>教师</th><th>状态</th><th>课时</th><th>操作</th></tr></thead>
+      <tbody>${list.map(l=>{
+        const statusColor = LESSON_STATUS_COLORS[l.status]||'#B2BEC3';
+        const typeBadge = LESSON_TYPE_COLORS[l.classType]||'badge-info';
+        const modeBadge = l.mode==='training'?'badge-pink':'badge-info';
+        const modeLabel = LESSON_MODE_LABELS[l.mode||'daily'];
+        const hours = l.status==='已完成' ? 2 : '—';
+        return `<tr>
+          <td>${formatDateFull(l.date)}</td>
+          <td>${l.timeSlot||'—'}</td>
+          <td><b>${l.name||'—'}</b>${l.content?`<br><span style="font-size:11px;color:var(--text-secondary);">${l.content}</span>`:''}</td>
+          <td><span class="badge ${modeBadge}">${modeLabel}</span></td>
+          <td><span class="badge ${typeBadge}">${l.classType||'—'}</span></td>
+          <td>${l.students||'—'}</td>
+          <td>${l.teacher||'—'}</td>
+          <td><span class="badge" style="background:${statusColor}22;color:${statusColor};">${l.status||'—'}</span></td>
+          <td><b>${hours}</b></td>
+          <td>
+            <button class="btn btn-outline btn-sm" onclick="showLessonModal('${l.id}')">编辑</button>
+            ${l.status==='未上'?`<button class="btn btn-success btn-sm" onclick="completeLesson('${l.id}')">完成</button>`:''}
+            <button class="btn btn-danger btn-sm" onclick="deleteLesson('${l.id}')">删除</button>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// ===== 课时统计 =====
+function renderLessonStats(content) {
+  if(DB.lessons.length===0) {
+    content.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>暂无课程数据</p></div>';
+    return;
+  }
+
+  const completed = DB.lessons.filter(l=>l.status==='已完成');
+  const totalHours = completed.length * 2;
+  const upcoming = DB.lessons.filter(l=>l.status==='未上');
+
+  // 日常vs集训
+  const dailyLessons = DB.lessons.filter(l=>(l.mode||'daily')==='daily');
+  const trainingLessons = DB.lessons.filter(l=>l.mode==='training');
+  const dailyCompleted = dailyLessons.filter(l=>l.status==='已完成');
+  const trainingCompleted = trainingLessons.filter(l=>l.status==='已完成');
+
+  // 按类型统计
+  const typeStats = {};
+  DB.lessons.forEach(l=>{
+    const type = l.classType||'其他';
+    if(!typeStats[type]) typeStats[type] = {total:0, completed:0, hours:0};
+    typeStats[type].total++;
+    if(l.status==='已完成') { typeStats[type].completed++; typeStats[type].hours+=2; }
+  });
+
+  // 按教师统计
+  const teacherStats = {};
+  DB.lessons.forEach(l=>{
+    const t = l.teacher||'未指定';
+    if(!teacherStats[t]) teacherStats[t] = {total:0, completed:0, hours:0};
+    teacherStats[t].total++;
+    if(l.status==='已完成') { teacherStats[t].completed++; teacherStats[t].hours+=2; }
+  });
+
+  // 按月份统计
+  const monthStats = {};
+  completed.forEach(l=>{
+    const m = l.date?.substring(0,7);
+    if(!m) return;
+    if(!monthStats[m]) monthStats[m] = {count:0, hours:0};
+    monthStats[m].count++;
+    monthStats[m].hours+=2;
+  });
+  const monthKeys = Object.keys(monthStats).sort();
+
+  let html = `<div class="stat-grid" style="margin-bottom:20px;">
+    <div class="stat-card"><div class="stat-icon purple">📚</div><div class="stat-info"><h3>${DB.lessons.length}</h3><p>课程总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h3>${completed.length}</h3><p>已完成课程</p></div></div>
+    <div class="stat-card"><div class="stat-icon blue">⏰</div><div class="stat-info"><h3>${totalHours}</h3><p>已完成课时</p></div></div>
+    <div class="stat-card"><div class="stat-icon orange">📋</div><div class="stat-info"><h3>${upcoming.length}</h3><p>待上课程</p></div></div>
+  </div>`;
+
+  // 日常 vs 集训
+  html += `<div class="card"><div class="card-title"><span class="icon">📋</span>日常 vs 集训</div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>模式</th><th>总课程</th><th>已完成</th><th>课时数</th><th>完成率</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-info">日常</span></td><td>${dailyLessons.length}</td><td>${dailyCompleted.length}</td><td><b style="color:var(--primary);">${dailyCompleted.length*2}</b></td><td>${dailyLessons.length>0?(dailyCompleted.length/dailyLessons.length*100).toFixed(0):0}%</td></tr>
+        <tr><td><span class="badge badge-pink">集训</span></td><td>${trainingLessons.length}</td><td>${trainingCompleted.length}</td><td><b style="color:var(--primary);">${trainingCompleted.length*2}</b></td><td>${trainingLessons.length>0?(trainingCompleted.length/trainingLessons.length*100).toFixed(0):0}%</td></tr>
+        <tr style="background:#F8F9FA;font-weight:600;"><td>合计</td><td>${DB.lessons.length}</td><td>${completed.length}</td><td>${totalHours}</td><td>${DB.lessons.length>0?(completed.length/DB.lessons.length*100).toFixed(0):0}%</td></tr>
+      </tbody>
+    </table></div>
+  </div>`;
+
+  // 按类型统计
+  html += `<div class="card"><div class="card-title"><span class="icon">📊</span>按课程类型统计</div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>类型</th><th>总课程数</th><th>已完成</th><th>已完成课时</th><th>完成率</th></tr></thead>
+      <tbody>${Object.entries(typeStats).map(([type,s])=>{
+        const rate = s.total>0 ? (s.completed/s.total*100).toFixed(0) : 0;
+        return `<tr>
+          <td><span class="badge ${LESSON_TYPE_COLORS[type]||'badge-info'}">${type}</span></td>
+          <td>${s.total}</td><td>${s.completed}</td>
+          <td><b style="color:var(--primary);">${s.hours}</b></td>
+          <td><div class="progress-bar" style="width:100px;display:inline-block;vertical-align:middle;"><div class="progress-fill" style="width:${rate}%;background:var(--primary);"></div></div> ${rate}%</td>
+        </tr>`;
+      }).join('')}
+      <tr style="background:#F8F9FA;font-weight:600;">
+        <td>合计</td><td>${DB.lessons.length}</td><td>${completed.length}</td><td>${totalHours}</td>
+        <td>${DB.lessons.length>0?(completed.length/DB.lessons.length*100).toFixed(0):0}%</td>
+      </tr>
+      </tbody>
+    </table></div>
+  </div>`;
+
+  // 按教师统计
+  html += `<div class="card"><div class="card-title"><span class="icon">👨‍🏫</span>按教师统计</div>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>教师</th><th>总课程数</th><th>已完成</th><th>已完成课时</th></tr></thead>
+      <tbody>${Object.entries(teacherStats).sort((a,b)=>b[1].hours-a[1].hours).map(([t,s])=>{
+        return `<tr><td><b>${t}</b></td><td>${s.total}</td><td>${s.completed}</td><td><b style="color:var(--primary);">${s.hours}</b></td></tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+
+  // 按月份统计
+  if(monthKeys.length>0) {
+    html += `<div class="card"><div class="card-title"><span class="icon">📅</span>月度课时统计</div>
+      <div class="table-wrapper"><table>
+        <thead><tr><th>月份</th><th>完成课程数</th><th>课时数</th></tr></thead>
+        <tbody>${monthKeys.map(m=>`<tr><td><b>${m}</b></td><td>${monthStats[m].count}</td><td><b style="color:var(--primary);">${monthStats[m].hours}</b></td></tr>`).join('')}</tbody>
+      </table></div>
+    </div>`;
+  }
+
+  content.innerHTML = html;
+}
+
+// ===== 课程添加/编辑弹窗 =====
+function showLessonModal(id, preset) {
+  const l = id ? DB.lessons.find(x=>x.id===id) : {};
+  const isEdit = !!id;
+  // preset: {date, mode, trainingSlot, timeSlot}
+  const p = preset || {};
+  const currentDate = l.date || p.date || formatDateFull(new Date().toISOString());
+  const currentMode = l.mode || p.mode || 'daily';
+  const currentSlot = l.trainingSlot || p.trainingSlot || '';
+  const currentTime = l.timeSlot || p.timeSlot || '';
+
+  const html = `<div class="modal-overlay show">
+    <div class="modal">
+      <div class="modal-header"><h3>${isEdit?'✏️ 编辑课程':'➕ 添加课程'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>课程名称 <span class="required">*</span></label><input id="l_name" value="${l.name||''}" placeholder="如：新闻播读基础" autofocus></div>
+          <div class="form-group"><label>日期 <span class="required">*</span></label><input id="l_date" type="date" value="${currentDate}"></div>
+          <div class="form-group"><label>排课模式</label><select id="l_mode" onchange="onModeChange()"><option value="daily" ${currentMode==='daily'?'selected':''}>📋 日常</option><option value="training" ${currentMode==='training'?'selected':''}>🔥 集训</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" id="l_slot_group" style="display:${currentMode==='training'?'block':'none'};"><label>集训时段</label><select id="l_trainingSlot"><option value="morning" ${currentSlot==='morning'?'selected':''}>🌅 早上 (08:00-10:00)</option><option value="afternoon" ${currentSlot==='afternoon'?'selected':''}>☀️ 下午 (14:00-16:00)</option><option value="evening" ${currentSlot==='evening'?'selected':''}>🌙 晚上 (19:00-21:00)</option></select></div>
+          <div class="form-group"><label>时间段</label><input id="l_timeSlot" value="${currentTime}" placeholder="如：08:00-09:30"></div>
+          <div class="form-group"><label>课程类型</label><select id="l_classType"><option value="大课" ${l.classType==='大课'?'selected':''}>大课</option><option value="小组课" ${l.classType==='小组课'?'selected':''}>小组课</option><option value="一对一" ${l.classType==='一对一'?'selected':''}>一对一</option><option value="模考" ${l.classType==='模考'?'selected':''}>模考</option><option value="其他" ${l.classType==='其他'?'selected':''}>其他</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>授课教师</label><input id="l_teacher" value="${l.teacher||''}" placeholder="如：王老师"></div>
+          <div class="form-group"><label>授课对象</label><input id="l_students" value="${l.students||''}" placeholder="如：全班 或 林晓阳、张子涵"></div>
+          <div class="form-group"><label>地点</label><input id="l_location" value="${l.location||''}" placeholder="如：1号演播室"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>状态</label><select id="l_status"><option value="未上" ${l.status==='未上'?'selected':''}>未上</option><option value="已完成" ${l.status==='已完成'?'selected':''}>已完成</option><option value="已取消" ${l.status==='已取消'?'selected':''}>已取消</option></select></div>
+        </div>
+        <div class="form-group"><label>教学内容</label><textarea id="l_content" placeholder="本节课教学内容...">${l.content||''}</textarea></div>
+        <div class="form-group"><label>备注</label><textarea id="l_remark" placeholder="课堂情况、注意事项...">${l.remark||''}</textarea></div>
+        <div class="alert alert-info">💡 每节课默认计 <b>2个课时</b>，已完成状态才计入课时统计</div>
+      </div>
+      <div class="modal-footer">
+        ${isEdit?`<button class="btn btn-danger" onclick="deleteLesson('${id}')">🗑️ 删除</button>`:''}
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        ${isEdit&&l.status==='未上'?`<button class="btn btn-success" onclick="completeLesson('${id}')">✅ 标记完成</button>`:''}
+        <button class="btn btn-primary" onclick="saveLesson('${id||''}')">💾 保存</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+  // 选择集训时段时自动填充时间段
+  document.getElementById('l_trainingSlot')?.addEventListener('change', function(){
+    const slot = TRAINING_SLOTS.find(s=>s.key===this.value);
+    if(slot) document.getElementById('l_timeSlot').value = slot.defaultTime;
+  });
+}
+
+function onModeChange() {
+  const mode = document.getElementById('l_mode').value;
+  document.getElementById('l_slot_group').style.display = mode==='training'?'block':'none';
+  if(mode==='training') {
+    const slot = document.getElementById('l_trainingSlot').value;
+    const slotData = TRAINING_SLOTS.find(s=>s.key===slot);
+    if(slotData && !document.getElementById('l_timeSlot').value) {
+      document.getElementById('l_timeSlot').value = slotData.defaultTime;
+    }
+  }
+}
+
+function saveLesson(id) {
+  const name = val('l_name');
+  const date = val('l_date');
+  if(!name) { toast('请输入课程名称','error'); return; }
+  if(!date) { toast('请选择日期','error'); return; }
+  const data = {
+    name, date, mode: val('l_mode'),
+    trainingSlot: val('l_mode')==='training' ? val('l_trainingSlot') : '',
+    timeSlot: val('l_timeSlot'),
+    classType: val('l_classType'), teacher: val('l_teacher'),
+    status: val('l_status'), students: val('l_students'),
+    location: val('l_location'), content: val('l_content'),
+    remark: val('l_remark'),
+  };
+  if(id) { Object.assign(DB.lessons.find(l=>l.id===id), data); toast('课程已更新'); }
+  else { data.id = genId(); DB.lessons.push(data); toast('课程已添加'); }
+  saveDB(); closeModal(); renderLessons();
+}
+
+function deleteLesson(id) {
+  if(!confirm('确定删除该课程记录？')) return;
+  DB.lessons = DB.lessons.filter(l=>l.id!==id);
+  saveDB(); closeModal(); renderLessons(); toast('已删除','warning');
+}
+
+function completeLesson(id) {
+  const l = DB.lessons.find(x=>x.id===id);
+  if(l) { l.status='已完成'; saveDB(); closeModal(); renderLessons(); toast('已标记为完成 ✅'); }
+}
+
+// ============================================================
+//  第十部分：教学复盘页
+// ============================================================
+function renderReview() {
+  const totalStudents = DB.students.length;
+  const totalTrainings = DB.trainings.length;
+  const totalExams = DB.exams.length;
+  const totalArtExams = DB.artexams.length;
+
+  // 训练完成率
+  const trainingByType = SKILL_TYPES.map(sk=>{
+    const count = DB.trainings.filter(t=>t.type===sk.key).length;
+    return {name:sk.name, icon:sk.icon, count};
+  });
+
+  // 成绩提升分析
+  const improvementData = DB.students.map(s=>{
+    const exams = DB.exams.filter(e=>e.studentId===s.id && e.total).sort((a,b)=>new Date(a.date)-new Date(b.date));
+    if(exams.length<2) return null;
+    const first = exams[0].total;
+    const last = exams[exams.length-1].total;
+    return {name:s.name, id:s.id, first, last, diff:(last-first).toFixed(1)};
+  }).filter(Boolean).sort((a,b)=>parseFloat(b.diff)-parseFloat(a.diff));
+
+  // 录取结果
+  const results = DB.artexams.filter(e=>e.result);
+  const passed = results.filter(e=>e.result==='通过');
+  const failed = results.filter(e=>e.result==='未通过');
+
+  // 训练统计
+  let html = `<div class="stat-grid" style="margin-bottom:16px;">
+    <div class="stat-card"><div class="stat-icon purple">👥</div><div class="stat-info"><h3>${totalStudents}</h3><p>学生总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon green">🎤</div><div class="stat-info"><h3>${totalTrainings}</h3><p>训练总次数</p></div></div>
+    <div class="stat-card"><div class="stat-icon blue">📝</div><div class="stat-info"><h3>${totalExams}</h3><p>模考总次数</p></div></div>
+    <div class="stat-card"><div class="stat-icon orange">📅</div><div class="stat-info"><h3>${passed.length}</h3><p>通过/合格数</p></div></div>
+  </div>`;
+
+  // 训练完成情况
+  html += `<div class="card"><div class="card-title">🎤 各专业方向训练统计</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+      ${trainingByType.map(t=>{
+        const max = Math.max(...trainingByType.map(x=>x.count),1);
+        const pct = (t.count/max)*100;
+        return `<div>
+          <div style="font-size:13px;margin-bottom:4px;">${t.icon} ${t.name}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="progress-bar" style="flex:1;"><div class="progress-fill" style="width:${pct}%;background:var(--primary);"></div></div>
+            <span style="font-size:13px;font-weight:600;min-width:30px;">${t.count}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  // 成绩提升
+  if(improvementData.length>0) {
+    html += `<div class="card"><div class="card-title">📈 学生成绩提升分析</div>
+      <div class="table-wrapper"><table>
+        <thead><tr><th>学生</th><th>首次模考</th><th>最近模考</th><th>提升幅度</th><th>趋势</th></tr></thead>
+        <tbody>${improvementData.map(d=>{
+          const diff = parseFloat(d.diff);
+          const color = diff>0?'#00B894':diff<0?'#FF7675':'#B2BEC3';
+          const arrow = diff>0?'↑':diff<0?'↓':'→';
+          return `<tr>
+            <td><div style="display:flex;align-items:center;gap:6px;"><div class="student-avatar" style="background:${studentAvatarColor(d.id)};width:24px;height:24px;font-size:11px;">${studentInitial(d.name)}</div>${d.name}</div></td>
+            <td>${d.first}</td><td>${d.last}</td>
+            <td><b style="color:${color};">${arrow} ${Math.abs(diff)}</b></td>
+            <td><span class="badge" style="background:${color}22;color:${color};">${diff>0?'进步':diff<0?'退步':'持平'}</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </div>`;
+  }
+
+  // 录取结果
+  if(results.length>0) {
+    const passRate = ((passed.length/results.length)*100).toFixed(0);
+    html += `<div class="card"><div class="card-title">🎓 考试结果统计</div>
+      <div class="stat-grid" style="margin-bottom:16px;">
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h3>${passed.length}</h3><p>通过/合格</p></div></div>
+        <div class="stat-card"><div class="stat-icon red">❌</div><div class="stat-info"><h3>${failed.length}</h3><p>未通过</p></div></div>
+        <div class="stat-card"><div class="stat-icon purple">📊</div><div class="stat-info"><h3>${passRate}%</h3><p>通过率</p></div></div>
+      </div>
+      <div class="table-wrapper"><table>
+        <thead><tr><th>日期</th><th>考试名称</th><th>类型</th><th>学生</th><th>成绩</th><th>结果</th></tr></thead>
+        <tbody>${results.map(e=>`<tr>
+          <td>${formatDate(e.date)}</td><td>${e.name||'—'}</td>
+          <td><span class="badge ${e.type==='联考'?'badge-info':'badge-pink'}">${e.type||'—'}</span></td>
+          <td>${e.studentId?studentName(e.studentId):'全班'}</td>
+          <td>${e.score||'—'}</td>
+          <td><span class="badge ${e.result==='通过'?'badge-success':'badge-danger'}">${e.result}</span></td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>`;
+  }
+
+  // 班级成绩分布
+  if(DB.exams.length>0) {
+    const ranges = [
+      {name:'90+', min:90, max:100, color:'#00B894'},
+      {name:'80-89', min:80, max:90, color:'#74B9FF'},
+      {name:'70-79', min:70, max:80, color:'#FDCB6E'},
+      {name:'60-69', min:60, max:70, color:'#FF7675'},
+      {name:'60以下', min:0, max:60, color:'#d63031'},
+    ];
+    const latestExams = DB.students.map(s=>{
+      const exams = DB.exams.filter(e=>e.studentId===s.id && e.total).sort((a,b)=>new Date(b.date)-new Date(a.date));
+      return exams[0]?.total;
+    }).filter(Boolean);
+    const dist = ranges.map(r=>({name:r.name, color:r.color, count:latestExams.filter(v=>v>=r.min && v<r.max).length}));
+    html += `<div class="card"><div class="card-title">📊 最近模考成绩分布</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;">
+        ${dist.map(d=>`<div style="text-align:center;padding:16px;border-radius:8px;background:${d.color}11;">
+          <div style="font-size:28px;font-weight:700;color:${d.color};">${d.count}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">${d.name}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  if(totalStudents===0) {
+    html = '<div class="empty-state"><div class="icon">📈</div><p>请先添加学生数据，复盘数据将在此展示</p></div>';
+  }
+  document.getElementById('reviewContent').innerHTML = html;
+}
+
+// ============================================================
+//  第十一部分：数据管理
+// ============================================================
+function exportData() {
+  const data = JSON.stringify(DB, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `播音主持艺考工作台_数据_${formatDateFull(new Date().toISOString())}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('数据已导出');
+}
+
+function showImportModal() {
+  const html = `<div class="modal-overlay show">
+    <div class="modal modal-sm">
+      <div class="modal-header"><h3>📤 导入数据</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <p style="margin-bottom:16px;color:var(--text-secondary);font-size:13px;">选择之前导出的JSON文件，导入会覆盖现有数据。</p>
+        <input type="file" id="importFile" accept=".json" style="margin-bottom:16px;">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="doImport()">导入</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+function doImport() {
+  const file = document.getElementById('importFile').files[0];
+  if(!file) { toast('请选择文件','error'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data.students || !data.trainings) throw new Error('格式不对');
+      DB = data;
+      if(!DB.artexams) DB.artexams = [];
+      if(!DB.statuses) DB.statuses = [];
+      if(!DB.lessons) DB.lessons = [];
+      saveDB(); closeModal();
+      renderStudents(); renderDashboard();
+      toast('数据导入成功');
+    } catch(err) { toast('文件格式错误','error'); }
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+//  Excel 导入功能
+// ============================================================
+
+// 列名智能匹配映射表 —— 左边是系统字段名，右边是常见的Excel列名（包含匹配）
+const COLUMN_ALIASES = {
+  // 学生信息
+  name: ['姓名','学生姓名','名字','学生'],
+  gender: ['性别'],
+  age: ['年龄'],
+  classNo: ['班级','班','分班','所在班'],
+  cultureScore: ['文化分','文化成绩','文化课','文化课分数','文化'],
+  source: ['生源地','生源','籍贯','来自'],
+  phone: ['电话','联系电话','手机','联系方式'],
+  level: ['水平','综合水平','等级','专业水平'],
+  height: ['身高'],
+  weight: ['体重'],
+  voiceType: ['嗓音','嗓音类型','声音类型','音色'],
+  targetSchools: ['目标院校','目标学校','报考院校','志愿'],
+  specialty: ['特长','专业特长','优势','擅长'],
+  weakness: ['薄弱','薄弱项','弱项','短板','不足'],
+  parent: ['家长','家长信息','父母','监护人'],
+  remark: ['备注','说明','附注','其他'],
+  // 模考成绩
+  examDate: ['考试日期','日期','模考日期','时间'],
+  examName: ['考试名称','模考名称','考试','模考','考试类型'],
+  news: ['新闻','新闻播读','播读'],
+  literature: ['朗诵','文学朗诵','文学作品','文学作品朗诵','稿件'],
+  comment: ['评述','即兴评述','即评'],
+  host: ['主持','模拟主持','模拟'],
+  total: ['总分','总成绩','总评'],
+  rank: ['排名','名次','班级排名'],
+  examRemark: ['考试备注','考试说明','成绩备注'],
+};
+
+// 尝试用智能匹配找到列名对应的实际表头
+function matchColumn(headers, field) {
+  const aliases = COLUMN_ALIASES[field] || [];
+  for(const alias of aliases) {
+    const found = headers.find(h => h && h.toString().trim().includes(alias));
+    if(found) return found;
+  }
+  return null;
+}
+
+// 下载Excel导入模板
+function downloadExcelTemplate() {
+  if(!window.xlsxLoaded) { toast('Excel库加载中，请稍后再试','warning'); return; }
+  const wb = XLSX.utils.book_new();
+
+  // Sheet1: 学生信息
+  const studentData = [
+    ['姓名','性别','年龄','班级','文化分','生源地','身高','体重','嗓音类型','综合水平','目标院校','专业特长','薄弱项','联系电话','家长信息','备注'],
+    ['林晓阳','女',17,'集训A班',452,'河北石家庄',168,50,'明亮','优秀','中传、浙传','新闻播读、朗诵','即兴评述','13800001111','林父 13800001112','悟性高，表现力强'],
+    ['张子涵','男',18,'集训A班',438,'山西太原',178,65,'浑厚','良好','中传、上戏','新闻播读、主持','文学朗诵','13800002222','张母 13800002223','声音条件好'],
+    ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+    ['↓ 说明 ↓','','','','','','','','','','','','','','',''],
+    ['必填','','','如集训A班','0-750分','','','','','优秀/良好/一般/薄弱','','','','','',''],
+  ];
+  const ws1 = XLSX.utils.aoa_to_sheet(studentData);
+  ws1['!cols'] = [{wch:10},{wch:6},{wch:6},{wch:10},{wch:8},{wch:14},{wch:8},{wch:8},{wch:10},{wch:10},{wch:16},{wch:16},{wch:14},{wch:14},{wch:18},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, ws1, '学生信息');
+
+  // Sheet2: 模考成绩
+  const examData = [
+    ['姓名','考试名称','考试日期','新闻播读','文学作品朗诵','即兴评述','模拟主持','总分','班级排名','备注'],
+    ['林晓阳','第一次全真模拟','2026-01-15',85,88,78,82,'','','状态稳定'],
+    ['林晓阳','第二次全真模拟','2026-01-29',87,90,82,85,'','','进步明显'],
+    ['张子涵','第一次全真模拟','2026-01-15',82,75,80,83,'','',''],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['↓ 说明 ↓','','','','','','','','',''],
+    ['必填','选填','格式:2026-01-15','0-100分','0-100分','0-100分','0-100分','留空自动算平均','选填','选填'],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(examData);
+  ws2['!cols'] = [{wch:10},{wch:18},{wch:14},{wch:10},{wch:12},{wch:10},{wch:10},{wch:8},{wch:10},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, ws2, '模考成绩');
+
+  // Sheet3: 使用说明
+  const guideData = [
+    ['播音主持艺考班主任工作台 - Excel导入说明'],
+    [],
+    ['一、文件格式'],
+    ['  支持 .xlsx / .xls / .csv 格式'],
+    ['  一个Excel文件中可包含多个Sheet，系统会按Sheet名自动识别'],
+    [],
+    ['二、Sheet识别规则'],
+    ['  Sheet名包含"学生" → 导入学生信息'],
+    ['  Sheet名包含"成绩"或"模考" → 导入模考成绩'],
+    ['  如果只有一个Sheet，会自动识别列名判断类型'],
+    [],
+    ['三、列名智能匹配'],
+    ['  列名不需要完全一致，系统会自动匹配：'],
+    ['  "姓名" / "学生姓名" / "名字" → 都能识别为姓名列'],
+    ['  "新闻" / "新闻播读" / "播读" → 都能识别为新闻播读成绩'],
+    ['  "朗诵" / "文学朗诵" / "文学作品" → 都能识别为文学朗诵成绩'],
+    ['  "评述" / "即兴评述" / "即评" → 都能识别为即兴评述成绩'],
+    ['  "主持" / "模拟主持" → 都能识别为模拟主持成绩'],
+    [],
+    ['四、注意事项'],
+    ['  1. 学生姓名必须填写，其他字段选填'],
+    ['  2. 成绩Sheet中姓名必须与学生信息中的姓名一致'],
+    ['  3. 日期格式建议：2026-01-15 或 2026/1/15'],
+    ['  4. 总分留空会自动按四科平均分计算'],
+    ['  5. 综合水平填：优秀 / 良好 / 一般 / 薄弱'],
+    ['  6. 导入会覆盖现有同名数据（学生按姓名匹配）'],
+    [],
+    ['五、导入流程'],
+    ['  1. 下载此模板 → 2. 按格式填写数据 → 3. 保存 → 4. 点击"选择Excel文件导入"'],
+  ];
+  const ws3 = XLSX.utils.aoa_to_sheet(guideData);
+  ws3['!cols'] = [{wch:60}];
+  XLSX.utils.book_append_sheet(wb, ws3, '使用说明');
+
+  XLSX.writeFile(wb, '播音主持艺考_导入模板.xlsx');
+  toast('模板已下载，请按格式填写');
+}
+
+// 处理Excel文件导入
+function handleExcelImport(input) {
+  const file = input.files[0];
+  if(!file) return;
+  if(!window.xlsxLoaded) { toast('Excel库加载中，请稍后再试','error'); input.value=''; return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const result = {students:[], exams:[]};
+      const matchLog = []; // 记录匹配情况
+
+      wb.SheetNames.forEach(sheetName => {
+        const sheet = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, {defval:'', raw:false});
+        if(rows.length===0) return;
+
+        const headers = Object.keys(rows[0]);
+
+        // 判断Sheet类型
+        const isStudentSheet = sheetName.includes('学生') || (!sheetName.includes('成绩') && !sheetName.includes('模考') && headers.some(h=>matchColumn(headers,'name')&&matchColumn(headers,'gender')));
+        const isExamSheet = sheetName.includes('成绩') || sheetName.includes('模考') || headers.some(h=>matchColumn(headers,'news')||matchColumn(headers,'literature'));
+
+        if(isStudentSheet && (!isExamSheet || sheetName.includes('学生'))) {
+          // 导入学生信息
+          const nameCol = matchColumn(headers,'name');
+          if(nameCol) {
+            rows.forEach(row=>{
+              const name = row[nameCol]?.toString().trim();
+              if(!name || name.includes('说明') || name.includes('必填') || name.includes('↓')) return;
+              const student = { id: genId(), name, createdAt: new Date().toISOString() };
+              const fieldMap = {gender:'gender',age:'age',classNo:'classNo',cultureScore:'cultureScore',source:'source',phone:'phone',level:'level',height:'height',weight:'weight',voiceType:'voiceType',targetSchools:'targetSchools',specialty:'specialty',weakness:'weakness',parent:'parent',remark:'remark'};
+              Object.entries(fieldMap).forEach(([field, _])=>{
+                const col = matchColumn(headers, field);
+                if(col && row[col]) {
+                  let v = row[col].toString().trim();
+                  if(field==='age'||field==='height'||field==='weight') v = parseInt(v)||null;
+                  if(field==='cultureScore') v = parseFloat(v)||null;
+                  if(v) student[field] = v;
+                }
+              });
+              result.students.push(student);
+            });
+            matchLog.push(`Sheet"${sheetName}"：识别为学生信息，导入${result.students.length}条`);
+          }
+        } else if(isExamSheet) {
+          // 导入模考成绩
+          const nameCol = matchColumn(headers,'name');
+          if(nameCol) {
+            let count = 0;
+            rows.forEach(row=>{
+              const name = row[nameCol]?.toString().trim();
+              if(!name || name.includes('说明') || name.includes('必填') || name.includes('↓')) return;
+              const exam = { id: genId(), studentName: name };
+              const dateCol = matchColumn(headers,'examDate');
+              const nameExamCol = matchColumn(headers,'examName');
+              const newsCol = matchColumn(headers,'news');
+              const litCol = matchColumn(headers,'literature');
+              const comCol = matchColumn(headers,'comment');
+              const hostCol = matchColumn(headers,'host');
+              const totalCol = matchColumn(headers,'total');
+              const rankCol = matchColumn(headers,'rank');
+              const remarkCol = matchColumn(headers,'examRemark');
+
+              if(dateCol && row[dateCol]) exam.date = parseExcelDate(row[dateCol]);
+              else exam.date = formatDateFull(new Date().toISOString());
+              if(nameExamCol && row[nameExamCol]) exam.name = row[nameExamCol].toString().trim();
+              if(newsCol && row[newsCol]) exam.news = parseFloat(row[newsCol])||null;
+              if(litCol && row[litCol]) exam.literature = parseFloat(row[litCol])||null;
+              if(comCol && row[comCol]) exam.comment = parseFloat(row[comCol])||null;
+              if(hostCol && row[hostCol]) exam.host = parseFloat(row[hostCol])||null;
+              if(totalCol && row[totalCol]) exam.total = parseFloat(row[totalCol])||null;
+              if(rankCol && row[rankCol]) exam.rank = parseInt(row[rankCol])||null;
+              if(remarkCol && row[remarkCol]) exam.remark = row[remarkCol].toString().trim();
+
+              // 自动计算总分
+              if(!exam.total) {
+                const scores = [exam.news, exam.literature, exam.comment, exam.host].filter(v=>v!==null);
+                if(scores.length>0) exam.total = parseFloat((scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1));
+              }
+              result.exams.push(exam);
+              count++;
+            });
+            matchLog.push(`Sheet"${sheetName}"：识别为模考成绩，导入${count}条`);
+          }
+        }
+      });
+
+      if(result.students.length===0 && result.exams.length===0) {
+        toast('未识别到有效数据，请检查Excel格式或下载模板参考','error');
+        input.value='';
+        return;
+      }
+
+      // 显示导入预览确认
+      showExcelImportConfirm(result, matchLog, file.name);
+
+    } catch(err) {
+      console.error(err);
+      toast('Excel解析失败：'+err.message,'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value='';
+}
+
+// 解析Excel日期（支持字符串和日期序列号）
+function parseExcelDate(val) {
+  if(!val) return formatDateFull(new Date().toISOString());
+  const str = val.toString().trim();
+  // 尝试标准格式 2026-01-15 或 2026/1/15
+  const m = str.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if(m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  // 尝试纯数字（Excel日期序列号）
+  const num = parseFloat(str);
+  if(!isNaN(num) && num > 30000 && num < 60000) {
+    const date = new Date((num - 25569) * 86400 * 1000);
+    return formatDateFull(date.toISOString());
+  }
+  return str;
+}
+
+// 显示Excel导入确认弹窗
+function showExcelImportConfirm(result, log, filename) {
+  const totalNew = result.students.length;
+  const totalExam = result.exams.length;
+
+  // 预览学生数据
+  const studentPreview = result.students.slice(0,5).map(s=>{
+    return `<tr><td>${s.name}</td><td>${s.gender||'—'}</td><td>${s.age||'—'}</td><td>${s.level||'—'}</td><td>${s.targetSchools||'—'}</td></tr>`;
+  }).join('');
+  const studentMore = totalNew>5 ? `<tr><td colspan="5" style="text-align:center;color:var(--text-light);">...还有${totalNew-5}条</td></tr>` : '';
+
+  // 预览成绩数据
+  const examPreview = result.exams.slice(0,5).map(e=>{
+    return `<tr><td>${e.studentName}</td><td>${e.name||'—'}</td><td>${e.date||'—'}</td><td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td>${e.host||'—'}</td><td><b>${e.total||'—'}</b></td></tr>`;
+  }).join('');
+  const examMore = totalExam>5 ? `<tr><td colspan="8" style="text-align:center;color:var(--text-light);">...还有${totalExam-5}条</td></tr>` : '';
+
+  const html = `<div class="modal-overlay show">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>📊 Excel导入预览</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">📁 文件：${filename}</div>
+        ${log.map(l=>`<div style="font-size:13px;color:var(--text-secondary);padding:4px 0;">✅ ${l}</div>`).join('')}
+        <div style="margin:16px 0;display:flex;gap:16px;">
+          <div class="stat-card" style="flex:1;margin:0;"><div class="stat-icon purple">👥</div><div class="stat-info"><h3>${totalNew}</h3><p>学生记录</p></div></div>
+          <div class="stat-card" style="flex:1;margin:0;"><div class="stat-icon blue">📝</div><div class="stat-info"><h3>${totalExam}</h3><p>成绩记录</p></div></div>
+        </div>
+
+        ${totalNew>0?`<div style="margin-bottom:16px;">
+          <h4 style="font-size:14px;margin-bottom:8px;">学生信息预览</h4>
+          <div class="table-wrapper"><table>
+            <thead><tr><th>姓名</th><th>性别</th><th>年龄</th><th>水平</th><th>目标院校</th></tr></thead>
+            <tbody>${studentPreview}${studentMore}</tbody>
+          </table></div>
+        </div>`:''}
+
+        ${totalExam>0?`<div style="margin-bottom:16px;">
+          <h4 style="font-size:14px;margin-bottom:8px;">模考成绩预览</h4>
+          <div class="table-wrapper"><table>
+            <thead><tr><th>姓名</th><th>考试名称</th><th>日期</th><th>新闻</th><th>朗诵</th><th>评述</th><th>主持</th><th>总分</th></tr></thead>
+            <tbody>${examPreview}${examMore}</tbody>
+          </table></div>
+        </div>`:''}
+
+        <div class="alert alert-warning">
+          ⚠️ 导入将<b>合并</b>到现有数据中：同名学生会更新信息，新学生会新增。成绩按姓名关联到学生。
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" onclick="confirmExcelImport(false)">替换全部数据</button>
+        <button class="btn btn-primary" onclick="confirmExcelImport(true)">合并导入</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+  window._excelImportData = result;
+}
+
+// 确认执行Excel导入
+function confirmExcelImport(merge) {
+  const data = window._excelImportData;
+  if(!data) return;
+
+  if(!merge) {
+    // 替换模式
+    DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[]};
+  }
+
+  // 导入学生（按姓名去重/更新）
+  let newStudentCount = 0, updateStudentCount = 0;
+  data.students.forEach(ns=>{
+    const existing = DB.students.find(s=>s.name===ns.name);
+    if(existing) {
+      // 更新已有学生信息（保留id和createdAt）
+      Object.keys(ns).forEach(k=>{ if(k!=='id'&&k!=='createdAt'&&ns[k]!==undefined) existing[k]=ns[k]; });
+      updateStudentCount++;
+    } else {
+      DB.students.push(ns);
+      newStudentCount++;
+    }
+  });
+
+  // 导入成绩（按姓名关联学生）
+  let examCount = 0, unmatchedNames = [];
+  data.exams.forEach(ne=>{
+    const student = DB.students.find(s=>s.name===ne.studentName);
+    if(student) {
+      const exam = {id: genId(), studentId: student.id};
+      Object.keys(ne).forEach(k=>{ if(k!=='studentName'&&k!=='id') exam[k]=ne[k]; });
+      if(!exam.date) exam.date = formatDateFull(new Date().toISOString());
+      DB.exams.push(exam);
+      examCount++;
+    } else {
+      if(!unmatchedNames.includes(ne.studentName)) unmatchedNames.push(ne.studentName);
+    }
+  });
+
+  saveDB();
+  closeModal();
+  renderStudents(); renderDashboard();
+  window._excelImportData = null;
+
+  let msg = `导入完成！`;
+  if(newStudentCount>0) msg += ` 新增${newStudentCount}名学生`;
+  if(updateStudentCount>0) msg += `、更新${updateStudentCount}名学生信息`;
+  if(examCount>0) msg += `、导入${examCount}条成绩`;
+  toast(msg, 'success');
+  if(unmatchedNames.length>0) {
+    setTimeout(()=>{
+      toast(`⚠️ ${unmatchedNames.length}名学生的成绩未匹配到学生档案：${unmatchedNames.slice(0,3).join('、')}${unmatchedNames.length>3?'等':''}（请检查姓名是否一致）`, 'warning');
+    }, 500);
+  }
+}
+
+function confirmClearData() {
+  if(!confirm('确定要清空全部数据吗？此操作不可撤销，请确保已导出备份！')) return;
+  if(!confirm('再次确认：清空所有学生、训练、成绩、考试、状态、课时记录？')) return;
+  DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[]};
+  saveDB();
+  renderStudents(); renderDashboard();
+  toast('全部数据已清空','warning');
+}
+
+// ============================================================
+//  第十二部分：通用模态框
+// ============================================================
+function navToSettings() {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelector('[data-page="settings"]').classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-settings').classList.add('active');
+}
+function closeModal() {
+  document.getElementById('modalContainer').innerHTML = '';
+}
+
+// 点击遮罩关闭
+document.addEventListener('click', (e)=>{
+  if(e.target.classList.contains('modal-overlay')) closeModal();
+});
+
+// ESC关闭
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape') closeModal();
+});
+
+// ============================================================
+//  第十三部分：示例数据
+// ============================================================
+function loadSampleData() {
+  if(!confirm('加载示例数据将覆盖现有数据，是否继续？')) return;
+  const students = [
+    {name:'林晓阳',gender:'女',age:17,classNo:'集训A班',cultureScore:452,source:'河北石家庄',level:'优秀',height:168,weight:50,voiceType:'明亮',targetSchools:'中传、浙传',specialty:'新闻播读、朗诵',weakness:'即兴评述',phone:'13800001111',parent:'林父 13800001112',remark:'悟性高，表现力强'},
+    {name:'张子涵',gender:'男',age:18,classNo:'集训A班',cultureScore:438,source:'山西太原',level:'良好',height:178,weight:65,voiceType:'浑厚',targetSchools:'中传、上戏',specialty:'新闻播读、主持',weakness:'文学朗诵',phone:'13800002222',parent:'张母 13800002223',remark:'声音条件好，需加强情感表达'},
+    {name:'王诗韵',gender:'女',age:17,classNo:'集训A班',cultureScore:465,source:'河北保定',level:'优秀',height:165,weight:48,voiceType:'柔和',targetSchools:'浙传、南艺',specialty:'朗诵、即兴评述',weakness:'模拟主持',phone:'13800003333',parent:'王父 13800003334',remark:'思维活跃，语言组织能力强'},
+    {name:'陈嘉豪',gender:'男',age:18,classNo:'集训B班',cultureScore:398,source:'山东济南',level:'一般',height:175,weight:68,voiceType:'浑厚',targetSchools:'天师大、浙传',specialty:'主持',weakness:'即兴评述、新闻感',phone:'13800004444',parent:'陈母 13800004445',remark:'需加强基础训练'},
+    {name:'赵悦然',gender:'女',age:17,classNo:'集训A班',cultureScore:441,source:'河北邯郸',level:'良好',height:170,weight:52,voiceType:'明亮',targetSchools:'中传、武大',specialty:'新闻播读',weakness:'文学朗诵',phone:'13800005555',parent:'赵父 13800005556',remark:'进步明显，状态稳定'},
+    {name:'刘思远',gender:'男',age:18,classNo:'集训B班',cultureScore:375,source:'河南郑州',level:'薄弱',height:180,weight:70,voiceType:'偏窄',targetSchools:'省联考',specialty:'—',weakness:'发声、评述',phone:'13800006666',parent:'刘母 13800006667',remark:'基础薄弱，需重点关注'},
+    {name:'孙雨萱',gender:'女',age:17,classNo:'集训A班',cultureScore:430,source:'河北石家庄',level:'良好',height:163,weight:47,voiceType:'柔和',targetSchools:'浙传、中传',specialty:'朗诵、主持',weakness:'新闻播读',phone:'13800007777',parent:'孙父 13800007778',remark:'台风好，需提升新闻感'},
+    {name:'周浩然',gender:'男',age:18,classNo:'集训A班',cultureScore:458,source:'山西大同',level:'优秀',height:182,weight:72,voiceType:'浑厚',targetSchools:'中传、上戏、浙传',specialty:'新闻播读、即兴评述',weakness:'—',phone:'13800008888',parent:'周父 13800008889',remark:'综合素质高，冲刺名校'},
+  ];
+  students.forEach(s=>{ s.id=genId(); s.createdAt=new Date().toISOString(); });
+  DB.students = students;
+
+  // 训练记录
+  const today = new Date();
+  const dstr = (offset)=>{ const d=new Date(today); d.setDate(d.getDate()+offset); return d.toISOString().split('T')[0]; };
+  DB.trainings = [];
+  students.forEach((s,i)=>{
+    SKILL_TYPES.forEach((sk,si)=>{
+      for(let r=0;r<2;r++){
+        const scores = sk.dims.map(d=>({dim:d, score: 70+Math.floor(Math.random()*25)}));
+        DB.trainings.push({id:genId(), type:sk.key, studentId:s.id, date:dstr(-(r*7+si*2+1)), scores, comment:['表现稳定，继续加强练习','有进步，注意气息控制','情感表达可以更丰富','状态不错，保持住','注意咬字清晰度','逻辑思维有提升'][Math.floor(Math.random()*6)]});
+      }
+    });
+  });
+
+  // 模考成绩
+  DB.exams = [];
+  const examNames = ['第一次全真模拟','第二次全真模拟','第三次全真模拟'];
+  for(let ei=0;ei<3;ei++){
+    students.forEach((s,i)=>{
+      const base = 70 + (s.level==='优秀'?15:s.level==='良好'?10:s.level==='一般'?5:0) + Math.random()*5;
+      const news = Math.round(base + Math.random()*8);
+      const lit = Math.round(base + Math.random()*8 - (s.weakness.includes('朗诵')?5:0));
+      const com = Math.round(base + Math.random()*8 - (s.weakness.includes('评述')?8:0));
+      const host = Math.round(base + Math.random()*8 - (s.weakness.includes('主持')?5:0));
+      const total = ((news+lit+com+host)/4).toFixed(1);
+      DB.exams.push({id:genId(), studentId:s.id, date:dstr(-(ei*14+5)), name:examNames[ei], news, literature:lit, comment:com, host, total:parseFloat(total), rank:0, remark:''});
+    });
+  }
+  // 计算排名
+  examNames.forEach(en=>{
+    const ex = DB.exams.filter(e=>e.name===en).sort((a,b)=>b.total-a.total);
+    ex.forEach((e,i)=>{ e.rank=i+1; });
+  });
+
+  // 艺考安排
+  DB.artexams = [
+    {id:genId(), name:'河北省播音与主持艺术专业联考', type:'联考', date:dstr(30), studentId:'', location:'石家庄·河北师范大学', status:'备考中', content:'自备稿件朗诵、指定稿件播读、即兴评述、回答考官提问', score:'', result:''},
+    {id:genId(), name:'中国传媒大学校考', type:'校考', date:dstr(60), studentId:students[0].id, location:'北京·中国传媒大学', status:'待考', content:'初试：文化素养基础；复试：专业能力', score:'', result:''},
+    {id:genId(), name:'浙江传媒学院校考', type:'校考', date:dstr(65), studentId:students[2].id, location:'杭州·浙江传媒学院', status:'待考', content:'播音与主持艺术专业校考', score:'', result:''},
+    {id:genId(), name:'上海戏剧学院校考', type:'校考', date:dstr(70), studentId:students[1].id, location:'上海·上海戏剧学院', status:'待考', content:'播音与主持专业校考', score:'', result:''},
+    {id:genId(), name:'第一次全真模拟考', type:'模拟考', date:dstr(-5), studentId:'', location:'本校', status:'已完成', content:'全流程模拟', score:'', result:''},
+  ];
+
+  // 状态记录
+  DB.statuses = [
+    {id:genId(), studentId:students[5].id, date:dstr(-1), level:'重点关注', category:'心理状态', communication:'面谈', followup:true, note:'近期压力大，对考试信心不足，已进行心理疏导，需持续关注'},
+    {id:genId(), studentId:students[3].id, date:dstr(-2), level:'需关注', category:'学习态度', communication:'面谈', followup:true, note:'早功迟到两次，已谈话，家长已沟通'},
+    {id:genId(), studentId:students[0].id, date:dstr(-3), level:'良好', category:'心理状态', communication:'—', followup:false, note:'状态稳定，备考积极'},
+    {id:genId(), studentId:students[5].id, date:dstr(-7), level:'需关注', category:'家庭沟通', communication:'家长沟通', followup:false, note:'家长反映学生回家情绪低落，已与家长沟通建议多鼓励'},
+    {id:genId(), studentId:students[2].id, date:dstr(-5), level:'良好', category:'压力管理', communication:'面谈', followup:false, note:'能较好管理备考压力，自我调节能力强'},
+    {id:genId(), studentId:students[7].id, date:dstr(-4), level:'良好', category:'心理状态', communication:'—', followup:false, note:'冲刺名校状态好，自信心强'},
+  ];
+
+  // 课时记录
+  DB.lessons = [
+    // 日常课程
+    {id:genId(), name:'新闻播读基础', date:dstr(-20), timeSlot:'08:00-09:30', classType:'大课', mode:'daily', students:'全班', teacher:'王老师', location:'1号演播室', status:'已完成', content:'新闻稿件播读技巧、语音面貌纠正', remark:'课堂氛围好'},
+    {id:genId(), name:'文学作品朗诵', date:dstr(-18), timeSlot:'10:00-11:30', classType:'大课', mode:'daily', students:'全班', teacher:'李老师', location:'2号教室', status:'已完成', content:'散文朗诵情感表达', remark:''},
+    {id:genId(), name:'即兴评述训练', date:dstr(-15), timeSlot:'14:00-15:30', classType:'小组课', mode:'daily', students:'林晓阳、张子涵、王诗韵', teacher:'王老师', location:'1号演播室', status:'已完成', content:'时事热点即兴评述练习', remark:'张子涵进步明显'},
+    {id:genId(), name:'一对一辅导·林晓阳', date:dstr(-5), timeSlot:'16:00-17:30', classType:'一对一', mode:'daily', students:'林晓阳', teacher:'王老师', location:'1号演播室', status:'已完成', content:'针对即兴评述弱项强化', remark:'重点训练逻辑思维'},
+    // 集训课程（最近一周）
+    {id:genId(), name:'早功·发声训练', date:dstr(-3), timeSlot:'08:00-10:00', classType:'大课', mode:'training', trainingSlot:'morning', students:'全班', teacher:'刘老师', location:'形体房', status:'已完成', content:'气息控制、共鸣、咬字吐词', remark:''},
+    {id:genId(), name:'新闻播读集训', date:dstr(-3), timeSlot:'14:00-16:00', classType:'大课', mode:'training', trainingSlot:'afternoon', students:'全班', teacher:'王老师', location:'1号演播室', status:'已完成', content:'新闻播读强化训练', remark:''},
+    {id:genId(), name:'即兴评述晚课', date:dstr(-3), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', students:'全班', teacher:'李老师', location:'2号教室', status:'已完成', content:'即兴评述专项', remark:''},
+    {id:genId(), name:'早功·发声训练', date:dstr(-2), timeSlot:'08:00-10:00', classType:'大课', mode:'training', trainingSlot:'morning', students:'全班', teacher:'刘老师', location:'形体房', status:'已完成', content:'气息与共鸣', remark:''},
+    {id:genId(), name:'模拟主持实训', date:dstr(-2), timeSlot:'14:00-16:00', classType:'大课', mode:'training', trainingSlot:'afternoon', students:'全班', teacher:'赵老师', location:'演播厅', status:'已完成', content:'模拟主持全流程', remark:''},
+    {id:genId(), name:'文学作品朗诵', date:dstr(-2), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', students:'全班', teacher:'李老师', location:'2号教室', status:'已完成', content:'散文朗诵情感表达', remark:''},
+    {id:genId(), name:'早功·发声训练', date:dstr(-1), timeSlot:'08:00-10:00', classType:'大课', mode:'training', trainingSlot:'morning', students:'全班', teacher:'刘老师', location:'形体房', status:'已完成', content:'声音弹性训练', remark:''},
+    {id:genId(), name:'全真模拟考', date:dstr(-1), timeSlot:'14:00-16:00', classType:'模考', mode:'training', trainingSlot:'afternoon', students:'全班', teacher:'全体', location:'演播厅', status:'已完成', content:'第二次全真模拟', remark:''},
+    {id:genId(), name:'点评与复盘', date:dstr(-1), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', students:'全班', teacher:'王老师', location:'2号教室', status:'已完成', content:'模考点评、问题分析', remark:''},
+    // 待上课程
+    {id:genId(), name:'早功·发声训练', date:dstr(1), timeSlot:'08:00-10:00', classType:'大课', mode:'training', trainingSlot:'morning', students:'全班', teacher:'刘老师', location:'形体房', status:'未上', content:'气息控制', remark:''},
+    {id:genId(), name:'新闻播读强化', date:dstr(1), timeSlot:'14:00-16:00', classType:'大课', mode:'training', trainingSlot:'afternoon', students:'全班', teacher:'王老师', location:'1号演播室', status:'未上', content:'新闻播读进阶', remark:''},
+    {id:genId(), name:'即兴评述·热点', date:dstr(1), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', students:'全班', teacher:'李老师', location:'2号教室', status:'未上', content:'热点素材评述', remark:''},
+    {id:genId(), name:'一对一辅导·刘思远', date:dstr(3), timeSlot:'16:00-17:30', classType:'一对一', mode:'daily', students:'刘思远', teacher:'王老师', location:'1号演播室', status:'未上', content:'基础发声矫正', remark:'重点关注学生'},
+  ];
+
+  saveDB();
+  renderStudents(); renderDashboard();
+  toast('示例数据已加载');
+}
+
+// ============================================================
+//  初始化
+// ============================================================
+loadDB();
+renderDashboard();
+populateStudentFilters();
+populateAnalysisStudentFilter();
+</script>
+</body>
+</html>

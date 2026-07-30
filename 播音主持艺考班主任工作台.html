@@ -734,24 +734,6 @@ select.filter-select { min-width: 120px; }
       <div class="student-grid" id="studentGrid"></div>
     </div>
 
-<div class="tabs" id="trainingTabs">
-        <div class="tab active" data-tab="news">📰 新闻播读</div>
-        <div class="tab" data-tab="literature">📖 文学朗诵</div>
-        <div class="tab" data-tab="comment">💬 即兴评述</div>
-        <div class="tab" data-tab="host">🎬 模拟主持</div>
-        <div class="tab" data-tab="voice">🎵 发声训练</div>
-      </div>
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <select class="filter-select" id="trainingStudentFilter" onchange="renderTraining()"></select>
-        </div>
-        <div class="toolbar-right">
-          <button class="btn btn-primary" onclick="showTrainingModal()">➕ 记录训练</button>
-        </div>
-      </div>
-      <div id="trainingContent"></div>
-    </div>
-
     <!-- ====== 模考成绩页 ====== -->
     <div class="page" id="page-exams">
       <div class="page-header">
@@ -812,24 +794,6 @@ select.filter-select { min-width: 120px; }
         </div>
       </div>
       <div id="analysisContent"></div>
-    </div>
-
-<div class="tabs" id="artexamTabs">
-        <div class="tab active" data-tab="artexam-list">考试安排</div>
-        <div class="tab" data-tab="artexam-progress">备考进度</div>
-      </div>
-      <div id="artexamContent"></div>
-    </div>
-
-<div class="toolbar">
-        <div class="toolbar-left">
-          <select class="filter-select" id="statusStudentFilter" onchange="renderStatus()"></select>
-        </div>
-        <div class="toolbar-right">
-          <button class="btn btn-primary" onclick="showStatusModal()">➕ 记录状态</button>
-        </div>
-      </div>
-      <div id="statusContent"></div>
     </div>
 
     <!-- ====== 课时工作台页 ====== -->

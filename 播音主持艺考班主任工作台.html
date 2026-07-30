@@ -1621,25 +1621,11 @@ function showStudentDetail(id) {
             </table>
           </div>
         </div>
-        <div class="card" style="margin:0 0 16px;">
-          <div class="card-title">🎯 各专业方向训练统计</div>
-          <table>
-            <thead><tr><th>方向</th><th>训练次数</th><th>平均分</th></tr></thead>
-            <tbody>${trainingByType.map(t=>`<tr><td>${t.icon} ${t.name}</td><td>${t.count}</td><td><b>${t.avg}</b></td></tr>`).join('')}</tbody>
-          </table>
-        </div>
         ${exams.length>0?`<div class="card" style="margin:0 0 16px;">
           <div class="card-title">📝 模考记录</div>
           <table><thead><tr><th>日期</th><th>考试名称</th><th>新闻</th><th>朗诵</th><th>评述</th><th>主持</th><th>总分</th><th>排名</th></tr></thead>
           <tbody>${exams.map(e=>`<tr><td>${formatDate(e.date)}</td><td>${e.name||'—'}</td><td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td>${e.host||'—'}</td><td><b style="color:var(--primary);">${e.total||'—'}</b></td><td>${e.rank||'—'}</td></tr>`).join('')}</tbody>
           </table>
-        </div>`:''}
-        ${statuses.length>0?`<div class="card" style="margin:0;">
-          <div class="card-title">💚 状态记录</div>
-          ${statuses.slice(0,5).map(st=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);">
-            <div style="display:flex;justify-content:space-between;"><b>${formatDate(st.date)}</b><span class="badge" style="background:${(STATUS_COLORS[st.level]||'#B2BEC3')}22;color:${STATUS_COLORS[st.level]||'#B2BEC3'};">${st.level}</span></div>
-            <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">${st.note||''}</div>
-          </div>`).join('')}
         </div>`:''}
         ${s.remark?`<div class="alert alert-info" style="margin-top:16px;">📝 ${s.remark}</div>`:''}
       </div>

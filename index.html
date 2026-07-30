@@ -885,6 +885,30 @@ select.filter-select { min-width: 120px; }
         </div>
       </div>
       <div class="card">
+        <div class="card-title"><span class="icon">☁️</span>云端同步（多人共用）</div>
+        <p style="margin-bottom:12px; color:var(--text-secondary); font-size:13px;">配置后，数据自动同步到云端，多位老师可共用同一份数据。离线时正常使用，联网后自动同步。</p>
+        <div id="syncConfigArea">
+          <div class="form-group">
+            <label>GitHub Token <span style="font-size:11px;color:var(--text-light);">（获取：github.com → Settings → Developer settings → Personal access tokens → 勾选repo）</span></label>
+            <input id="sync_token" type="password" placeholder="ghp_xxxxx（粘贴你的Token）" style="font-family:monospace;">
+          </div>
+          <div class="form-group">
+            <label>仓库所有者</label>
+            <input id="sync_owner" placeholder="如 Laoyuhao" style="font-family:monospace;">
+          </div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px;">
+            <button class="btn btn-primary" onclick="saveSyncConfig()">💾 保存配置并开启同步</button>
+            <button class="btn btn-outline" onclick="manualSync()">🔄 立即同步</button>
+            <button class="btn btn-danger" onclick="clearSyncConfig()">🗑️ 清除配置</button>
+            <span id="syncStatusBadge" class="badge badge-warning" style="font-size:12px;">未配置</span>
+          </div>
+          <div id="syncLastTime" style="font-size:12px;color:var(--text-light);margin-top:8px;"></div>
+        </div>
+        <div class="alert alert-info" style="margin-top:12px;">
+          <span>💡 <b>使用方法</b>：1. 生成GitHub Token（勾选repo权限）2. 填入Token和你的用户名 3. 保存 4. 把Token发给其他老师，各自填入即可共用。数据自动合并，多人同时编辑不冲突（最后修改者优先）。</span>
+        </div>
+      </div>
+      <div class="card">
         <div class="card-title"><span class="icon">📊</span>Excel 导入</div>
         <p style="margin-bottom:12px; color:var(--text-secondary); font-size:13px;">支持直接上传 <b>.xlsx / .xls / .csv</b> 格式的Excel表格，自动匹配列名导入学生信息和模考成绩。</p>
         <div class="alert alert-info" style="margin-bottom:16px;">
@@ -971,15 +995,287 @@ let DB = {
   lessons: [],
 };
 
+const SYNC_CONFIG_KEY = 'broadcast_art_workbench_sync_config';
+const SYNC_REPO = 'broadcast-workbench'; // 仓库名
+const SYNC_FILE = 'data.json'; // 云端数据文件名
+let SYNC_CONFIG = null; // {token, owner}
+let SYNC_ENABLED = false;
+let SYNC_TIMER = null;
+let SYNC_IN_PROGRESS = false;
+let SYNC_LAST_TIME = null;
+
+// ===== 同步配置管理 =====
+function loadSyncConfig() {
+  try {
+    const raw = localStorage.getItem(SYNC_CONFIG_KEY);
+    if(raw) {
+      SYNC_CONFIG = JSON.parse(raw);
+      SYNC_ENABLED = !!SYNC_CONFIG.token && !!SYNC_CONFIG.owner;
+    }
+  } catch(e) { SYNC_CONFIG = null; }
+}
+function saveSyncConfig() {
+  const token = document.getElementById('sync_token').value.trim();
+  const owner = document.getElementById('sync_owner').value.trim();
+  if(!token || !owner) { toast('请填写Token和用户名','error'); return; }
+  SYNC_CONFIG = {token, owner};
+  localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(SYNC_CONFIG));
+  SYNC_ENABLED = true;
+  updateSyncUI();
+  toast('同步配置已保存，正在初始化...');
+  // 立即同步一次
+  setTimeout(()=>syncPush(true), 1000);
+  startAutoSync();
+}
+function clearSyncConfig() {
+  if(!confirm('确定清除同步配置？清除后数据仅在本地。')) return;
+  SYNC_CONFIG = null; SYNC_ENABLED = false;
+  localStorage.removeItem(SYNC_CONFIG_KEY);
+  stopAutoSync();
+  document.getElementById('sync_token').value = '';
+  document.getElementById('sync_owner').value = '';
+  updateSyncUI();
+  toast('同步配置已清除','warning');
+}
+function updateSyncUI() {
+  const badge = document.getElementById('syncStatusBadge');
+  if(!badge) return;
+  if(!SYNC_ENABLED) {
+    badge.className = 'badge badge-warning';
+    badge.textContent = '未配置';
+  } else if(SYNC_IN_PROGRESS) {
+    badge.className = 'badge badge-info';
+    badge.textContent = '同步中...';
+  } else if(SYNC_LAST_TIME) {
+    badge.className = 'badge badge-success';
+    badge.textContent = '已同步 ✓';
+  } else {
+    badge.className = 'badge badge-purple';
+    badge.textContent = '已就绪';
+  }
+  const lt = document.getElementById('syncLastTime');
+  if(lt) lt.textContent = SYNC_LAST_TIME ? '上次同步：' + SYNC_LAST_TIME : '';
+  // 回填表单
+  if(SYNC_CONFIG) {
+    const t = document.getElementById('sync_token'); if(t && !t.value) t.value = SYNC_CONFIG.token;
+    const o = document.getElementById('sync_owner'); if(o && !o.value) o.value = SYNC_CONFIG.owner;
+  }
+}
+
+// ===== 核心：保存到本地 =====
 function saveDB() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+  // 如果开启同步，异步推送（防抖：延迟3秒避免连续操作）
+  if(SYNC_ENABLED) {
+    clearTimeout(window._syncPushTimer);
+    window._syncPushTimer = setTimeout(()=>syncPush(), 3000);
+  }
 }
+
+// ===== 核心：从本地加载 + 拉取云端 =====
 function loadDB() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
-    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; } catch(e) { DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[]}; }
+    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[]}}; }
+  }
+  // 加载同步配置
+  loadSyncConfig();
+  // 如果开启同步，异步拉取云端数据
+  if(SYNC_ENABLED) {
+    setTimeout(()=>syncPull(), 500);
+    startAutoSync();
   }
 }
+
+// ===== 为记录打时间戳 =====
+function stampRecord(item) {
+  item.updatedAt = new Date().toISOString();
+  return item;
+}
+
+// ===== 合并两份数据（本地 + 云端），基于ID和updatedAt =====
+function mergeDB(localDB, remoteDB) {
+  const collections = ['students','trainings','exams','artexams','statuses','lessons'];
+  const result = {};
+  collections.forEach(key => {
+    const local = localDB[key] || [];
+    const remote = remoteDB[key] || [];
+    const map = new Map();
+    // 先放入本地
+    local.forEach(item => {
+      if(item.id) map.set(item.id, {...item});
+    });
+    // 用云端覆盖/补充
+    remote.forEach(item => {
+      if(!item.id) return;
+      const existing = map.get(item.id);
+      if(!existing) {
+        map.set(item.id, {...item});
+      } else {
+        // 比较updatedAt，晚的覆盖
+        const localTime = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+        const remoteTime = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
+        if(remoteTime > localTime) {
+          map.set(item.id, {...item});
+        }
+      }
+    });
+    result[key] = Array.from(map.values());
+  });
+  return result;
+}
+
+// ===== 推送数据到GitHub =====
+async function syncPush(initialPush) {
+  if(!SYNC_ENABLED || SYNC_IN_PROGRESS) return;
+  SYNC_IN_PROGRESS = true;
+  updateSyncUI();
+  try {
+    const {token, owner} = SYNC_CONFIG;
+    // 1. 获取云端当前数据
+    const remoteDB = await fetchRemoteData(token, owner);
+    // 2. 合并本地和云端
+    const merged = mergeDB(DB, remoteDB || {});
+    // 3. 写回本地
+    Object.assign(DB, merged);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+    // 4. 推送合并后的数据到云端
+    await pushRemoteData(token, owner, merged);
+    SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
+    if(initialPush) toast('初始化同步完成 ✓');
+    updateSyncUI();
+    // 刷新当前页面
+    refreshCurrentPage();
+  } catch(e) {
+    console.error('syncPush error:', e);
+    if(initialPush) toast('同步失败：'+e.message, 'error');
+    setSyncError();
+  } finally {
+    SYNC_IN_PROGRESS = false;
+    updateSyncUI();
+  }
+}
+
+// ===== 从GitHub拉取数据 =====
+async function syncPull() {
+  if(!SYNC_ENABLED || SYNC_IN_PROGRESS) return;
+  SYNC_IN_PROGRESS = true;
+  updateSyncUI();
+  try {
+    const {token, owner} = SYNC_CONFIG;
+    const remoteDB = await fetchRemoteData(token, owner);
+    if(!remoteDB) {
+      // 云端无数据，推送本地
+      await pushRemoteData(token, owner, DB);
+      SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
+      updateSyncUI();
+      return;
+    }
+    // 合并
+    const merged = mergeDB(DB, remoteDB);
+    const oldLen = JSON.stringify(DB).length;
+    Object.assign(DB, merged);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+    const newLen = JSON.stringify(DB).length;
+    SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
+    updateSyncUI();
+    // 如果数据有变化，刷新页面
+    if(newLen !== oldLen) refreshCurrentPage();
+  } catch(e) {
+    console.error('syncPull error:', e);
+    setSyncError();
+  } finally {
+    SYNC_IN_PROGRESS = false;
+    updateSyncUI();
+  }
+}
+
+function setSyncError() {
+  const badge = document.getElementById('syncStatusBadge');
+  if(badge) { badge.className = 'badge badge-danger'; badge.textContent = '同步失败'; }
+}
+
+// ===== 通过GitHub API获取云端数据 =====
+async function fetchRemoteData(token, owner) {
+  const url = `https://api.github.com/repos/${owner}/${SYNC_REPO}/contents/${SYNC_FILE}`;
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github.v3+json',
+    }
+  });
+  if(res.status === 404) return null; // 文件不存在
+  if(!res.ok) throw new Error(`GitHub API错误: ${res.status}`);
+  const data = await res.json();
+  const content = atob(data.content);
+  return JSON.parse(content);
+}
+
+// ===== 通过GitHub API推送数据 =====
+async function pushRemoteData(token, owner, data) {
+  const url = `https://api.github.com/repos/${owner}/${SYNC_REPO}/contents/${SYNC_FILE}`;
+  // 获取当前文件的sha（用于更新）
+  let sha = null;
+  try {
+    const res = await fetch(url, {headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
+    if(res.ok) { const d = await res.json(); sha = d.sha; }
+  } catch(e) {}
+  // 推送
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const body = {
+    message: `数据同步 ${new Date().toISOString()}`,
+    content: content,
+  };
+  if(sha) body.sha = sha;
+  const res2 = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if(!res2.ok) {
+    const err = await res2.json();
+    throw new Error(err.message || `推送失败: ${res2.status}`);
+  }
+}
+
+// ===== 手动同步 =====
+function manualSync() {
+  if(!SYNC_ENABLED) { toast('请先配置同步','warning'); return; }
+  toast('正在同步...');
+  syncPull().then(()=>syncPush());
+}
+
+// ===== 自动同步（每60秒拉取一次）=====
+function startAutoSync() {
+  stopAutoSync();
+  SYNC_TIMER = setInterval(()=>{
+    if(!SYNC_IN_PROGRESS) syncPull();
+  }, 60000);
+}
+function stopAutoSync() {
+  if(SYNC_TIMER) { clearInterval(SYNC_TIMER); SYNC_TIMER = null; }
+}
+
+// ===== 刷新当前页面 =====
+function refreshCurrentPage() {
+  const activePage = document.querySelector('.page.active');
+  if(!activePage) return;
+  const id = activePage.id.replace('page-','');
+  if(id==='dashboard') renderDashboard();
+  if(id==='students') renderStudents();
+  if(id==='analysis') renderAnalysis();
+  if(id==='training') renderTraining();
+  if(id==='exams') renderExams();
+  if(id==='artexam') renderArtExam();
+  if(id==='status') renderStatus();
+  if(id==='lessons') renderLessons();
+  if(id==='review') renderReview();
+}
+
 function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
 function getStudent(id) { return DB.students.find(s=>s.id===id); }
 function studentName(id) { const s=getStudent(id); return s?s.name:'未知'; }
@@ -1296,6 +1592,7 @@ function saveStudent(id) {
     DB.students.push(data);
     toast('学生已添加');
   }
+  stampRecord(data);
   saveDB(); closeModal(); renderStudents();
 }
 function val(id) { return document.getElementById(id)?.value?.trim()||''; }
@@ -1497,6 +1794,7 @@ function saveTraining(id) {
   const data = { type, studentId, date, scores, comment: val('t_comment') };
   if(id) { Object.assign(DB.trainings.find(t=>t.id===id), data); toast('训练记录已更新'); }
   else { data.id = genId(); DB.trainings.push(data); toast('训练记录已添加'); }
+  stampRecord(data);
   saveDB(); closeModal(); renderTraining();
 }
 
@@ -1663,6 +1961,7 @@ function saveExam(id) {
   };
   if(id) { Object.assign(DB.exams.find(e=>e.id===id), data); toast('模考成绩已更新'); }
   else { data.id = genId(); DB.exams.push(data); toast('模考成绩已录入'); }
+  stampRecord(data);
   saveDB(); closeModal(); renderExams();
 }
 function deleteExam(id) {
@@ -1799,6 +2098,7 @@ function saveArtExam(id) {
   };
   if(id) { Object.assign(DB.artexams.find(e=>e.id===id), data); toast('考试安排已更新'); }
   else { data.id = genId(); DB.artexams.push(data); toast('考试安排已添加'); }
+  stampRecord(data);
   saveDB(); closeModal(); renderArtExam();
 }
 function deleteArtExam(id) {
@@ -1919,6 +2219,7 @@ function saveStatus(id) {
   };
   if(id) { Object.assign(DB.statuses.find(s=>s.id===id), data); toast('状态记录已更新'); }
   else { data.id = genId(); DB.statuses.push(data); toast('状态记录已添加'); }
+  stampRecord(data);
   saveDB(); closeModal(); renderStatus();
 }
 function deleteStatus(id) {
@@ -2822,6 +3123,7 @@ function saveLesson(id) {
   };
   if(id) { Object.assign(DB.lessons.find(l=>l.id===id), data); toast('课程已更新'); }
   else { data.id = genId(); DB.lessons.push(data); toast('课程已添加'); }
+  stampRecord(data);
   saveDB(); closeModal(); renderLessons();
 }
 
@@ -3511,6 +3813,7 @@ loadDB();
 renderDashboard();
 populateStudentFilters();
 populateAnalysisStudentFilter();
+updateSyncUI();
 </script>
 </body>
 </html>

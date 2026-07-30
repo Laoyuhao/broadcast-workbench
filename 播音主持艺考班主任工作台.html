@@ -804,8 +804,17 @@ select.filter-select { min-width: 120px; }
           <p>点击日期直接排课 · 日常/集训两种模式 · 每课2课时</p>
         </div>
         <div>
-          <button class="btn btn-outline btn-sm" onclick="showLessonModal()">➕ 快速添加</button>
+          <button class="btn btn-outline btn-sm" onclick="showLessonModal(null, {teacher: lessonTeacherFilter})">➕ 快速添加</button>
         </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:14px;font-weight:600;color:var(--text-secondary);">👩‍🏫 当前老师</span>
+          <select id="lessonTeacherSelect" class="filter-select" onchange="onLessonTeacherChange(this.value)" style="min-width:140px;">
+            <option value="">全部老师</option>
+          </select>
+        </div>
+        <div id="lessonTeacherInfo" style="font-size:13px;color:var(--text-light);"></div>
       </div>
       <div class="tabs" id="lessonTabs">
         <div class="tab active" data-tab="lesson-calendar">📅 日历排课</div>
@@ -2779,8 +2788,23 @@ const TRAINING_SLOTS = [
 ];
 let calendarCurrentDate = new Date(); // 日历当前月份
 let calendarMode = 'daily'; // 'daily' 日常 | 'training' 集训
+let lessonTeacherFilter = ''; // 课时工作台：当前选中的老师，空=全部
+
+// 获取所有授课老师列表（去重排序）
+function getLessonTeachers() {
+  const set = new Set();
+  DB.lessons.forEach(l => { if(l.teacher) set.add(l.teacher); });
+  return [...set].sort((a,b)=>a.localeCompare(b,'zh'));
+}
+
+// 获取当前老师筛选下的课程
+function getFilteredLessons() {
+  if(!lessonTeacherFilter) return DB.lessons;
+  return DB.lessons.filter(l => l.teacher === lessonTeacherFilter);
+}
 
 function renderLessons() {
+  initLessonTeacherSelect();
   const activeTab = document.querySelector('#lessonTabs .tab.active')?.dataset.tab || 'lesson-calendar';
   const content = document.getElementById('lessonContent');
 
@@ -2798,8 +2822,9 @@ function renderLessonCalendar(content) {
   const year = calendarCurrentDate.getFullYear();
   const month = calendarCurrentDate.getMonth();
 
-  // 统计当月数据
-  const monthLessons = DB.lessons.filter(l=>{
+  // 统计当月数据（按老师过滤）
+  const filteredLessons = getFilteredLessons();
+  const monthLessons = filteredLessons.filter(l=>{
     const d = new Date(l.date);
     return d.getFullYear()===year && d.getMonth()===month;
   });
@@ -2868,7 +2893,7 @@ function generateCalendarDays(year, month, startWeekday, daysInMonth, prevMonthD
     const dayWeekday = new Date(year, month, d).getDay();
     const isWeekend = dayWeekday===0 || dayWeekday===6;
     const isToday = dateStr===todayStr;
-    const dayLessons = DB.lessons.filter(l=>l.date===dateStr);
+    const dayLessons = getFilteredLessons().filter(l=>l.date===dateStr);
     const hasLessons = dayLessons.length>0;
     let lessonTags = dayLessons.slice(0,3).map(l=>{
       const cls = l.status==='已完成'?'completed':l.status==='已取消'?'cancelled':'upcoming';
@@ -2901,7 +2926,7 @@ function generateTrainingView(year, month, daysInMonth, todayStr) {
     const weekdayNames = ['周日','周一','周二','周三','周四','周五','周六'];
 
     // 当天课程
-    const dayLessons = DB.lessons.filter(l=>l.date===dateStr);
+    const dayLessons = getFilteredLessons().filter(l=>l.date===dateStr);
     const dayCompleted = dayLessons.filter(l=>l.status==='已完成').length;
     const dayHours = dayCompleted * 2;
 
@@ -2961,6 +2986,29 @@ function generateTrainingView(year, month, daysInMonth, todayStr) {
   return html;
 }
 
+function onLessonTeacherChange(val) {
+  lessonTeacherFilter = val;
+  renderLessons();
+}
+
+// 初始化老师选择器（渲染前调用）
+function initLessonTeacherSelect() {
+  const sel = document.getElementById('lessonTeacherSelect');
+  if(!sel) return;
+  const teachers = getLessonTeachers();
+  const current = lessonTeacherFilter;
+  sel.innerHTML = '<option value="">全部老师</option>' + teachers.map(t=>`<option value="${t}" ${current===t?'selected':''}>${t}</option>`).join('');
+  // 更新信息提示
+  const info = document.getElementById('lessonTeacherInfo');
+  if(info) {
+    const filtered = getFilteredLessons();
+    const completed = filtered.filter(l=>l.status==='已完成');
+    info.innerHTML = lessonTeacherFilter
+      ? `<span class="badge badge-purple">${lessonTeacherFilter}</span> 共 ${filtered.length} 节 · 已完成 ${completed.length} 节 · ${completed.length*2} 课时`
+      : filtered.length > 0 ? `共 ${filtered.length} 节课程` : '';
+  }
+}
+
 function switchCalendarMode(mode) {
   calendarMode = mode;
   renderLessons();
@@ -2978,20 +3026,21 @@ function goToToday() {
 
 // 快速添加课程（日常模式，指定日期）
 function quickAddLesson(dateStr) {
-  showLessonModal(null, {date: dateStr, mode: 'daily'});
+  showLessonModal(null, {date: dateStr, mode: 'daily', teacher: lessonTeacherFilter});
 }
 
 // 快速添加课程（集训模式，指定日期和时段）
 function quickAddTrainingLesson(dateStr, slotKey) {
   const slot = TRAINING_SLOTS.find(s=>s.key===slotKey);
-  showLessonModal(null, {date: dateStr, mode: 'training', trainingSlot: slotKey, timeSlot: slot.defaultTime});
+  showLessonModal(null, {date: dateStr, mode: 'training', trainingSlot: slotKey, timeSlot: slot.defaultTime, teacher: lessonTeacherFilter});
 }
 
 // ===== 课程列表 =====
 function renderLessonList(content) {
-  let list = [...DB.lessons].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const completed = DB.lessons.filter(l=>l.status==='已完成');
-  const upcoming = DB.lessons.filter(l=>l.status==='未上');
+  const allFiltered = getFilteredLessons();
+  let list = [...allFiltered].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const completed = allFiltered.filter(l=>l.status==='已完成');
+  const upcoming = allFiltered.filter(l=>l.status==='未上');
   const totalHours = completed.length * 2;
 
   if(list.length===0) {
@@ -3000,7 +3049,7 @@ function renderLessonList(content) {
   }
 
   let html = `<div class="stat-grid" style="margin-bottom:16px;">
-    <div class="stat-card"><div class="stat-icon purple">📚</div><div class="stat-info"><h3>${DB.lessons.length}</h3><p>课程总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon purple">📚</div><div class="stat-info"><h3>${allFiltered.length}</h3><p>课程总数</p></div></div>
     <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h3>${completed.length}（${totalHours}课时）</h3><p>已完成</p></div></div>
     <div class="stat-card"><div class="stat-icon blue">📋</div><div class="stat-info"><h3>${upcoming.length}</h3><p>待上课</p></div></div>
   </div>`;
@@ -3031,7 +3080,7 @@ function renderLessonListFiltered() {
   const keyword = (document.getElementById('lessonSearch')?.value||'').trim();
   const statusFilter = document.getElementById('lessonFilterStatus')?.value||'';
   const modeFilter = document.getElementById('lessonFilterMode')?.value||'';
-  let list = DB.lessons.filter(l=>{
+  let list = getFilteredLessons().filter(l=>{
     if(keyword && !(l.name||'').includes(keyword)) return false;
     if(statusFilter && l.status!==statusFilter) return false;
     if(modeFilter && (l.mode||'daily')!==modeFilter) return false;
@@ -3076,6 +3125,7 @@ function renderLessonListFiltered() {
 
 // ===== 课时统计 =====
 function renderLessonStats(content) {
+  // 统计页始终显示全局数据（跨老师），但标注当前筛选
   if(DB.lessons.length===0) {
     content.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>暂无课程数据</p></div>';
     return;
@@ -3193,6 +3243,7 @@ function showLessonModal(id, preset) {
   const currentMode = l.mode || p.mode || 'daily';
   const currentSlot = l.trainingSlot || p.trainingSlot || '';
   const currentTime = l.timeSlot || p.timeSlot || '';
+  const currentTeacher = l.teacher || p.teacher || lessonTeacherFilter || '';
   const currentScheduleClass = l.scheduleClass || p.scheduleClass || '';
   const currentScheduleDay = l.scheduleDay || p.scheduleDay || '';
 
@@ -3217,7 +3268,7 @@ function showLessonModal(id, preset) {
           <div class="form-group"><label>课程类型</label><select id="l_classType"><option value="大课" ${l.classType==='大课'?'selected':''}>大课</option><option value="小组课" ${l.classType==='小组课'?'selected':''}>小组课</option><option value="一对一" ${l.classType==='一对一'?'selected':''}>一对一</option><option value="模考" ${l.classType==='模考'?'selected':''}>模考</option><option value="其他" ${l.classType==='其他'?'selected':''}>其他</option></select></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>授课教师</label><input id="l_teacher" value="${l.teacher||''}" placeholder="如：王老师"></div>
+          <div class="form-group"><label>授课教师</label><input id="l_teacher" value="${currentTeacher}" placeholder="如：王老师"></div>
           <div class="form-group"><label>授课对象</label><input id="l_students" value="${l.students||''}" placeholder="如：全班 或 林晓阳、张子涵"></div>
           <div class="form-group"><label>地点</label><input id="l_location" value="${l.location||''}" placeholder="如：1号演播室"></div>
         </div>

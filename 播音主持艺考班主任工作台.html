@@ -2592,13 +2592,27 @@ function renderSchedule() {
 
   // 课表网格视图（按天 x 时段）
   const weekdays = ['周一','周二','周三','周四','周五','周六','周日'];
+  const weekNum = weekFilterVal ? parseInt(weekFilterVal) : 1;
+  const today = new Date();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7) + (weekNum-1)*7);
+  const weekDates = weekdays.map((d,i)=>{
+    const dt = new Date(monday);
+    dt.setDate(monday.getDate()+i);
+    return dt;
+  });
+
   html += `<div class="card">
-    <div class="card-title"><span class="icon">🗓️</span>${classNo} 课表 ${weekFilterVal?'· 第'+weekFilterVal+'周':''}</div>
+    <div class="card-title"><span class="icon">🗓️</span>${classNo} 课表 · 第${weekNum}周</div>
     <div style="overflow-x:auto;">
     <table style="min-width:700px;">
       <thead><tr>
         <th style="width:80px;">时段</th>
-        ${weekdays.map(d=>`<th>${d}</th>`).join('')}
+        ${weekdays.map((d,idx)=>{
+          const dt = weekDates[idx];
+          const isToday = dt.toDateString()===today.toDateString();
+          return `<th>${d}<br><span style="font-size:11px;font-weight:400;color:${isToday?'var(--primary)':'var(--text-light)'};">${dt.getMonth()+1}/${dt.getDate()}</span></th>`;
+        }).join('')}
       </tr></thead>
       <tbody>
         ${TRAINING_SLOTS.map(slot=>{
@@ -2609,19 +2623,17 @@ function renderSchedule() {
               <div style="font-weight:600;">${slot.label}</div>
               <div style="font-size:11px;color:var(--text-secondary);">${slot.defaultTime}</div>
             </td>
-            ${weekdays.map((day,idx)=>{
-              const dayLessons = slotLessons.filter(l=>{
-                if(!l.scheduleDay) return false;
-                return l.scheduleDay===idx+1;
-              });
+            ${weekDates.map((dt,idx)=>{
+              const dateStr = formatDateFull(dt.toISOString());
+              const dayLessons = slotLessons.filter(l=>l.date===dateStr);
               if(dayLessons.length===0) {
-                return `<td style="text-align:center;cursor:pointer;" onclick="quickAddSchedule('${classNo}','${slot.key}',${idx+1})" title="点击添加">
+                return `<td style="text-align:center;cursor:pointer;" onclick="quickAddSchedule('${classNo}','${slot.key}','${dateStr}')" title="点击添加">
                   <span style="color:var(--text-light);font-size:20px;">+</span>
                 </td>`;
               }
               return `<td style="vertical-align:top;">${dayLessons.map(l=>{
                 const statusColor = LESSON_STATUS_COLORS[l.status]||'#B2BEC3';
-                return `<div style="background:${statusColor}11;border-left:3px solid ${statusColor};border-radius:4px;padding:6px 8px;margin-bottom:4px;cursor:pointer;" onclick="showLessonModal('${l.id}')">
+                return `<div style="background:${statusColor}11;border-left:3px solid ${statusColor};border-radius:4px;padding:6px 8px;margin-bottom:4px;cursor:pointer;" onclick="showScheduleLessonModal('${l.id}')">
                   <div style="font-size:12px;font-weight:600;">${l.name||'课程'}</div>
                   <div style="font-size:11px;color:var(--text-secondary);">${l.teacher||''} ${l.location?'· '+l.location:''}</div>
                   <span class="badge" style="background:${statusColor}22;color:${statusColor};font-size:10px;">${l.status}</span>
@@ -2635,7 +2647,7 @@ function renderSchedule() {
     </div>
   </div>`;
 
-  html += `<div class="alert alert-info">💡 点击空格子的 <b>+</b> 可以快速添加课程到对应时段，点击已有课程可编辑</div>`;
+  html += `<div class="alert alert-info">💡 点击空格子的 <b>+</b> 快速添加课程，点击已有课程可编辑或标记完成</div>`;
 
   content.innerHTML = html;
 }
@@ -2649,9 +2661,109 @@ function updateScheduleClassFilter() {
   if(current) sel.value = current;
 }
 
-function quickAddSchedule(classNo, slotKey, day) {
+function quickAddSchedule(classNo, slotKey, dateStr) {
+  showScheduleLessonModal(null, {scheduleClass:classNo, trainingSlot:slotKey, date:dateStr});
+}
+
+// 班级课表 - 简化版添加/编辑课程弹窗
+function showScheduleLessonModal(id, preset) {
+  const l = id ? DB.lessons.find(x=>x.id===id) : {};
+  const isEdit = !!id;
+  const p = preset || {};
+  const currentDate = l.date || p.date || formatDateFull(new Date().toISOString());
+  const currentSlot = l.trainingSlot || p.trainingSlot || 'morning';
+  const currentScheduleClass = l.scheduleClass || p.scheduleClass || '';
+
+  const slotOptions = TRAINING_SLOTS.map(s=>
+    `<option value="${s.key}" ${currentSlot===s.key?'selected':''}>${s.icon} ${s.label} (${s.defaultTime})</option>`
+  ).join('');
+
+  // 从日期计算星期
+  let currentScheduleDay = l.scheduleDay || '';
+  if(!currentScheduleDay && currentDate) {
+    const dt = new Date(currentDate);
+    currentScheduleDay = ((dt.getDay()+6)%7)+1;
+  }
+
+  const html = `<div class="modal-overlay show">
+    <div class="modal">
+      <div class="modal-header"><h3>${isEdit?'✏️ 编辑课程':'➕ 添加课程'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="sl_scheduleClass" value="${currentScheduleClass}">
+        <div class="form-row">
+          <div class="form-group"><label>日期 <span class="required">*</span></label><input id="sl_date" type="date" value="${currentDate}"></div>
+          <div class="form-group"><label>时段 <span class="required">*</span></label><select id="sl_slot" onchange="onScheduleSlotChange()">${slotOptions}</select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>授课教师</label><input id="sl_teacher" value="${l.teacher||''}" placeholder="如：王老师" autofocus></div>
+          <div class="form-group"><label>地点</label><input id="sl_location" value="${l.location||''}" placeholder="如：1号演播室"></div>
+        </div>
+        <div class="form-group"><label>课程内容 <span class="required">*</span></label><input id="sl_content" value="${l.name||l.content||''}" placeholder="如：新闻播读基础"></div>
+        <div class="form-row">
+          <div class="form-group"><label>状态</label><select id="sl_status"><option value="未上" ${l.status==='未上'?'selected':''}>未上</option><option value="已完成" ${l.status==='已完成'?'selected':''}>已完成</option><option value="已取消" ${l.status==='已取消'?'selected':''}>已取消</option></select></div>
+        </div>
+        <div class="form-group"><label>备注</label><textarea id="sl_remark" placeholder="课堂情况、注意事项...">${l.remark||''}</textarea></div>
+        <div class="alert alert-info">每节课默认计 <b>2个课时</b>，所属班级：${currentScheduleClass||'未指定'}</div>
+      </div>
+      <div class="modal-footer">
+        ${isEdit?`<button class="btn btn-danger" onclick="deleteScheduleLesson('${id}')">🗑️ 删除</button>`:''}
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveScheduleLesson('${id||''}')">💾 保存</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+function onScheduleSlotChange() {
+  // 时段切换时无需额外操作，时间由时段自动确定
+}
+
+function saveScheduleLesson(id) {
+  const date = val('sl_date');
+  const content = val('sl_content');
+  if(!date) { toast('请选择日期','error'); return; }
+  if(!content) { toast('请输入课程内容','error'); return; }
+
+  const slotKey = val('sl_slot');
   const slot = TRAINING_SLOTS.find(s=>s.key===slotKey);
-  showLessonModal(null, {mode:'training', scheduleClass:classNo, trainingSlot:slotKey, timeSlot:slot.defaultTime, scheduleDay:day});
+  const dt = new Date(date);
+  const scheduleDay = ((dt.getDay()+6)%7)+1;
+  // 从隐藏字段获取所属班级
+  const scheduleClass = val('sl_scheduleClass') || '';
+
+  const data = {
+    name: content,
+    date: date,
+    mode: 'training',
+    trainingSlot: slotKey,
+    scheduleClass: scheduleClass,
+    scheduleDay: scheduleDay,
+    timeSlot: slot ? slot.defaultTime : '',
+    classType: '大课',
+    teacher: val('sl_teacher'),
+    status: val('sl_status'),
+    students: '全班',
+    location: val('sl_location'),
+    content: content,
+    remark: val('sl_remark'),
+  };
+  if(id) {
+    const lesson = DB.lessons.find(l=>l.id===id);
+    if(lesson) { Object.assign(lesson, data); toast('课程已更新'); }
+  } else {
+    data.id = genId();
+    DB.lessons.push(data);
+    toast('课程已添加');
+  }
+  stampRecord(data);
+  saveDB(); closeModal(); renderSchedule();
+}
+
+function deleteScheduleLesson(id) {
+  if(!confirm('确定删除该课程记录？')) return;
+  DB.lessons = DB.lessons.filter(l=>l.id!==id);
+  saveDB(); closeModal(); renderSchedule(); toast('已删除','warning');
 }
 
 // ============================================================

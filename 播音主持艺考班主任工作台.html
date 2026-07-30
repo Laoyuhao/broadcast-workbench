@@ -666,10 +666,8 @@ select.filter-select { min-width: 120px; }
       <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>数据总览</span></div>
       <div class="nav-item" data-page="students"><span class="nav-icon">👥</span><span>学生档案</span></div>
       <div class="nav-item" data-page="analysis"><span class="nav-icon">🔬</span><span>成绩分析</span></div>
-      <div class="nav-item" data-page="training"><span class="nav-icon">🎤</span><span>专业训练</span></div>
       <div class="nav-item" data-page="exams"><span class="nav-icon">📝</span><span>模考成绩</span></div>
-      <div class="nav-item" data-page="artexam"><span class="nav-icon">📅</span><span>艺考流程</span></div>
-      <div class="nav-item" data-page="status"><span class="nav-icon">💚</span><span>学生状态</span></div>
+      <div class="nav-item" data-page="schedule"><span class="nav-icon">🗓️</span><span>班级课表</span></div>
       <div class="nav-item" data-page="lessons"><span class="nav-icon">📚</span><span>课时工作台</span></div>
       <div class="nav-item" data-page="review"><span class="nav-icon">📈</span><span>教学复盘</span></div>
       <div class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span>数据管理</span></div>
@@ -736,15 +734,7 @@ select.filter-select { min-width: 120px; }
       <div class="student-grid" id="studentGrid"></div>
     </div>
 
-    <!-- ====== 专业训练页 ====== -->
-    <div class="page" id="page-training">
-      <div class="page-header">
-        <div>
-          <h2>🎤 专业训练跟踪</h2>
-          <p>新闻播读 · 文学作品朗诵 · 即兴评述 · 模拟主持</p>
-        </div>
-      </div>
-      <div class="tabs" id="trainingTabs">
+<div class="tabs" id="trainingTabs">
         <div class="tab active" data-tab="news">📰 新闻播读</div>
         <div class="tab" data-tab="literature">📖 文学朗诵</div>
         <div class="tab" data-tab="comment">💬 即兴评述</div>
@@ -781,6 +771,30 @@ select.filter-select { min-width: 120px; }
       <div id="examContent"></div>
     </div>
 
+    <!-- ====== 班级课表页 ====== -->
+    <div class="page" id="page-schedule">
+      <div class="page-header">
+        <div>
+          <h2>🗓️ 班级课表</h2>
+          <p>按班级编辑集训课表 · 早/中/晚三时段排课</p>
+        </div>
+        <div>
+          <button class="btn btn-primary btn-sm" onclick="showScheduleModal()">➕ 添加课程</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <select class="filter-select" id="scheduleClassFilter" onchange="renderSchedule()" style="min-width:140px;">
+            <option value="">请选择班级</option>
+          </select>
+          <select class="filter-select" id="scheduleWeekFilter" onchange="renderSchedule()">
+            <option value="">全部周次</option>
+          </select>
+        </div>
+      </div>
+      <div id="scheduleContent"></div>
+    </div>
+
     <!-- ====== 成绩分析页 ====== -->
     <div class="page" id="page-analysis">
       <div class="page-header">
@@ -800,34 +814,14 @@ select.filter-select { min-width: 120px; }
       <div id="analysisContent"></div>
     </div>
 
-    <!-- ====== 艺考流程页 ====== -->
-    <div class="page" id="page-artexam">
-      <div class="page-header">
-        <div>
-          <h2>📅 艺考全流程</h2>
-          <p>联考 · 校考 · 报名 · 备考 · 带考 · 成绩追踪</p>
-        </div>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showArtExamTimelineModal()">📅 查看时间轴</button>
-          <button class="btn btn-primary btn-sm" onclick="showArtExamModal()">➕ 添加考试</button>
-        </div>
-      </div>
-      <div class="tabs" id="artexamTabs">
+<div class="tabs" id="artexamTabs">
         <div class="tab active" data-tab="artexam-list">考试安排</div>
         <div class="tab" data-tab="artexam-progress">备考进度</div>
       </div>
       <div id="artexamContent"></div>
     </div>
 
-    <!-- ====== 学生状态页 ====== -->
-    <div class="page" id="page-status">
-      <div class="page-header">
-        <div>
-          <h2>💚 学生状态关怀</h2>
-          <p>心理状态 · 学习态度 · 家校沟通 · 压力管理</p>
-        </div>
-      </div>
-      <div class="toolbar">
+<div class="toolbar">
         <div class="toolbar-left">
           <select class="filter-select" id="statusStudentFilter" onchange="renderStatus()"></select>
         </div>
@@ -933,15 +927,13 @@ select.filter-select { min-width: 120px; }
       <div class="card">
         <div class="card-title"><span class="icon">📖</span>使用说明</div>
         <div style="font-size:13px; color:var(--text-secondary); line-height:1.8;">
-          <p>• <b>数据总览</b>：查看班级整体数据、成绩趋势、需关注学生</p>
-          <p>• <b>学生档案</b>：添加/编辑/删除学生信息，点击学生卡片查看详情</p>
+          <p>• <b>数据总览</b>：查看班级整体数据、成绩趋势</p>
+          <p>• <b>学生档案</b>：管理学生信息，按班级分组，含招生老师、身高、文化分</p>
           <p>• <b>成绩分析</b>：选择学生查看个人成绩分析报告（优劣势、趋势、智能建议）</p>
-          <p>• <b>专业训练</b>：分5个专业方向记录每次训练成绩与点评</p>
           <p>• <b>模考成绩</b>：录入模考成绩，自动生成趋势图与弱项分析</p>
-          <p>• <b>艺考流程</b>：管理联考/校考安排，追踪备考进度</p>
-          <p>• <b>学生状态</b>：记录心理状态、家校沟通，及时关注学生</p>
-          <p>• <b>课时工作台</b>：记录课程安排与上课情况，每课2课时，自动统计课时量</p>
-          <p>• <b>教学复盘</b>：统计训练完成率、成绩提升幅度、录取结果</p>
+          <p>• <b>班级课表</b>：按班级编辑集训课表，早/中/晚三时段排课</p>
+          <p>• <b>课时工作台</b>：日历排课，记录上课情况，每课2课时，自动统计课时量</p>
+          <p>• <b>教学复盘</b>：统计成绩提升幅度、录取结果</p>
           <p>• 数据自动保存在浏览器本地，关闭页面不丢失</p>
         </div>
       </div>
@@ -1268,10 +1260,8 @@ function refreshCurrentPage() {
   if(id==='dashboard') renderDashboard();
   if(id==='students') renderStudents();
   if(id==='analysis') renderAnalysis();
-  if(id==='training') renderTraining();
   if(id==='exams') renderExams();
-  if(id==='artexam') renderArtExam();
-  if(id==='status') renderStatus();
+  if(id==='schedule') renderSchedule();
   if(id==='lessons') renderLessons();
   if(id==='review') renderReview();
 }
@@ -1322,31 +1312,13 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if(page==='dashboard') renderDashboard();
     if(page==='students') renderStudents();
     if(page==='analysis') renderAnalysis();
-    if(page==='training') renderTraining();
     if(page==='exams') renderExams();
-    if(page==='artexam') renderArtExam();
-    if(page==='status') renderStatus();
+    if(page==='schedule') renderSchedule();
     if(page==='lessons') renderLessons();
     if(page==='review') renderReview();
   });
 });
 
-// Tab 切换 - 训练
-document.querySelectorAll('#trainingTabs .tab').forEach(t=>{
-  t.addEventListener('click',()=>{
-    document.querySelectorAll('#trainingTabs .tab').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    renderTraining();
-  });
-});
-// Tab 切换 - 艺考
-document.querySelectorAll('#artexamTabs .tab').forEach(t=>{
-  t.addEventListener('click',()=>{
-    document.querySelectorAll('#artexamTabs .tab').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    renderArtExam();
-  });
-});
 // Tab 切换 - 课时
 document.querySelectorAll('#lessonTabs .tab').forEach(t=>{
   t.addEventListener('click',()=>{
@@ -1485,30 +1457,22 @@ function renderStudents() {
 
 function renderStudentCard(s) {
     const color = LEVEL_COLORS[s.level]||'#B2BEC3';
-    const exams = DB.exams.filter(e=>e.studentId===s.id);
-    const avgScore = exams.length>0 ? (exams.reduce((a,e)=>a+(e.total||0),0)/exams.length).toFixed(1) : '—';
-    const trainings = DB.trainings.filter(t=>t.studentId===s.id).length;
-    const latestStatus = DB.statuses.filter(st=>st.studentId===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
-    const statusBadge = latestStatus ? `<span class="badge" style="background:${(STATUS_COLORS[latestStatus.level]||'#B2BEC3')}22;color:${STATUS_COLORS[latestStatus.level]||'#B2BEC3'};">${latestStatus.level}</span>` : '';
-    const cultureScore = s.cultureScore ? `<span class="badge badge-info">📚 ${s.cultureScore}分</span>` : '';
     return `<div class="student-card" onclick="showStudentDetail('${s.id}')">
       <div class="student-card-header">
         <div class="student-avatar" style="background:${studentAvatarColor(s.id)};">${studentInitial(s.name)}</div>
         <div style="flex:1;">
           <div class="student-name">${s.name}</div>
-          <div class="student-meta">${s.age||'?'}岁 · ${s.source||'—'} ${s.classNo?'· '+s.classNo:''}</div>
+          <div class="student-meta">${s.age||'?'}岁 · ${s.gender||'—'} · ${s.source||'—'}</div>
         </div>
       </div>
       <div class="student-tags">
+        ${s.classNo ? `<span class="badge badge-purple">🏫 ${s.classNo}</span>` : '<span class="badge" style="background:#B2BEC322;color:#B2BEC3;">未分班</span>'}
         <span class="badge" style="background:${color}22;color:${color};">${s.level||'未评'}</span>
-        ${statusBadge}
-        ${cultureScore}
-        ${s.targetSchools ? `<span class="badge badge-info">🎯 ${s.targetSchools}</span>` : ''}
+        ${s.recruitTeacher ? `<span class="badge badge-info">👨‍🏫 ${s.recruitTeacher}</span>` : ''}
       </div>
-      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
-        <div><div style="font-size:18px;font-weight:700;color:var(--primary);">${avgScore}</div><div style="font-size:11px;color:var(--text-secondary);">专业均分</div></div>
-        <div><div style="font-size:18px;font-weight:700;color:var(--info);">${s.cultureScore||'—'}</div><div style="font-size:11px;color:var(--text-secondary);">文化分</div></div>
-        <div><div style="font-size:18px;font-weight:700;color:var(--success);">${trainings}</div><div style="font-size:11px;color:var(--text-secondary);">训练次数</div></div>
+      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;">
+        <div><div style="font-size:16px;font-weight:700;color:var(--primary);">${s.height||'—'}<span style="font-size:11px;font-weight:400;">cm</span></div><div style="font-size:11px;color:var(--text-secondary);">身高</div></div>
+        <div><div style="font-size:16px;font-weight:700;color:var(--info);">${s.cultureScore||'—'}</div><div style="font-size:11px;color:var(--text-secondary);">文化分</div></div>
       </div>
     </div>`;
 }
@@ -1541,6 +1505,7 @@ function showStudentModal(id) {
         <div class="form-row">
           <div class="form-group"><label>班级</label><input id="s_classNo" value="${s.classNo||''}" placeholder="如：1班、集训A班" list="classList"></div>
           <datalist id="classList">${[...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].map(c=>`<option value="${c}">`).join('')}</datalist>
+          <div class="form-group"><label>招生老师</label><input id="s_recruitTeacher" value="${s.recruitTeacher||''}" placeholder="如：王老师"></div>
           <div class="form-group"><label>文化分</label><input id="s_cultureScore" type="number" value="${s.cultureScore||''}" placeholder="如420" min="0" max="750"></div>
           <div class="form-group"><label>综合水平</label><select id="s_level"><option value="">请选择</option><option value="优秀" ${s.level==='优秀'?'selected':''}>优秀</option><option value="良好" ${s.level==='良好'?'selected':''}>良好</option><option value="一般" ${s.level==='一般'?'selected':''}>一般</option><option value="薄弱" ${s.level==='薄弱'?'selected':''}>薄弱</option></select></div>
         </div>
@@ -1577,6 +1542,7 @@ function saveStudent(id) {
   const data = {
     name, gender: val('s_gender'), age: parseInt(val('s_age'))||null,
     classNo: val('s_classNo'), cultureScore: parseFloat(val('s_cultureScore'))||null,
+    recruitTeacher: val('s_recruitTeacher'),
     source: val('s_source'), phone: val('s_phone'), level: val('s_level'),
     height: parseInt(val('s_height'))||null, weight: parseInt(val('s_weight'))||null,
     voiceType: val('s_voiceType'), targetSchools: val('s_targetSchools'),
@@ -2626,14 +2592,127 @@ function exportAnalysisReport() {
 }
 
 // ============================================================
+//  第九部分B：班级课表
+// ============================================================
+let scheduleCurrentWeek = 1;
+
+function renderSchedule() {
+  updateScheduleClassFilter();
+  const classNo = document.getElementById('scheduleClassFilter')?.value||'';
+  const content = document.getElementById('scheduleContent');
+
+  if(!classNo) {
+    content.innerHTML = '<div class="empty-state"><div class="icon">🗓️</div><p>请在上方选择班级</p><p style="font-size:13px;margin-top:8px;">选择班级后可编辑该班级的集训课表</p></div>';
+    return;
+  }
+
+  // 该班学生
+  const classStudents = DB.students.filter(s=>s.classNo===classNo);
+  // 该班课表（lessons中classNo匹配或students包含该班名）
+  const schedules = DB.lessons.filter(l=>l.scheduleClass===classNo);
+
+  // 按周分组
+  const weeks = {};
+  schedules.forEach(s=>{
+    const w = s.scheduleWeek || 1;
+    if(!weeks[w]) weeks[w] = [];
+    weeks[w].push(s);
+  });
+
+  // 更新周次筛选
+  const weekFilter = document.getElementById('scheduleWeekFilter');
+  const currentWeekFilter = weekFilter.value;
+  const allWeeks = [...new Set(schedules.map(s=>s.scheduleWeek||1))].sort((a,b)=>a-b);
+  weekFilter.innerHTML = '<option value="">全部周次</option>' + allWeeks.map(w=>`<option value="${w}" ${currentWeekFilter==w?'selected':''}>第${w}周</option>`).join('');
+  const weekFilterVal = weekFilter.value;
+
+  let list = schedules;
+  if(weekFilterVal) list = list.filter(s=>(s.scheduleWeek||1)==parseInt(weekFilterVal));
+
+  // 周次统计
+  const totalCourses = list.length;
+  const completedCourses = list.filter(l=>l.status==='已完成').length;
+  const totalHours = completedCourses * 2;
+
+  let html = `<div class="stat-grid" style="margin-bottom:16px;">
+    <div class="stat-card"><div class="stat-icon purple">👥</div><div class="stat-info"><h3>${classStudents.length}</h3><p>${classNo}人数</p></div></div>
+    <div class="stat-card"><div class="stat-icon blue">📚</div><div class="stat-info"><h3>${totalCourses}</h3><p>课程数</p></div></div>
+    <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><h3>${completedCourses}（${totalHours}课时）</h3><p>已完成</p></div></div>
+  </div>`;
+
+  // 课表网格视图（按天 x 时段）
+  const weekdays = ['周一','周二','周三','周四','周五','周六','周日'];
+  html += `<div class="card">
+    <div class="card-title"><span class="icon">🗓️</span>${classNo} 课表 ${weekFilterVal?'· 第'+weekFilterVal+'周':''}</div>
+    <div style="overflow-x:auto;">
+    <table style="min-width:700px;">
+      <thead><tr>
+        <th style="width:80px;">时段</th>
+        ${weekdays.map(d=>`<th>${d}</th>`).join('')}
+      </tr></thead>
+      <tbody>
+        ${TRAINING_SLOTS.map(slot=>{
+          const slotLessons = list.filter(l=>l.trainingSlot===slot.key);
+          return `<tr>
+            <td style="background:#F8F9FA;text-align:center;">
+              <div style="font-size:14px;">${slot.icon}</div>
+              <div style="font-weight:600;">${slot.label}</div>
+              <div style="font-size:11px;color:var(--text-secondary);">${slot.defaultTime}</div>
+            </td>
+            ${weekdays.map((day,idx)=>{
+              const dayLessons = slotLessons.filter(l=>{
+                if(!l.scheduleDay) return false;
+                return l.scheduleDay===idx+1;
+              });
+              if(dayLessons.length===0) {
+                return `<td style="text-align:center;cursor:pointer;" onclick="quickAddSchedule('${classNo}','${slot.key}',${idx+1})" title="点击添加">
+                  <span style="color:var(--text-light);font-size:20px;">+</span>
+                </td>`;
+              }
+              return `<td style="vertical-align:top;">${dayLessons.map(l=>{
+                const statusColor = LESSON_STATUS_COLORS[l.status]||'#B2BEC3';
+                return `<div style="background:${statusColor}11;border-left:3px solid ${statusColor};border-radius:4px;padding:6px 8px;margin-bottom:4px;cursor:pointer;" onclick="showLessonModal('${l.id}')">
+                  <div style="font-size:12px;font-weight:600;">${l.name||'课程'}</div>
+                  <div style="font-size:11px;color:var(--text-secondary);">${l.teacher||''} ${l.location?'· '+l.location:''}</div>
+                  <span class="badge" style="background:${statusColor}22;color:${statusColor};font-size:10px;">${l.status}</span>
+                </div>`;
+              }).join('')}</td>`;
+            }).join('')}
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>`;
+
+  html += `<div class="alert alert-info">💡 点击空格子的 <b>+</b> 可以快速添加课程到对应时段，点击已有课程可编辑</div>`;
+
+  content.innerHTML = html;
+}
+
+function updateScheduleClassFilter() {
+  const sel = document.getElementById('scheduleClassFilter');
+  if(!sel) return;
+  const current = sel.value;
+  const classes = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh'));
+  sel.innerHTML = '<option value="">请选择班级</option>' + classes.map(c=>`<option value="${c}">${c}</option>`).join('');
+  if(current) sel.value = current;
+}
+
+function quickAddSchedule(classNo, slotKey, day) {
+  const slot = TRAINING_SLOTS.find(s=>s.key===slotKey);
+  showLessonModal(null, {mode:'training', scheduleClass:classNo, trainingSlot:slotKey, timeSlot:slot.defaultTime, scheduleDay:day});
+}
+
+// ============================================================
 //  第九部分C：课时工作台
 // ============================================================
 const LESSON_STATUS_COLORS = {'已完成':'#00B894','未上':'#74B9FF','已取消':'#B2BEC3'};
 const LESSON_TYPE_COLORS = {'大课':'badge-purple','小组课':'badge-info','一对一':'badge-pink','模考':'badge-warning'};
 const LESSON_MODE_LABELS = {'daily':'日常','training':'集训'};
 const TRAINING_SLOTS = [
-  {key:'morning', label:'早上', icon:'🌅', defaultTime:'08:00-10:00'},
-  {key:'afternoon', label:'下午', icon:'☀️', defaultTime:'14:00-16:00'},
+  {key:'morning', label:'早上', icon:'🌅', defaultTime:'10:00-12:00'},
+  {key:'afternoon', label:'下午', icon:'☀️', defaultTime:'14:30-16:30'},
   {key:'evening', label:'晚上', icon:'🌙', defaultTime:'19:00-21:00'},
 ];
 let calendarCurrentDate = new Date(); // 日历当前月份
@@ -3046,12 +3125,14 @@ function renderLessonStats(content) {
 function showLessonModal(id, preset) {
   const l = id ? DB.lessons.find(x=>x.id===id) : {};
   const isEdit = !!id;
-  // preset: {date, mode, trainingSlot, timeSlot}
+  // preset: {date, mode, trainingSlot, timeSlot, scheduleClass, scheduleDay}
   const p = preset || {};
   const currentDate = l.date || p.date || formatDateFull(new Date().toISOString());
   const currentMode = l.mode || p.mode || 'daily';
   const currentSlot = l.trainingSlot || p.trainingSlot || '';
   const currentTime = l.timeSlot || p.timeSlot || '';
+  const currentScheduleClass = l.scheduleClass || p.scheduleClass || '';
+  const currentScheduleDay = l.scheduleDay || p.scheduleDay || '';
 
   const html = `<div class="modal-overlay show">
     <div class="modal">
@@ -3063,7 +3144,13 @@ function showLessonModal(id, preset) {
           <div class="form-group"><label>排课模式</label><select id="l_mode" onchange="onModeChange()"><option value="daily" ${currentMode==='daily'?'selected':''}>📋 日常</option><option value="training" ${currentMode==='training'?'selected':''}>🔥 集训</option></select></div>
         </div>
         <div class="form-row">
-          <div class="form-group" id="l_slot_group" style="display:${currentMode==='training'?'block':'none'};"><label>集训时段</label><select id="l_trainingSlot"><option value="morning" ${currentSlot==='morning'?'selected':''}>🌅 早上 (08:00-10:00)</option><option value="afternoon" ${currentSlot==='afternoon'?'selected':''}>☀️ 下午 (14:00-16:00)</option><option value="evening" ${currentSlot==='evening'?'selected':''}>🌙 晚上 (19:00-21:00)</option></select></div>
+          <div class="form-group" id="l_scheduleclass_group" style="display:${currentMode==='training'?'block':'none'};">
+            <label>所属班级</label>
+            <input id="l_scheduleClass" value="${currentScheduleClass}" placeholder="如：集训A班" list="scheduleClassList">
+            <datalist id="scheduleClassList">${[...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].map(c=>`<option value="${c}">`).join('')}</datalist>
+          </div>
+          <div class="form-group" id="l_slot_group" style="display:${currentMode==='training'?'block':'none'};"><label>集训时段</label><select id="l_trainingSlot" onchange="onSlotChange()"><option value="morning" ${currentSlot==='morning'?'selected':''}>🌅 早上 (10:00-12:00)</option><option value="afternoon" ${currentSlot==='afternoon'?'selected':''}>☀️ 下午 (14:30-16:30)</option><option value="evening" ${currentSlot==='evening'?'selected':''}>🌙 晚上 (19:00-21:00)</option></select></div>
+          <div class="form-group" id="l_day_group" style="display:${currentMode==='training'?'block':'none'};"><label>星期</label><select id="l_scheduleDay"><option value="">不指定</option><option value="1" ${currentScheduleDay==1?'selected':''}>周一</option><option value="2" ${currentScheduleDay==2?'selected':''}>周二</option><option value="3" ${currentScheduleDay==3?'selected':''}>周三</option><option value="4" ${currentScheduleDay==4?'selected':''}>周四</option><option value="5" ${currentScheduleDay==5?'selected':''}>周五</option><option value="6" ${currentScheduleDay==6?'selected':''}>周六</option><option value="7" ${currentScheduleDay==7?'selected':''}>周日</option></select></div>
           <div class="form-group"><label>时间段</label><input id="l_timeSlot" value="${currentTime}" placeholder="如：08:00-09:30"></div>
           <div class="form-group"><label>课程类型</label><select id="l_classType"><option value="大课" ${l.classType==='大课'?'selected':''}>大课</option><option value="小组课" ${l.classType==='小组课'?'selected':''}>小组课</option><option value="一对一" ${l.classType==='一对一'?'selected':''}>一对一</option><option value="模考" ${l.classType==='模考'?'selected':''}>模考</option><option value="其他" ${l.classType==='其他'?'selected':''}>其他</option></select></div>
         </div>
@@ -3097,14 +3184,22 @@ function showLessonModal(id, preset) {
 
 function onModeChange() {
   const mode = document.getElementById('l_mode').value;
-  document.getElementById('l_slot_group').style.display = mode==='training'?'block':'none';
-  if(mode==='training') {
+  const isTraining = mode==='training';
+  document.getElementById('l_slot_group').style.display = isTraining?'block':'none';
+  document.getElementById('l_day_group').style.display = isTraining?'block':'none';
+  document.getElementById('l_scheduleclass_group').style.display = isTraining?'block':'none';
+  if(isTraining) {
     const slot = document.getElementById('l_trainingSlot').value;
     const slotData = TRAINING_SLOTS.find(s=>s.key===slot);
     if(slotData && !document.getElementById('l_timeSlot').value) {
       document.getElementById('l_timeSlot').value = slotData.defaultTime;
     }
   }
+}
+function onSlotChange() {
+  const slot = document.getElementById('l_trainingSlot').value;
+  const slotData = TRAINING_SLOTS.find(s=>s.key===slot);
+  if(slotData) document.getElementById('l_timeSlot').value = slotData.defaultTime;
 }
 
 function saveLesson(id) {
@@ -3115,6 +3210,8 @@ function saveLesson(id) {
   const data = {
     name, date, mode: val('l_mode'),
     trainingSlot: val('l_mode')==='training' ? val('l_trainingSlot') : '',
+    scheduleClass: val('l_mode')==='training' ? val('l_scheduleClass') : '',
+    scheduleDay: val('l_mode')==='training' ? parseInt(val('l_scheduleDay'))||null : null,
     timeSlot: val('l_timeSlot'),
     classType: val('l_classType'), teacher: val('l_teacher'),
     status: val('l_status'), students: val('l_students'),
@@ -3713,14 +3810,14 @@ document.addEventListener('keydown', (e)=>{
 function loadSampleData() {
   if(!confirm('加载示例数据将覆盖现有数据，是否继续？')) return;
   const students = [
-    {name:'林晓阳',gender:'女',age:17,classNo:'集训A班',cultureScore:452,source:'河北石家庄',level:'优秀',height:168,weight:50,voiceType:'明亮',targetSchools:'中传、浙传',specialty:'新闻播读、朗诵',weakness:'即兴评述',phone:'13800001111',parent:'林父 13800001112',remark:'悟性高，表现力强'},
-    {name:'张子涵',gender:'男',age:18,classNo:'集训A班',cultureScore:438,source:'山西太原',level:'良好',height:178,weight:65,voiceType:'浑厚',targetSchools:'中传、上戏',specialty:'新闻播读、主持',weakness:'文学朗诵',phone:'13800002222',parent:'张母 13800002223',remark:'声音条件好，需加强情感表达'},
-    {name:'王诗韵',gender:'女',age:17,classNo:'集训A班',cultureScore:465,source:'河北保定',level:'优秀',height:165,weight:48,voiceType:'柔和',targetSchools:'浙传、南艺',specialty:'朗诵、即兴评述',weakness:'模拟主持',phone:'13800003333',parent:'王父 13800003334',remark:'思维活跃，语言组织能力强'},
-    {name:'陈嘉豪',gender:'男',age:18,classNo:'集训B班',cultureScore:398,source:'山东济南',level:'一般',height:175,weight:68,voiceType:'浑厚',targetSchools:'天师大、浙传',specialty:'主持',weakness:'即兴评述、新闻感',phone:'13800004444',parent:'陈母 13800004445',remark:'需加强基础训练'},
-    {name:'赵悦然',gender:'女',age:17,classNo:'集训A班',cultureScore:441,source:'河北邯郸',level:'良好',height:170,weight:52,voiceType:'明亮',targetSchools:'中传、武大',specialty:'新闻播读',weakness:'文学朗诵',phone:'13800005555',parent:'赵父 13800005556',remark:'进步明显，状态稳定'},
-    {name:'刘思远',gender:'男',age:18,classNo:'集训B班',cultureScore:375,source:'河南郑州',level:'薄弱',height:180,weight:70,voiceType:'偏窄',targetSchools:'省联考',specialty:'—',weakness:'发声、评述',phone:'13800006666',parent:'刘母 13800006667',remark:'基础薄弱，需重点关注'},
-    {name:'孙雨萱',gender:'女',age:17,classNo:'集训A班',cultureScore:430,source:'河北石家庄',level:'良好',height:163,weight:47,voiceType:'柔和',targetSchools:'浙传、中传',specialty:'朗诵、主持',weakness:'新闻播读',phone:'13800007777',parent:'孙父 13800007778',remark:'台风好，需提升新闻感'},
-    {name:'周浩然',gender:'男',age:18,classNo:'集训A班',cultureScore:458,source:'山西大同',level:'优秀',height:182,weight:72,voiceType:'浑厚',targetSchools:'中传、上戏、浙传',specialty:'新闻播读、即兴评述',weakness:'—',phone:'13800008888',parent:'周父 13800008889',remark:'综合素质高，冲刺名校'},
+    {name:'林晓阳',gender:'女',age:17,classNo:'集训A班',recruitTeacher:'王老师',cultureScore:452,source:'河北石家庄',level:'优秀',height:168,weight:50,voiceType:'明亮',targetSchools:'中传、浙传',specialty:'新闻播读、朗诵',weakness:'即兴评述',phone:'13800001111',parent:'林父 13800001112',remark:'悟性高，表现力强'},
+    {name:'张子涵',gender:'男',age:18,classNo:'集训A班',recruitTeacher:'李老师',cultureScore:438,source:'山西太原',level:'良好',height:178,weight:65,voiceType:'浑厚',targetSchools:'中传、上戏',specialty:'新闻播读、主持',weakness:'文学朗诵',phone:'13800002222',parent:'张母 13800002223',remark:'声音条件好，需加强情感表达'},
+    {name:'王诗韵',gender:'女',age:17,classNo:'集训A班',recruitTeacher:'王老师',cultureScore:465,source:'河北保定',level:'优秀',height:165,weight:48,voiceType:'柔和',targetSchools:'浙传、南艺',specialty:'朗诵、即兴评述',weakness:'模拟主持',phone:'13800003333',parent:'王父 13800003334',remark:'思维活跃，语言组织能力强'},
+    {name:'陈嘉豪',gender:'男',age:18,classNo:'集训B班',recruitTeacher:'赵老师',cultureScore:398,source:'山东济南',level:'一般',height:175,weight:68,voiceType:'浑厚',targetSchools:'天师大、浙传',specialty:'主持',weakness:'即兴评述、新闻感',phone:'13800004444',parent:'陈母 13800004445',remark:'需加强基础训练'},
+    {name:'赵悦然',gender:'女',age:17,classNo:'集训A班',recruitTeacher:'李老师',cultureScore:441,source:'河北邯郸',level:'良好',height:170,weight:52,voiceType:'明亮',targetSchools:'中传、武大',specialty:'新闻播读',weakness:'文学朗诵',phone:'13800005555',parent:'赵父 13800005556',remark:'进步明显，状态稳定'},
+    {name:'刘思远',gender:'男',age:18,classNo:'集训B班',recruitTeacher:'赵老师',cultureScore:375,source:'河南郑州',level:'薄弱',height:180,weight:70,voiceType:'偏窄',targetSchools:'省联考',specialty:'—',weakness:'发声、评述',phone:'13800006666',parent:'刘母 13800006667',remark:'基础薄弱，需重点关注'},
+    {name:'孙雨萱',gender:'女',age:17,classNo:'集训A班',recruitTeacher:'王老师',cultureScore:430,source:'河北石家庄',level:'良好',height:163,weight:47,voiceType:'柔和',targetSchools:'浙传、中传',specialty:'朗诵、主持',weakness:'新闻播读',phone:'13800007777',parent:'孙父 13800007778',remark:'台风好，需提升新闻感'},
+    {name:'周浩然',gender:'男',age:18,classNo:'集训A班',recruitTeacher:'王老师',cultureScore:458,source:'山西大同',level:'优秀',height:182,weight:72,voiceType:'浑厚',targetSchools:'中传、上戏、浙传',specialty:'新闻播读、即兴评述',weakness:'—',phone:'13800008888',parent:'周父 13800008889',remark:'综合素质高，冲刺名校'},
   ];
   students.forEach(s=>{ s.id=genId(); s.createdAt=new Date().toISOString(); });
   DB.students = students;
@@ -3785,19 +3882,19 @@ function loadSampleData() {
     {id:genId(), name:'即兴评述训练', date:dstr(-15), timeSlot:'14:00-15:30', classType:'小组课', mode:'daily', students:'林晓阳、张子涵、王诗韵', teacher:'王老师', location:'1号演播室', status:'已完成', content:'时事热点即兴评述练习', remark:'张子涵进步明显'},
     {id:genId(), name:'一对一辅导·林晓阳', date:dstr(-5), timeSlot:'16:00-17:30', classType:'一对一', mode:'daily', students:'林晓阳', teacher:'王老师', location:'1号演播室', status:'已完成', content:'针对即兴评述弱项强化', remark:'重点训练逻辑思维'},
     // 集训课程（最近一周）
-    {id:genId(), name:'早功·发声训练', date:dstr(-3), timeSlot:'08:00-10:00', classType:'大课', mode:'training', trainingSlot:'morning', students:'全班', teacher:'刘老师', location:'形体房', status:'已完成', content:'气息控制、共鸣、咬字吐词', remark:''},
-    {id:genId(), name:'新闻播读集训', date:dstr(-3), timeSlot:'14:00-16:00', classType:'大课', mode:'training', trainingSlot:'afternoon', students:'全班', teacher:'王老师', location:'1号演播室', status:'已完成', content:'新闻播读强化训练', remark:''},
-    {id:genId(), name:'即兴评述晚课', date:dstr(-3), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', students:'全班', teacher:'李老师', location:'2号教室', status:'已完成', content:'即兴评述专项', remark:''},
-    {id:genId(), name:'早功·发声训练', date:dstr(-2), timeSlot:'08:00-10:00', classType:'大课', mode:'training', trainingSlot:'morning', students:'全班', teacher:'刘老师', location:'形体房', status:'已完成', content:'气息与共鸣', remark:''},
-    {id:genId(), name:'模拟主持实训', date:dstr(-2), timeSlot:'14:00-16:00', classType:'大课', mode:'training', trainingSlot:'afternoon', students:'全班', teacher:'赵老师', location:'演播厅', status:'已完成', content:'模拟主持全流程', remark:''},
-    {id:genId(), name:'文学作品朗诵', date:dstr(-2), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', students:'全班', teacher:'李老师', location:'2号教室', status:'已完成', content:'散文朗诵情感表达', remark:''},
-    {id:genId(), name:'早功·发声训练', date:dstr(-1), timeSlot:'08:00-10:00', classType:'大课', mode:'training', trainingSlot:'morning', students:'全班', teacher:'刘老师', location:'形体房', status:'已完成', content:'声音弹性训练', remark:''},
-    {id:genId(), name:'全真模拟考', date:dstr(-1), timeSlot:'14:00-16:00', classType:'模考', mode:'training', trainingSlot:'afternoon', students:'全班', teacher:'全体', location:'演播厅', status:'已完成', content:'第二次全真模拟', remark:''},
-    {id:genId(), name:'点评与复盘', date:dstr(-1), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', students:'全班', teacher:'王老师', location:'2号教室', status:'已完成', content:'模考点评、问题分析', remark:''},
+    {id:genId(), name:'早功·发声训练', date:dstr(-3), timeSlot:'10:00-12:00', classType:'大课', mode:'training', trainingSlot:'morning', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'刘老师', location:'形体房', status:'已完成', content:'气息控制、共鸣、咬字吐词', remark:''},
+    {id:genId(), name:'新闻播读集训', date:dstr(-3), timeSlot:'14:30-16:30', classType:'大课', mode:'training', trainingSlot:'afternoon', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'王老师', location:'1号演播室', status:'已完成', content:'新闻播读强化训练', remark:''},
+    {id:genId(), name:'即兴评述晚课', date:dstr(-3), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'李老师', location:'2号教室', status:'已完成', content:'即兴评述专项', remark:''},
+    {id:genId(), name:'早功·发声训练', date:dstr(-2), timeSlot:'10:00-12:00', classType:'大课', mode:'training', trainingSlot:'morning', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'刘老师', location:'形体房', status:'已完成', content:'气息与共鸣', remark:''},
+    {id:genId(), name:'模拟主持实训', date:dstr(-2), timeSlot:'14:30-16:30', classType:'大课', mode:'training', trainingSlot:'afternoon', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'赵老师', location:'演播厅', status:'已完成', content:'模拟主持全流程', remark:''},
+    {id:genId(), name:'文学作品朗诵', date:dstr(-2), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'李老师', location:'2号教室', status:'已完成', content:'散文朗诵情感表达', remark:''},
+    {id:genId(), name:'早功·发声训练', date:dstr(-1), timeSlot:'10:00-12:00', classType:'大课', mode:'training', trainingSlot:'morning', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'刘老师', location:'形体房', status:'已完成', content:'声音弹性训练', remark:''},
+    {id:genId(), name:'全真模拟考', date:dstr(-1), timeSlot:'14:30-16:30', classType:'模考', mode:'training', trainingSlot:'afternoon', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'全体', location:'演播厅', status:'已完成', content:'第二次全真模拟', remark:''},
+    {id:genId(), name:'点评与复盘', date:dstr(-1), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'王老师', location:'2号教室', status:'已完成', content:'模考点评、问题分析', remark:''},
     // 待上课程
-    {id:genId(), name:'早功·发声训练', date:dstr(1), timeSlot:'08:00-10:00', classType:'大课', mode:'training', trainingSlot:'morning', students:'全班', teacher:'刘老师', location:'形体房', status:'未上', content:'气息控制', remark:''},
-    {id:genId(), name:'新闻播读强化', date:dstr(1), timeSlot:'14:00-16:00', classType:'大课', mode:'training', trainingSlot:'afternoon', students:'全班', teacher:'王老师', location:'1号演播室', status:'未上', content:'新闻播读进阶', remark:''},
-    {id:genId(), name:'即兴评述·热点', date:dstr(1), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', students:'全班', teacher:'李老师', location:'2号教室', status:'未上', content:'热点素材评述', remark:''},
+    {id:genId(), name:'早功·发声训练', date:dstr(1), timeSlot:'10:00-12:00', classType:'大课', mode:'training', trainingSlot:'morning', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'刘老师', location:'形体房', status:'未上', content:'气息控制', remark:''},
+    {id:genId(), name:'新闻播读强化', date:dstr(1), timeSlot:'14:30-16:30', classType:'大课', mode:'training', trainingSlot:'afternoon', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'王老师', location:'1号演播室', status:'未上', content:'新闻播读进阶', remark:''},
+    {id:genId(), name:'即兴评述·热点', date:dstr(1), timeSlot:'19:00-21:00', classType:'大课', mode:'training', trainingSlot:'evening', scheduleClass:'集训A班', scheduleDay:1, students:'全班', teacher:'李老师', location:'2号教室', status:'未上', content:'热点素材评述', remark:''},
     {id:genId(), name:'一对一辅导·刘思远', date:dstr(3), timeSlot:'16:00-17:30', classType:'一对一', mode:'daily', students:'刘思远', teacher:'王老师', location:'1号演播室', status:'未上', content:'基础发声矫正', remark:'重点关注学生'},
   ];
 

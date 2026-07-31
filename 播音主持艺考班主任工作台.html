@@ -991,6 +991,7 @@ let SYNC_ENABLED = false;
 let SYNC_TIMER = null;
 let SYNC_IN_PROGRESS = false;
 let SYNC_LAST_TIME = null;
+let LOCAL_DIRTY = false; // 本地有未推送的变更
 
 // ===== 同步配置管理 =====
 function loadSyncConfig() {
@@ -1053,10 +1054,11 @@ function updateSyncUI() {
 // ===== 核心：保存到本地 =====
 function saveDB() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
-  // 如果开启同步，异步推送（防抖：延迟3秒避免连续操作）
+  // 如果开启同步，标记本地有变更，防抖推送
   if(SYNC_ENABLED) {
+    LOCAL_DIRTY = true;
     clearTimeout(window._syncPushTimer);
-    window._syncPushTimer = setTimeout(()=>syncPush(), 3000);
+    window._syncPushTimer = setTimeout(()=>syncPush(), 2000);
   }
 }
 
@@ -1164,19 +1166,19 @@ async function syncPush(initialPush) {
   updateSyncUI();
   try {
     const {token, owner} = SYNC_CONFIG;
-    // 1. 获取云端当前数据
+    // 先拉取云端数据做合并（保留其他设备的变更）
     const remoteDB = await fetchRemoteData(token, owner);
-    // 2. 合并本地和云端
-    const merged = mergeDB(DB, remoteDB || {});
-    // 3. 写回本地
-    Object.assign(DB, merged);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
-    // 4. 推送合并后的数据到云端
-    await pushRemoteData(token, owner, merged);
+    if(remoteDB) {
+      const merged = mergeDB(DB, remoteDB);
+      Object.assign(DB, merged);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+    }
+    // 推送本地（已合并）数据到云端，直接覆盖
+    await pushRemoteData(token, owner, DB);
+    LOCAL_DIRTY = false;
     SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
     if(initialPush) toast('初始化同步完成 ✓');
     updateSyncUI();
-    // 刷新当前页面
     refreshCurrentPage();
   } catch(e) {
     console.error('syncPush error:', e);
@@ -1191,13 +1193,17 @@ async function syncPush(initialPush) {
 // ===== 从GitHub拉取数据 =====
 async function syncPull() {
   if(!SYNC_ENABLED || SYNC_IN_PROGRESS) return;
+  // 如果本地有未推送的变更，先推送再拉取，避免覆盖
+  if(LOCAL_DIRTY) {
+    await syncPush();
+    return;
+  }
   SYNC_IN_PROGRESS = true;
   updateSyncUI();
   try {
     const {token, owner} = SYNC_CONFIG;
     const remoteDB = await fetchRemoteData(token, owner);
     if(!remoteDB) {
-      // 云端无数据，推送本地
       await pushRemoteData(token, owner, DB);
       SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
       updateSyncUI();
@@ -1211,7 +1217,6 @@ async function syncPull() {
     const newLen = JSON.stringify(DB).length;
     SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
     updateSyncUI();
-    // 如果数据有变化，刷新页面
     if(newLen !== oldLen) refreshCurrentPage();
   } catch(e) {
     console.error('syncPull error:', e);
@@ -1621,6 +1626,7 @@ function deleteStudent(id) {
   DB.exams.filter(e=>e.studentId===id).forEach(e => softDelete(DB.exams, e.id));
   DB.statuses.filter(x=>x.studentId===id).forEach(x => softDelete(DB.statuses, x.id));
   saveDB(); closeModal(); renderStudents(); toast('学生已删除','warning');
+  if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100); // 立即推送删除
 }
 
 function showStudentDetail(id) {
@@ -1972,6 +1978,7 @@ function deleteExam(id) {
   if(!confirm('确定删除该模考成绩？')) return;
   softDelete(DB.exams, id);
   saveDB(); closeModal(); renderExams(); toast('成绩已删除','warning');
+  if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
 }
 
 // ============================================================
@@ -2837,6 +2844,7 @@ function deleteScheduleLesson(id) {
   if(!confirm('确定删除该课程记录？')) return;
   softDelete(DB.lessons, id);
   saveDB(); closeModal(); renderSchedule(); toast('已删除','warning');
+  if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
 }
 
 // ============================================================
@@ -3114,6 +3122,7 @@ function confirmDeleteTeacher(id) {
   closeModal();
   showTeacherListModal();
   renderLessons();
+  if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
 }
 
 function showTeacherModal(id) {
@@ -3171,6 +3180,7 @@ function deleteTeacher(id) {
   DB.lessons.filter(l=>l.teacher===t.name).forEach(l => softDelete(DB.lessons, l.id));
   if(lessonTeacherFilter===t.name) lessonTeacherFilter='';
   saveDB(); closeModal(); renderLessons(); toast('已删除','warning');
+  if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
 }
 
 function onLessonTeacherChange(val) {
@@ -3568,6 +3578,7 @@ function deleteLesson(id) {
   if(!confirm('确定删除该课程记录？')) return;
   softDelete(DB.lessons, id);
   saveDB(); closeModal(); renderLessons(); toast('已删除','warning');
+  if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
 }
 
 function completeLesson(id) {

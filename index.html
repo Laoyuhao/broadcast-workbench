@@ -1109,17 +1109,30 @@ function autoFixMojibake(obj) {
 }
 
 // ===== 合并两份数据（本地 + 云端），基于ID和updatedAt，支持墓碑删除 =====
-function mergeDB(localDB, remoteDB) {
+// syncMode: true=同步模式（云端为准，本地有但云端没有的旧记录视为已删除）
+function mergeDB(localDB, remoteDB, syncMode) {
   const collections = ['students','trainings','exams','artexams','statuses','lessons','teachers'];
   const result = {};
   collections.forEach(key => {
     const local = localDB[key] || [];
     const remote = remoteDB[key] || [];
     const map = new Map();
-    // 先放入本地
-    local.forEach(item => {
-      if(item.id) map.set(item.id, {...item});
-    });
+    // 同步模式：以云端ID集合为准
+    if(syncMode) {
+      const remoteIds = new Set(remote.filter(r=>r.id).map(r=>r.id));
+      // 只保留本地有且云端也有、或者本地比云端更新的记录
+      local.forEach(item => {
+        if(item.id && remoteIds.has(item.id)) {
+          map.set(item.id, {...item});
+        }
+        // 本地有但云端没有的记录，直接丢弃（已被其他设备删除）
+      });
+    } else {
+      // 非同步模式：先放入本地全部
+      local.forEach(item => {
+        if(item.id) map.set(item.id, {...item});
+      });
+    }
     // 用云端覆盖/补充
     remote.forEach(item => {
       if(!item.id) return;
@@ -1169,7 +1182,8 @@ async function syncPush(initialPush) {
     // 先拉取云端数据做合并（保留其他设备的变更）
     const remoteDB = await fetchRemoteData(token, owner);
     if(remoteDB) {
-      const merged = mergeDB(DB, remoteDB);
+      // syncPush用非同步模式合并（本地新记录要保留），但删除标记会传播
+      const merged = mergeDB(DB, remoteDB, false);
       Object.assign(DB, merged);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
     }
@@ -1209,8 +1223,8 @@ async function syncPull() {
       updateSyncUI();
       return;
     }
-    // 合并
-    const merged = mergeDB(DB, remoteDB);
+    // 合并（同步模式：云端为准，本地有但云端没有的旧记录视为已删除）
+    const merged = mergeDB(DB, remoteDB, true);
     const oldLen = JSON.stringify(DB).length;
     Object.assign(DB, merged);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));

@@ -482,6 +482,8 @@ select.filter-select { min-width: 120px; }
 /* ========== 雷达图容器 ========== */
 .radar-container { display: flex; justify-content: center; }
 /* ========== 日历视图 ========== */
+.teacher-chip { transition: all 0.2s; }
+.teacher-chip:hover { opacity: 0.85; }
 .calendar-header {
   display: flex;
   justify-content: space-between;
@@ -801,21 +803,15 @@ select.filter-select { min-width: 120px; }
       <div class="page-header">
         <div>
           <h2>📚 课时工作台</h2>
-          <p>点击日期直接排课 · 日常/集训两种模式 · 每课2课时</p>
+          <p>按老师管理排课 · 日常/集训两种模式 · 每课2课时</p>
         </div>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showLessonModal(null, {teacher: lessonTeacherFilter})">➕ 快速添加</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="showTeacherModal()">👩‍🏫 管理老师</button>
+          <button class="btn btn-primary btn-sm" onclick="showLessonModal(null, {teacher: lessonTeacherFilter})">➕ 快速添加</button>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:14px;font-weight:600;color:var(--text-secondary);">👩‍🏫 当前老师</span>
-          <select id="lessonTeacherSelect" class="filter-select" onchange="onLessonTeacherChange(this.value)" style="min-width:140px;">
-            <option value="">全部老师</option>
-          </select>
-        </div>
-        <div id="lessonTeacherInfo" style="font-size:13px;color:var(--text-light);"></div>
-      </div>
+      <!-- 老师标签栏 -->
+      <div id="teacherBar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
       <div class="tabs" id="lessonTabs">
         <div class="tab active" data-tab="lesson-calendar">📅 日历排课</div>
         <div class="tab" data-tab="lesson-list">📋 课程列表</div>
@@ -958,6 +954,7 @@ let DB = {
   artexams: [],
   statuses: [],
   lessons: [],
+  teachers: [],  // {id, name, phone, remark, createdAt, updatedAt}
 };
 
 const SYNC_CONFIG_KEY = 'broadcast_art_workbench_sync_config';
@@ -1041,7 +1038,7 @@ function saveDB() {
 function loadDB() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
-    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[]}}; }
+    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; if(!DB.teachers) DB.teachers=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[]}}; }
   }
   // 加载同步配置
   loadSyncConfig();
@@ -1060,7 +1057,7 @@ function stampRecord(item) {
 
 // ===== 合并两份数据（本地 + 云端），基于ID和updatedAt =====
 function mergeDB(localDB, remoteDB) {
-  const collections = ['students','trainings','exams','artexams','statuses','lessons'];
+  const collections = ['students','trainings','exams','artexams','statuses','lessons','teachers'];
   const result = {};
   collections.forEach(key => {
     const local = localDB[key] || [];
@@ -2790,11 +2787,9 @@ let calendarCurrentDate = new Date(); // 日历当前月份
 let calendarMode = 'daily'; // 'daily' 日常 | 'training' 集训
 let lessonTeacherFilter = ''; // 课时工作台：当前选中的老师，空=全部
 
-// 获取所有授课老师列表（去重排序）
+// 获取所有老师名称列表
 function getLessonTeachers() {
-  const set = new Set();
-  DB.lessons.forEach(l => { if(l.teacher) set.add(l.teacher); });
-  return [...set].sort((a,b)=>a.localeCompare(b,'zh'));
+  return DB.teachers.map(t=>t.name);
 }
 
 // 获取当前老师筛选下的课程
@@ -2986,27 +2981,92 @@ function generateTrainingView(year, month, daysInMonth, todayStr) {
   return html;
 }
 
+// ===== 老师管理 =====
+function showTeacherModal(id) {
+  const t = id ? DB.teachers.find(x=>x.id===id) : {};
+  const isEdit = !!id;
+  const html = `<div class="modal-overlay show">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header"><h3>${isEdit?'✏️ 编辑老师':'➕ 添加老师'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>老师姓名 <span class="required">*</span></label><input id="t_name" value="${t.name||''}" placeholder="如：王老师" autofocus></div>
+        <div class="form-group"><label>联系电话</label><input id="t_phone" value="${t.phone||''}" placeholder="如：138xxxx"></div>
+        <div class="form-group"><label>备注</label><textarea id="t_remark" placeholder="擅长方向、备注等...">${t.remark||''}</textarea></div>
+      </div>
+      <div class="modal-footer">
+        ${isEdit?`<button class="btn btn-danger" onclick="deleteTeacher('${id}')">🗑️ 删除</button>`:''}
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveTeacher('${id||''}')">💾 保存</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+function saveTeacher(id) {
+  const name = val('t_name');
+  if(!name) { toast('请输入老师姓名','error'); return; }
+  const data = { name, phone: val('t_phone'), remark: val('t_remark') };
+  if(id) {
+    const old = DB.teachers.find(x=>x.id===id);
+    if(old) {
+      // 如果改了名字，同步更新已有课程的teacher字段
+      if(old.name !== name) {
+        DB.lessons.forEach(l=>{ if(l.teacher===old.name) l.teacher=name; });
+      }
+      Object.assign(old, data); toast('老师信息已更新');
+    }
+  } else {
+    // 检查重名
+    if(DB.teachers.some(x=>x.name===name)) { toast('该老师已存在','error'); return; }
+    data.id = genId(); DB.teachers.push(data); toast('老师已添加');
+  }
+  stampRecord(data);
+  saveDB(); closeModal(); renderLessons();
+}
+
+function deleteTeacher(id) {
+  const t = DB.teachers.find(x=>x.id===id);
+  if(!t) return;
+  const lessonCount = DB.lessons.filter(l=>l.teacher===t.name).length;
+  const msg = lessonCount>0
+    ? `该老师名下有 ${lessonCount} 节课程，删除老师后这些课程的授课教师将变为空。确定删除？`
+    : '确定删除该老师？';
+  if(!confirm(msg)) return;
+  // 清空关联课程的teacher
+  DB.lessons.forEach(l=>{ if(l.teacher===t.name) l.teacher=''; });
+  DB.teachers = DB.teachers.filter(x=>x.id!==id);
+  if(lessonTeacherFilter===t.name) lessonTeacherFilter='';
+  saveDB(); closeModal(); renderLessons(); toast('已删除','warning');
+}
+
 function onLessonTeacherChange(val) {
   lessonTeacherFilter = val;
   renderLessons();
 }
 
-// 初始化老师选择器（渲染前调用）
+// 渲染老师标签栏
 function initLessonTeacherSelect() {
-  const sel = document.getElementById('lessonTeacherSelect');
-  if(!sel) return;
-  const teachers = getLessonTeachers();
-  const current = lessonTeacherFilter;
-  sel.innerHTML = '<option value="">全部老师</option>' + teachers.map(t=>`<option value="${t}" ${current===t?'selected':''}>${t}</option>`).join('');
-  // 更新信息提示
-  const info = document.getElementById('lessonTeacherInfo');
-  if(info) {
-    const filtered = getFilteredLessons();
-    const completed = filtered.filter(l=>l.status==='已完成');
-    info.innerHTML = lessonTeacherFilter
-      ? `<span class="badge badge-purple">${lessonTeacherFilter}</span> 共 ${filtered.length} 节 · 已完成 ${completed.length} 节 · ${completed.length*2} 课时`
-      : filtered.length > 0 ? `共 ${filtered.length} 节课程` : '';
-  }
+  const bar = document.getElementById('teacherBar');
+  if(!bar) return;
+  const teachers = DB.teachers;
+  let html = '';
+  // "全部"标签
+  const allLessons = DB.lessons;
+  html += `<div class="teacher-chip ${lessonTeacherFilter===''?'active':''}" onclick="onLessonTeacherChange('')" style="cursor:pointer;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;${lessonTeacherFilter===''?'background:var(--primary);color:#fff;':'background:#F0F0F0;color:var(--text-secondary);'}">全部（${allLessons.length}）</div>`;
+  // 各老师标签
+  teachers.forEach(t => {
+    const count = DB.lessons.filter(l=>l.teacher===t.name).length;
+    const isActive = lessonTeacherFilter===t.name;
+    html += `<div class="teacher-chip ${isActive?'active':''}" onclick="onLessonTeacherChange('${t.name.replace(/'/g,"\'")}')" style="cursor:pointer;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px;${isActive?'background:var(--primary);color:#fff;':'background:#F0F0F0;color:var(--text-secondary);'}">
+      <span>${t.name}</span>
+      <span style="font-size:11px;opacity:0.8;">(${count})</span>
+      <span onclick="event.stopPropagation();showTeacherModal('${t.id}')" style="margin-left:4px;opacity:0.6;font-size:11px;">✏️</span>
+    </div>`;
+  });
+  // 添加老师按钮
+  html += `<div onclick="showTeacherModal()" style="cursor:pointer;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;background:transparent;border:1px dashed var(--primary);color:var(--primary);">➕ 添加老师</div>`;
+  bar.innerHTML = html;
 }
 
 function switchCalendarMode(mode) {
@@ -3268,7 +3328,7 @@ function showLessonModal(id, preset) {
           <div class="form-group"><label>课程类型</label><select id="l_classType"><option value="大课" ${l.classType==='大课'?'selected':''}>大课</option><option value="小组课" ${l.classType==='小组课'?'selected':''}>小组课</option><option value="一对一" ${l.classType==='一对一'?'selected':''}>一对一</option><option value="模考" ${l.classType==='模考'?'selected':''}>模考</option><option value="其他" ${l.classType==='其他'?'selected':''}>其他</option></select></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>授课教师</label><input id="l_teacher" value="${currentTeacher}" placeholder="如：王老师"></div>
+          <div class="form-group"><label>授课教师</label><select id="l_teacher"><option value="">请选择</option>${DB.teachers.map(t=>`<option value="${t.name}" ${currentTeacher===t.name?'selected':''}>${t.name}</option>`).join('')}</select></div>
           <div class="form-group"><label>授课对象</label><input id="l_students" value="${l.students||''}" placeholder="如：全班 或 林晓阳、张子涵"></div>
           <div class="form-group"><label>地点</label><input id="l_location" value="${l.location||''}" placeholder="如：1号演播室"></div>
         </div>

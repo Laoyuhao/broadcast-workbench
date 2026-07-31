@@ -747,6 +747,12 @@ select.filter-select { min-width: 120px; }
             <option value="一般">一般</option>
             <option value="薄弱">薄弱</option>
           </select>
+          <select class="filter-select" id="studentFilterTeacher" onchange="renderStudents()">
+            <option value="">全部招生老师</option>
+          </select>
+          <select class="filter-select" id="studentFilterSource" onchange="renderStudents()">
+            <option value="">全部生源地</option>
+          </select>
         </div>
         <div class="toolbar-right">
           <button class="btn btn-primary" onclick="showStudentModal()">➕ 添加学生</button>
@@ -1422,50 +1428,50 @@ function renderDashboard() {
 //  第五部分：学生档案页
 // ============================================================
 function renderStudents() {
-  // 更新班级筛选项
+  // 更新筛选项
   updateClassFilter();
+  updateStudentFilters();
   const keyword = (document.getElementById('studentSearch')?.value||'').trim();
   const levelFilter = document.getElementById('studentFilterLevel')?.value||'';
   const classFilter = document.getElementById('studentFilterClass')?.value||'';
+  const teacherFilter = document.getElementById('studentFilterTeacher')?.value||'';
+  const sourceFilter = document.getElementById('studentFilterSource')?.value||'';
   let list = DB.students.filter(s=>{
     if(keyword && !s.name.includes(keyword)) return false;
     if(levelFilter && s.level!==levelFilter) return false;
     if(classFilter && s.classNo!==classFilter) return false;
+    if(teacherFilter && s.recruitTeacher!==teacherFilter) return false;
+    if(sourceFilter && s.source!==sourceFilter) return false;
     return true;
   });
   const grid = document.getElementById('studentGrid');
   if(list.length===0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="icon">👥</div><p>暂无学生，点击右上角"添加学生"开始</p></div>';
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="icon">👥</div><p>暂无符合条件的学生</p></div>';
     return;
   }
 
-  // 按班级分组
-  const classGroups = {};
-  list.forEach(s=>{
-    const cn = s.classNo || '未分班';
-    if(!classGroups[cn]) classGroups[cn] = [];
-    classGroups[cn].push(s);
-  });
-  const classNames = Object.keys(classGroups).sort((a,b)=> a==='未分班'?1: b==='未分班'?-1 : a.localeCompare(b,'zh'));
+  // 直接显示所有学生卡片（不按班级分组）
+  grid.innerHTML = `<div class="student-grid">${list.map(s=>renderStudentCard(s)).join('')}</div>`;
+}
 
-  let html = '';
-  classNames.forEach(cn=>{
-    const group = classGroups[cn];
-    // 班级统计
-    const groupExams = group.flatMap(s=> DB.exams.filter(e=>e.studentId===s.id && e.total));
-    const groupAvg = groupExams.length>0 ? (groupExams.reduce((a,e)=>a+e.total,0)/groupExams.length).toFixed(1) : '—';
-    const groupCultures = group.map(s=>parseFloat(s.cultureScore)).filter(v=>!isNaN(v));
-    const cultureAvg = groupCultures.length>0 ? (groupCultures.reduce((a,b)=>a+b,0)/groupCultures.length).toFixed(0) : '—';
-    html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 16px;background:var(--card-bg);border-radius:var(--radius-sm);box-shadow:var(--shadow);">
-      <span style="font-size:16px;">🏫</span>
-      <span style="font-size:16px;font-weight:700;">${cn}</span>
-      <span class="badge badge-purple">${group.length}人</span>
-      <span style="font-size:13px;color:var(--text-secondary);">专业均分 <b style="color:var(--primary);">${groupAvg}</b></span>
-      <span style="font-size:13px;color:var(--text-secondary);">文化均分 <b style="color:var(--info);">${cultureAvg}</b></span>
-    </div>`;
-    html += `<div class="student-grid" style="margin-bottom:24px;">${group.map(s=>renderStudentCard(s)).join('')}</div>`;
-  });
-  grid.innerHTML = html;
+// 更新招生老师和生源地筛选项
+function updateStudentFilters() {
+  // 招生老师
+  const teacherSel = document.getElementById('studentFilterTeacher');
+  if(teacherSel) {
+    const current = teacherSel.value;
+    const teachers = [...new Set(DB.students.map(s=>s.recruitTeacher).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh'));
+    teacherSel.innerHTML = '<option value="">全部招生老师</option>' + teachers.map(t=>`<option value="${t}">${t}</option>`).join('');
+    teacherSel.value = current;
+  }
+  // 生源地
+  const sourceSel = document.getElementById('studentFilterSource');
+  if(sourceSel) {
+    const current = sourceSel.value;
+    const sources = [...new Set(DB.students.map(s=>s.source).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh'));
+    sourceSel.innerHTML = '<option value="">全部生源地</option>' + sources.map(s=>`<option value="${s}">${s}</option>`).join('');
+    sourceSel.value = current;
+  }
 }
 
 function renderStudentCard(s) {
@@ -1579,11 +1585,17 @@ function saveStudent(id) {
 function val(id) { return document.getElementById(id)?.value?.trim()||''; }
 
 function deleteStudent(id) {
-  if(!confirm('确定删除该学生？相关的训练、成绩、状态记录也会一并删除。')) return;
-  DB.students = DB.students.filter(s=>s.id!==id);
+  const s = getStudent(id);
+  if(!s) return;
+  const examCount = DB.exams.filter(e=>e.studentId===id).length;
+  const msg = examCount > 0
+    ? `确定删除学生「${s.name}」？\n\n该学生有 ${examCount} 条模考成绩记录，将一并删除。\n此操作不可撤销。`
+    : `确定删除学生「${s.name}」？\n\n此操作不可撤销。`;
+  if(!confirm(msg)) return;
+  DB.students = DB.students.filter(x=>x.id!==id);
   DB.trainings = DB.trainings.filter(t=>t.studentId!==id);
   DB.exams = DB.exams.filter(e=>e.studentId!==id);
-  DB.statuses = DB.statuses.filter(s=>s.studentId!==id);
+  DB.statuses = DB.statuses.filter(x=>x.studentId!==id);
   saveDB(); closeModal(); renderStudents(); toast('学生已删除','warning');
 }
 
@@ -1646,6 +1658,7 @@ function showStudentDetail(id) {
         ${s.remark?`<div class="alert alert-info" style="margin-top:16px;">📝 ${s.remark}</div>`:''}
       </div>
       <div class="modal-footer">
+        <button class="btn btn-danger" onclick="deleteStudent('${id}')">🗑️ 删除学生</button>
         <button class="btn btn-outline" onclick="closeModal()">关闭</button>
         <button class="btn btn-primary" onclick="closeModal();showStudentModal('${id}')">编辑</button>
       </div>

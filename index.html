@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>播音主持艺考班主任工作台</title>
+<title>艺风粤播学生管理工作台</title>
 <style>
 /* ========== 全局变量与基础 ========== */
 :root {
@@ -61,6 +61,22 @@ body {
 .sidebar-header p {
   font-size: 11px;
   opacity: 0.7;
+}
+.sidebar-logo-box {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sidebar-logo {
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+  display: block;
 }
 .nav { padding: 12px 0; }
 .nav-item {
@@ -650,7 +666,7 @@ select.filter-select { min-width: 120px; }
 /* ========== 响应式 ========== */
 @media (max-width: 768px) {
   .sidebar { width: 60px; }
-  .sidebar-header h1, .sidebar-header p, .nav-item span:not(.nav-icon) { display: none; }
+  .sidebar-header h1, .sidebar-header p, .sidebar-logo-box, .nav-item span:not(.nav-icon) { display: none; }
   .nav-item { justify-content: center; padding: 12px; }
   .main { margin-left: 60px; padding: 16px; }
 }
@@ -661,8 +677,11 @@ select.filter-select { min-width: 120px; }
   <!-- ========== 侧边栏 ========== -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h1>🎙️ 播音主持艺考</h1>
-      <p>班主任工作台</p>
+      <div class="sidebar-logo-box">
+        <img src="assets/logo.jpg" alt="艺风粤播" class="sidebar-logo">
+      </div>
+      <h1>艺风粤播</h1>
+      <p>学生管理工作台</p>
     </div>
     <nav class="nav" id="nav">
       <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>数据总览</span></div>
@@ -806,7 +825,7 @@ select.filter-select { min-width: 120px; }
           <p>按老师管理排课 · 日常/集训两种模式 · 每课2课时</p>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-outline btn-sm" onclick="showTeacherModal()">👩‍🏫 管理老师</button>
+          <button class="btn btn-outline btn-sm" onclick="showTeacherListModal()">👩‍🏫 管理老师</button>
           <button class="btn btn-primary btn-sm" onclick="showLessonModal(null, {teacher: lessonTeacherFilter})">➕ 快速添加</button>
         </div>
       </div>
@@ -1440,9 +1459,8 @@ function renderStudentCard(s) {
         <span class="badge" style="background:${color}22;color:${color};">${s.level||'未评'}</span>
         ${s.recruitTeacher ? `<span class="badge badge-info">👨‍🏫 ${s.recruitTeacher}</span>` : ''}
       </div>
-      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;">
+      <div style="margin-top:12px;display:flex;justify-content:center;gap:8px;text-align:center;">
         <div><div style="font-size:16px;font-weight:700;color:var(--primary);">${s.height||'—'}<span style="font-size:11px;font-weight:400;">cm</span></div><div style="font-size:11px;color:var(--text-secondary);">身高</div></div>
-        <div><div style="font-size:16px;font-weight:700;color:var(--info);">${s.cultureScore||'—'}</div><div style="font-size:11px;color:var(--text-secondary);">文化分</div></div>
       </div>
     </div>`;
 }
@@ -1488,7 +1506,6 @@ function showStudentModal(id) {
           <div class="form-group"><label>身高(cm)</label><input id="s_height" type="number" value="${s.height||''}" placeholder="如170"></div>
           <div class="form-group"><label>体重(kg)</label><input id="s_weight" type="number" value="${s.weight||''}" placeholder="如55"></div>
         </div>
-        <div class="form-group"><label>目标院校</label><input id="s_targetSchools" value="${s.targetSchools||''}" placeholder="如：中传、浙传、上戏"></div>
         <div class="form-row">
           <div class="form-group"><label>专业特长</label><input id="s_specialty" value="${s.specialty||''}" placeholder="如：朗诵、新闻、主持"></div>
           <div class="form-group"><label>薄弱项</label><input id="s_weakness" value="${s.weakness||''}" placeholder="如：即兴评述"></div>
@@ -1582,7 +1599,7 @@ function showStudentDetail(id) {
             <table>
               <tr><td style="color:var(--text-secondary);">综合水平</td><td>${s.level?`<span class="badge" style="background:${LEVEL_COLORS[s.level]}22;color:${LEVEL_COLORS[s.level]};">${s.level}</span>`:'未评'}</td></tr>
               <tr><td style="color:var(--text-secondary);">文化分</td><td>${s.cultureScore?`<b style="color:var(--info);font-size:16px;">${s.cultureScore}</b> / 750`:'—'}</td></tr>
-              <tr><td style="color:var(--text-secondary);">目标院校</td><td>${s.targetSchools||'—'}</td></tr>
+    
               <tr><td style="color:var(--text-secondary);">专业特长</td><td>${s.specialty||'—'}</td></tr>
               <tr><td style="color:var(--text-secondary);">薄弱项</td><td>${s.weakness||'—'}</td></tr>
               <tr><td style="color:var(--text-secondary);">专业模考均分</td><td><b style="color:var(--primary);font-size:16px;">${avgScore}</b></td></tr>
@@ -1844,10 +1861,9 @@ function showExamModal(id) {
           <div class="form-group"><label>新闻播读（0-100）</label><input id="e_news" type="number" min="0" max="100" value="${e.news||''}" placeholder="如82"></div>
           <div class="form-group"><label>文学作品朗诵（0-100）</label><input id="e_literature" type="number" min="0" max="100" value="${e.literature||''}" placeholder="如85"></div>
           <div class="form-group"><label>即兴评述（0-100）</label><input id="e_comment" type="number" min="0" max="100" value="${e.comment||''}" placeholder="如78"></div>
-          <div class="form-group"><label>模拟主持（0-100）</label><input id="e_host" type="number" min="0" max="100" value="${e.host||''}" placeholder="如80"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>总分</label><input id="e_total" type="number" value="${e.total||''}" placeholder="留空自动计算四科平均"></div>
+          <div class="form-group"><label>总分</label><input id="e_total" type="number" value="${e.total||''}" placeholder="留空自动计算三科平均"></div>
           <div class="form-group"><label>班级排名</label><input id="e_rank" type="number" value="${e.rank||''}" placeholder="如第5名"></div>
         </div>
         <div class="form-group"><label>备注</label><textarea id="e_remark" placeholder="考试表现、特殊情况...">${e.remark||''}</textarea></div>
@@ -1861,9 +1877,9 @@ function showExamModal(id) {
   </div>`;
   document.getElementById('modalContainer').innerHTML = html;
   // 自动计算总分
-  ['e_news','e_literature','e_comment','e_host'].forEach(id=>{
+  ['e_news','e_literature','e_comment'].forEach(id=>{
     document.getElementById(id).addEventListener('input', ()=>{
-      const vals = ['e_news','e_literature','e_comment','e_host'].map(x=>parseFloat(document.getElementById(x).value)).filter(v=>!isNaN(v));
+      const vals = ['e_news','e_literature','e_comment'].map(x=>parseFloat(document.getElementById(x).value)).filter(v=>!isNaN(v));
       if(vals.length>0) document.getElementById('e_total').value = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
     });
   });
@@ -2893,7 +2909,10 @@ function generateCalendarDays(year, month, startWeekday, daysInMonth, prevMonthD
     let lessonTags = dayLessons.slice(0,3).map(l=>{
       const cls = l.status==='已完成'?'completed':l.status==='已取消'?'cancelled':'upcoming';
       const tCls = l.mode==='training'?' training':'';
-      return `<div class="calendar-lesson-tag ${cls}${tCls}" onclick="event.stopPropagation();showLessonModal('${l.id}')">${l.timeSlot?l.timeSlot.split('-')[0]+' ':''}${l.name||'课程'}</div>`;
+      return `<div class="calendar-lesson-tag ${cls}${tCls}" onclick="event.stopPropagation();showLessonModal('${l.id}')" title="${l.name||'课程'} · ${l.scheduleClass||''}">
+        ${l.timeSlot?l.timeSlot.split('-')[0]+' ':''}${l.name||'课程'}
+        ${l.scheduleClass?`<div style="font-size:9px;opacity:0.8;margin-top:1px;">📍 ${l.scheduleClass}</div>`:''}
+      </div>`;
     }).join('');
     const moreTag = dayLessons.length>3 ? `<div class="calendar-day-more">+${dayLessons.length-3}更多</div>` : '';
     html += `<div class="calendar-day ${isToday?'today':''} ${hasLessons?'has-lessons':''}" onclick="quickAddLesson('${dateStr}')">
@@ -2956,10 +2975,9 @@ function generateTrainingView(year, month, daysInMonth, todayStr) {
                 <div class="training-slot-label">${slot.icon} ${slot.label} · ${l.timeSlot||slot.defaultTime}</div>
                 <div class="training-slot-content">
                   <b>${l.name||'课程'}</b>
-                  ${l.teacher?`<div style="font-size:12px;color:var(--text-secondary);">${l.teacher}</div>`:''}
-                  ${l.students?`<div style="font-size:12px;color:var(--text-secondary);">${l.students}</div>`:''}
-                  <div style="margin-top:4px;"><span class="badge ${LESSON_TYPE_COLORS[l.classType]||'badge-info'}" style="font-size:10px;">${l.classType||'—'}</span>
-                  <span class="badge" style="background:${(LESSON_STATUS_COLORS[l.status]||'#B2BEC3')}22;color:${LESSON_STATUS_COLORS[l.status]||'#B2BEC3'};font-size:10px;">${l.status}</span></div>
+                  ${l.scheduleClass?`<div style="font-size:12px;color:var(--text-secondary);">📍 ${l.scheduleClass}</div>`:''}
+                  ${l.teacher?`<div style="font-size:12px;color:var(--text-secondary);">👨‍🏫 ${l.teacher}</div>`:''}
+                  <div style="margin-top:4px;"><span class="badge" style="background:${(LESSON_STATUS_COLORS[l.status]||'#B2BEC3')}22;color:${LESSON_STATUS_COLORS[l.status]||'#B2BEC3'};font-size:10px;">${l.status}</span></div>
                 </div>
               </div>`;
             }).join('');
@@ -2982,6 +3000,61 @@ function generateTrainingView(year, month, daysInMonth, todayStr) {
 }
 
 // ===== 老师管理 =====
+// 老师列表管理弹窗（带删除功能）
+function showTeacherListModal() {
+  const html = `<div class="modal-overlay show">
+    <div class="modal" style="max-width:560px;">
+      <div class="modal-header"><h3>👩‍🏫 老师管理</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-size:13px;color:var(--text-secondary);">共 ${DB.teachers.length} 位老师</div>
+          <button class="btn btn-primary btn-sm" onclick="closeModal();showTeacherModal()">➕ 添加老师</button>
+        </div>
+        ${DB.teachers.length === 0 ? '<div class="empty-state" style="padding:20px;"><div class="icon">👩‍🏫</div><p>暂无老师，请添加</p></div>' : `
+        <div style="max-height:60vh;overflow-y:auto;">
+          ${DB.teachers.map(t=>{
+            const lessonCount = DB.lessons.filter(l=>l.teacher===t.name).length;
+            const completedCount = DB.lessons.filter(l=>l.teacher===t.name && l.status==='已完成').length;
+            return `<div style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #eee;border-radius:8px;margin-bottom:8px;">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;">${t.name.charAt(0)}</div>
+              <div style="flex:1;">
+                <div style="font-weight:600;">${t.name}</div>
+                <div style="font-size:12px;color:var(--text-secondary);">${t.phone||'无电话'} · ${lessonCount}节课 · ${completedCount}已完成${t.remark?' · '+t.remark:''}</div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="closeModal();showTeacherModal('${t.id}')">✏️ 编辑</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDeleteTeacher('${t.id}')">🗑️ 删除</button>
+            </div>`;
+          }).join('')}
+        </div>`}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">关闭</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+function confirmDeleteTeacher(id) {
+  const t = DB.teachers.find(x=>x.id===id);
+  if(!t) return;
+  const lessonCount = DB.lessons.filter(l=>l.teacher===t.name).length;
+  const msg = lessonCount>0
+    ? `该老师「${t.name}」名下有 ${lessonCount} 节课程。\n\n删除后：\n· 该老师从列表中移除\n· 这些课程的授课教师将变为空\n\n确定删除？`
+    : `确定删除老师「${t.name}」？`;
+  if(!confirm(msg)) return;
+  // 清空关联课程的teacher
+  DB.lessons.forEach(l=>{ if(l.teacher===t.name) l.teacher=''; });
+  DB.teachers = DB.teachers.filter(x=>x.id!==id);
+  if(lessonTeacherFilter===t.name) lessonTeacherFilter='';
+  saveDB();
+  toast('已删除','warning');
+  // 重新打开管理弹窗
+  closeModal();
+  showTeacherListModal();
+  renderLessons();
+}
+
 function showTeacherModal(id) {
   const t = id ? DB.teachers.find(x=>x.id===id) : {};
   const isEdit = !!id;
@@ -3155,7 +3228,7 @@ function renderLessonListFiltered() {
   }
   container.innerHTML = `<div class="card" style="margin:0;">
     <div class="table-wrapper"><table>
-      <thead><tr><th>日期</th><th>时间</th><th>课程名称</th><th>模式</th><th>类型</th><th>授课对象</th><th>教师</th><th>状态</th><th>课时</th><th>操作</th></tr></thead>
+      <thead><tr><th>日期</th><th>时间</th><th>课程名称</th><th>模式</th><th>授课班级</th><th>教师</th><th>状态</th><th>课时</th><th>操作</th></tr></thead>
       <tbody>${list.map(l=>{
         const statusColor = LESSON_STATUS_COLORS[l.status]||'#B2BEC3';
         const typeBadge = LESSON_TYPE_COLORS[l.classType]||'badge-info';
@@ -3165,10 +3238,9 @@ function renderLessonListFiltered() {
         return `<tr>
           <td>${formatDateFull(l.date)}</td>
           <td>${l.timeSlot||'—'}</td>
-          <td><b>${l.name||'—'}</b>${l.content?`<br><span style="font-size:11px;color:var(--text-secondary);">${l.content}</span>`:''}</td>
+          <td><b>${l.name||'—'}</b></td>
           <td><span class="badge ${modeBadge}">${modeLabel}</span></td>
-          <td><span class="badge ${typeBadge}">${l.classType||'—'}</span></td>
-          <td>${l.students||'—'}</td>
+          <td>${l.scheduleClass?`<span class="badge badge-purple">🏫 ${l.scheduleClass}</span>`:'—'}</td>
           <td>${l.teacher||'—'}</td>
           <td><span class="badge" style="background:${statusColor}22;color:${statusColor};">${l.status||'—'}</span></td>
           <td><b>${hours}</b></td>
@@ -3293,51 +3365,39 @@ function renderLessonStats(content) {
   content.innerHTML = html;
 }
 
-// ===== 课程添加/编辑弹窗 =====
+// ===== 课程添加/编辑弹窗（简化版）======
 function showLessonModal(id, preset) {
   const l = id ? DB.lessons.find(x=>x.id===id) : {};
   const isEdit = !!id;
-  // preset: {date, mode, trainingSlot, timeSlot, scheduleClass, scheduleDay}
   const p = preset || {};
   const currentDate = l.date || p.date || formatDateFull(new Date().toISOString());
   const currentMode = l.mode || p.mode || 'daily';
-  const currentSlot = l.trainingSlot || p.trainingSlot || '';
-  const currentTime = l.timeSlot || p.timeSlot || '';
   const currentTeacher = l.teacher || p.teacher || lessonTeacherFilter || '';
   const currentScheduleClass = l.scheduleClass || p.scheduleClass || '';
-  const currentScheduleDay = l.scheduleDay || p.scheduleDay || '';
+  const currentLocation = l.location || '';
+  const currentStatus = l.status || '未上';
+
+  // 班级列表（来自已有学生班级）
+  const classOptions = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].map(c=>`<option value="${c}" ${currentScheduleClass===c?'selected':''}>${c}</option>`).join('');
 
   const html = `<div class="modal-overlay show">
-    <div class="modal">
+    <div class="modal" style="max-width:480px;">
       <div class="modal-header"><h3>${isEdit?'✏️ 编辑课程':'➕ 添加课程'}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
       <div class="modal-body">
+        <input type="hidden" id="l_date" value="${currentDate}">
+        <input type="hidden" id="l_teacher" value="${currentTeacher}">
+        <input type="hidden" id="l_slot" value="${p.trainingSlot||l.trainingSlot||''}">
+        <div class="form-group"><label>课程名称 <span class="required">*</span></label><input id="l_name" value="${l.name||''}" placeholder="如：新闻播读基础" autofocus></div>
         <div class="form-row">
-          <div class="form-group"><label>课程名称 <span class="required">*</span></label><input id="l_name" value="${l.name||''}" placeholder="如：新闻播读基础" autofocus></div>
-          <div class="form-group"><label>日期 <span class="required">*</span></label><input id="l_date" type="date" value="${currentDate}"></div>
-          <div class="form-group"><label>排课模式</label><select id="l_mode" onchange="onModeChange()"><option value="daily" ${currentMode==='daily'?'selected':''}>📋 日常</option><option value="training" ${currentMode==='training'?'selected':''}>🔥 集训</option></select></div>
+          <div class="form-group"><label>排课模式</label><select id="l_mode"><option value="daily" ${currentMode==='daily'?'selected':''}>📋 日常</option><option value="training" ${currentMode==='training'?'selected':''}>🔥 集训</option></select></div>
+          <div class="form-group"><label>授课班级 <span class="required">*</span></label><select id="l_scheduleClass"><option value="">请选择班级</option>${classOptions}<option value="__custom__" ${currentScheduleClass && ![...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].includes(currentScheduleClass)?'selected':''}>自定义...</option></select><input id="l_scheduleClassCustom" placeholder="输入班级名称" style="margin-top:6px;display:none;" value="${currentScheduleClass && ![...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].includes(currentScheduleClass)?currentScheduleClass:''}"></div>
         </div>
+        <div class="form-group"><label>授课课室（选填）</label><input id="l_location" value="${currentLocation}" placeholder="如：1号演播室"></div>
         <div class="form-row">
-          <div class="form-group" id="l_scheduleclass_group" style="display:${currentMode==='training'?'block':'none'};">
-            <label>所属班级</label>
-            <input id="l_scheduleClass" value="${currentScheduleClass}" placeholder="如：集训A班" list="scheduleClassList">
-            <datalist id="scheduleClassList">${[...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].map(c=>`<option value="${c}">`).join('')}</datalist>
-          </div>
-          <div class="form-group" id="l_slot_group" style="display:${currentMode==='training'?'block':'none'};"><label>集训时段</label><select id="l_trainingSlot" onchange="onSlotChange()"><option value="morning" ${currentSlot==='morning'?'selected':''}>🌅 早上 (10:00-12:00)</option><option value="afternoon" ${currentSlot==='afternoon'?'selected':''}>☀️ 下午 (14:30-16:30)</option><option value="evening" ${currentSlot==='evening'?'selected':''}>🌙 晚上 (19:00-21:00)</option></select></div>
-          <div class="form-group" id="l_day_group" style="display:${currentMode==='training'?'block':'none'};"><label>星期</label><select id="l_scheduleDay"><option value="">不指定</option><option value="1" ${currentScheduleDay==1?'selected':''}>周一</option><option value="2" ${currentScheduleDay==2?'selected':''}>周二</option><option value="3" ${currentScheduleDay==3?'selected':''}>周三</option><option value="4" ${currentScheduleDay==4?'selected':''}>周四</option><option value="5" ${currentScheduleDay==5?'selected':''}>周五</option><option value="6" ${currentScheduleDay==6?'selected':''}>周六</option><option value="7" ${currentScheduleDay==7?'selected':''}>周日</option></select></div>
-          <div class="form-group"><label>时间段</label><input id="l_timeSlot" value="${currentTime}" placeholder="如：08:00-09:30"></div>
-          <div class="form-group"><label>课程类型</label><select id="l_classType"><option value="大课" ${l.classType==='大课'?'selected':''}>大课</option><option value="小组课" ${l.classType==='小组课'?'selected':''}>小组课</option><option value="一对一" ${l.classType==='一对一'?'selected':''}>一对一</option><option value="模考" ${l.classType==='模考'?'selected':''}>模考</option><option value="其他" ${l.classType==='其他'?'selected':''}>其他</option></select></div>
+          <div class="form-group"><label>状态</label><select id="l_status"><option value="未上" ${currentStatus==='未上'?'selected':''}>未上</option><option value="已完成" ${currentStatus==='已完成'?'selected':''}>已完成</option><option value="已取消" ${currentStatus==='已取消'?'selected':''}>已取消</option></select></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>授课教师</label><select id="l_teacher"><option value="">请选择</option>${DB.teachers.map(t=>`<option value="${t.name}" ${currentTeacher===t.name?'selected':''}>${t.name}</option>`).join('')}</select></div>
-          <div class="form-group"><label>授课对象</label><input id="l_students" value="${l.students||''}" placeholder="如：全班 或 林晓阳、张子涵"></div>
-          <div class="form-group"><label>地点</label><input id="l_location" value="${l.location||''}" placeholder="如：1号演播室"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>状态</label><select id="l_status"><option value="未上" ${l.status==='未上'?'selected':''}>未上</option><option value="已完成" ${l.status==='已完成'?'selected':''}>已完成</option><option value="已取消" ${l.status==='已取消'?'selected':''}>已取消</option></select></div>
-        </div>
-        <div class="form-group"><label>教学内容</label><textarea id="l_content" placeholder="本节课教学内容...">${l.content||''}</textarea></div>
         <div class="form-group"><label>备注</label><textarea id="l_remark" placeholder="课堂情况、注意事项...">${l.remark||''}</textarea></div>
-        <div class="alert alert-info">💡 每节课默认计 <b>2个课时</b>，已完成状态才计入课时统计</div>
+        ${currentTeacher?`<div class="alert alert-info">授课教师：<b>${currentTeacher}</b> · 日期：${currentDate}</div>`:`<div class="alert alert-info">日期：${currentDate}</div>`}
       </div>
       <div class="modal-footer">
         ${isEdit?`<button class="btn btn-danger" onclick="deleteLesson('${id}')">🗑️ 删除</button>`:''}
@@ -3348,11 +3408,20 @@ function showLessonModal(id, preset) {
     </div>
   </div>`;
   document.getElementById('modalContainer').innerHTML = html;
-  // 选择集训时段时自动填充时间段
-  document.getElementById('l_trainingSlot')?.addEventListener('change', function(){
-    const slot = TRAINING_SLOTS.find(s=>s.key===this.value);
-    if(slot) document.getElementById('l_timeSlot').value = slot.defaultTime;
-  });
+
+  // 班级下拉框 - 自定义切换
+  const sel = document.getElementById('l_scheduleClass');
+  const customInput = document.getElementById('l_scheduleClassCustom');
+  function updateCustomInput() {
+    if(sel.value === '__custom__') {
+      customInput.style.display = 'block';
+      customInput.focus();
+    } else {
+      customInput.style.display = 'none';
+    }
+  }
+  sel.addEventListener('change', updateCustomInput);
+  updateCustomInput();
 }
 
 function onModeChange() {
@@ -3378,21 +3447,59 @@ function onSlotChange() {
 function saveLesson(id) {
   const name = val('l_name');
   const date = val('l_date');
+  const mode = val('l_mode');
   if(!name) { toast('请输入课程名称','error'); return; }
   if(!date) { toast('请选择日期','error'); return; }
+
+  // 处理授课班级
+  let scheduleClass = '';
+  const selVal = val('l_scheduleClass');
+  if(selVal === '__custom__') {
+    scheduleClass = val('l_scheduleClassCustom').trim();
+  } else {
+    scheduleClass = selVal;
+  }
+  if(!scheduleClass) { toast('请选择或输入授课班级','error'); return; }
+
+  const teacher = val('l_teacher');
+  const trainingSlot = val('l_slot');
+
+  // 自动根据mode + slot计算timeSlot
+  let timeSlot = '';
+  if(mode==='training' && trainingSlot) {
+    const slot = TRAINING_SLOTS.find(s=>s.key===trainingSlot);
+    if(slot) timeSlot = slot.defaultTime;
+  }
+
+  // 自动计算scheduleDay
+  let scheduleDay = null;
+  if(mode==='training' && date) {
+    const dt = new Date(date);
+    scheduleDay = ((dt.getDay()+6)%7)+1;
+  }
+
   const data = {
-    name, date, mode: val('l_mode'),
-    trainingSlot: val('l_mode')==='training' ? val('l_trainingSlot') : '',
-    scheduleClass: val('l_mode')==='training' ? val('l_scheduleClass') : '',
-    scheduleDay: val('l_mode')==='training' ? parseInt(val('l_scheduleDay'))||null : null,
-    timeSlot: val('l_timeSlot'),
-    classType: val('l_classType'), teacher: val('l_teacher'),
-    status: val('l_status'), students: val('l_students'),
-    location: val('l_location'), content: val('l_content'),
+    name, date, mode,
+    trainingSlot: mode==='training' ? trainingSlot : '',
+    scheduleClass: scheduleClass,
+    scheduleDay: scheduleDay,
+    timeSlot: timeSlot,
+    classType: '大课',
+    teacher: teacher,
+    status: val('l_status'),
+    students: '全班',
+    location: val('l_location'),
+    content: name,
     remark: val('l_remark'),
   };
-  if(id) { Object.assign(DB.lessons.find(l=>l.id===id), data); toast('课程已更新'); }
-  else { data.id = genId(); DB.lessons.push(data); toast('课程已添加'); }
+  if(id) {
+    const lesson = DB.lessons.find(l=>l.id===id);
+    if(lesson) { Object.assign(lesson, data); toast('课程已更新'); }
+  } else {
+    data.id = genId();
+    DB.lessons.push(data);
+    toast('课程已添加');
+  }
   stampRecord(data);
   saveDB(); closeModal(); renderLessons();
 }

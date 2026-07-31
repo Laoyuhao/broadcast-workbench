@@ -1189,7 +1189,7 @@ async function fetchRemoteData(token, owner) {
   if(res.status === 404) return null; // 文件不存在
   if(!res.ok) throw new Error(`GitHub API错误: ${res.status}`);
   const data = await res.json();
-  const content = atob(data.content);
+  const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g,''))));
   return JSON.parse(content);
 }
 

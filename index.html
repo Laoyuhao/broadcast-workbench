@@ -1075,6 +1075,27 @@ function stampRecord(item) {
   return item;
 }
 
+// ===== 自动修复乱码（latin1误读UTF-8）======
+function isMojibake(s) {
+  if(!s || typeof s !== 'string') return false;
+  // latin1误读UTF-8的特征：高频出现 Ã© Ã§ Ã¥ 等组合
+  return /[Ã©Ã§Ã¥Ã¨Ã¦Ã¸Ã]/.test(s) || /Ã©|Ã§|Ã¥|Ã¨|Ã¦|Ã¸|Ã/.test(s);
+}
+function fixMojibakeStr(s) {
+  if(!isMojibake(s)) return s;
+  try { return decodeURIComponent(escape(s)); } catch(e) { return s; }
+}
+function autoFixMojibake(obj) {
+  if(typeof obj === 'string') return fixMojibakeStr(obj);
+  if(Array.isArray(obj)) return obj.map(autoFixMojibake);
+  if(obj && typeof obj === 'object') {
+    const fixed = {};
+    for(const k in obj) fixed[k] = autoFixMojibake(obj[k]);
+    return fixed;
+  }
+  return obj;
+}
+
 // ===== 合并两份数据（本地 + 云端），基于ID和updatedAt =====
 function mergeDB(localDB, remoteDB) {
   const collections = ['students','trainings','exams','artexams','statuses','lessons','teachers'];
@@ -1190,7 +1211,9 @@ async function fetchRemoteData(token, owner) {
   if(!res.ok) throw new Error(`GitHub API错误: ${res.status}`);
   const data = await res.json();
   const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g,''))));
-  return JSON.parse(content);
+  const parsed = JSON.parse(content);
+  // 自动修复乱码（latin1误读UTF-8）
+  return autoFixMojibake(parsed);
 }
 
 // ===== 通过GitHub API推送数据 =====

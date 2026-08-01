@@ -1495,7 +1495,7 @@ function renderStudents() {
   }
 
   // 直接显示所有学生卡片（不按班级分组）
-  grid.innerHTML = `<div class="student-grid">${list.map(s=>renderStudentCard(s)).join('')}</div>`;
+  grid.innerHTML = list.map(s=>renderStudentCard(s)).join('');
 }
 
 // 更新招生老师和生源地筛选项

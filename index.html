@@ -772,6 +772,9 @@ select.filter-select { min-width: 120px; }
       <div class="toolbar">
         <div class="toolbar-left">
           <select class="filter-select" id="examStudentFilter" onchange="renderExams()"></select>
+          <select class="filter-select" id="examNameFilter" onchange="renderExams()">
+            <option value="">全部考试</option>
+          </select>
         </div>
         <div class="toolbar-right">
           <button class="btn btn-primary" onclick="showExamModal()">➕ 录入模考成绩</button>
@@ -1831,10 +1834,24 @@ function deleteTraining(id) {
 // ============================================================
 //  第七部分：模考成绩页
 // ============================================================
+// 更新考试名称筛选项
+function updateExamNameFilter() {
+  const sel = document.getElementById('examNameFilter');
+  if(!sel) return;
+  const current = sel.value;
+  const names = [...new Set(DB.exams.map(e=>e.name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh'));
+  sel.innerHTML = '<option value="">全部考试</option>' + names.map(n=>`<option value="${n}" ${current===n?'selected':''}>${n}</option>`).join('');
+  sel.value = current;
+}
+
 function renderExams() {
   populateStudentFilters();
+  updateExamNameFilter();
   const studentFilter = document.getElementById('examStudentFilter')?.value||'';
-  let list = studentFilter ? DB.exams.filter(e=>e.studentId===studentFilter) : [...DB.exams];
+  const nameFilter = document.getElementById('examNameFilter')?.value||'';
+  let list = [...DB.exams];
+  if(studentFilter) list = list.filter(e=>e.studentId===studentFilter);
+  if(nameFilter) list = list.filter(e=>(e.name||'')===nameFilter);
   list.sort((a,b)=>new Date(b.date)-new Date(a.date));
 
   const content = document.getElementById('examContent');

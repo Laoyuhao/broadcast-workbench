@@ -967,7 +967,6 @@ const SKILL_TYPES = [
   {key:'news', name:'新闻播读', icon:'📰', dims:['语音面貌','语言表达','新闻感','流畅度']},
   {key:'literature', name:'文学作品朗诵', icon:'📖', dims:['情感表达','语言技巧','作品理解','声音塑造']},
   {key:'comment', name:'即兴评述', icon:'💬', dims:['思维逻辑','观点深度','语言组织','即兴反应']},
-  {key:'host', name:'模拟主持', icon:'🎬', dims:['主持状态','控场能力','语言表达','创意表现']},
   {key:'voice', name:'发声训练', icon:'🎵', dims:['气息控制','共鸣','咬字吐词','声音弹性']},
 ];
 const LEVEL_COLORS = {'优秀':'#00B894','良好':'#74B9FF','一般':'#FDCB6E','薄弱':'#FF7675'};
@@ -1695,8 +1694,8 @@ function showStudentDetail(id) {
         </div>
         ${exams.length>0?`<div class="card" style="margin:0 0 16px;">
           <div class="card-title">📝 模考记录</div>
-          <table><thead><tr><th>日期</th><th>考试名称</th><th>新闻</th><th>朗诵</th><th>评述</th><th>主持</th><th>总分</th><th>排名</th></tr></thead>
-          <tbody>${exams.map(e=>`<tr><td>${formatDate(e.date)}</td><td>${e.name||'—'}</td><td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td>${e.host||'—'}</td><td><b style="color:var(--primary);">${e.total||'—'}</b></td><td>${e.rank||'—'}</td></tr>`).join('')}</tbody>
+          <table><thead><tr><th>日期</th><th>考试名称</th><th>新闻</th><th>朗诵</th><th>评述</th><th>总分</th><th>排名</th></tr></thead>
+          <tbody>${exams.map(e=>`<tr><td>${formatDate(e.date)}</td><td>${e.name||'—'}</td><td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td><b style="color:var(--primary);">${e.total?e.total.toFixed(2):'—'}</b></td><td>${e.rank||'—'}</td></tr>`).join('')}</tbody>
           </table>
         </div>`:''}
         ${s.remark?`<div class="alert alert-info" style="margin-top:16px;">📝 ${s.remark}</div>`:''}
@@ -1844,7 +1843,7 @@ function renderExams() {
     return;
   }
   // 统计
-  const avgTotal = list.length>0 ? (list.reduce((s,e)=>s+(e.total||0),0)/list.length).toFixed(1) : '—';
+  const avgTotal = list.length>0 ? (list.reduce((s,e)=>s+(e.total||0),0)/list.length).toFixed(2) : '—';
   const maxTotal = list.length>0 ? Math.max(...list.map(e=>e.total||0)) : '—';
   const minTotal = list.length>0 ? Math.min(...list.map(e=>e.total||0)) : '—';
 
@@ -1857,15 +1856,15 @@ function renderExams() {
 
   // 成绩表
   html += `<div class="card"><div class="card-title">📋 模考成绩明细</div><div class="table-wrapper"><table>
-    <thead><tr><th>日期</th><th>学生</th><th>考试名称</th><th>新闻播读</th><th>文学朗诵</th><th>即兴评述</th><th>模拟主持</th><th>总分</th><th>班级排名</th><th>操作</th></tr></thead>
+    <thead><tr><th>日期</th><th>学生</th><th>考试名称</th><th>新闻播读</th><th>文学朗诵</th><th>即兴评述</th><th>总分</th><th>班级排名</th><th>操作</th></tr></thead>
     <tbody>${list.map(e=>{
-      const total = e.total || ([e.news,e.literature,e.comment,e.host].filter(v=>v).reduce((a,b)=>a+b,0)||null);
+      const total = e.total || ([e.news,e.literature,e.comment].filter(v=>v).reduce((a,b)=>a+b,0)||null);
       return `<tr>
         <td>${formatDate(e.date)}</td>
         <td><div style="display:flex;align-items:center;gap:6px;"><div class="student-avatar" style="background:${studentAvatarColor(e.studentId)};width:24px;height:24px;font-size:11px;">${studentInitial(studentName(e.studentId))}</div>${studentName(e.studentId)}</div></td>
         <td>${e.name||'—'}</td>
-        <td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td>${e.host||'—'}</td>
-        <td><b style="color:var(--primary);font-size:15px;">${total||'—'}</b></td>
+        <td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td>
+        <td><b style="color:var(--primary);font-size:15px;">${total?total.toFixed(2):'—'}</b></td>
         <td>${e.rank||'—'}</td>
         <td><button class="btn btn-outline btn-sm" onclick="showExamModal('${e.id}')">编辑</button> <button class="btn btn-danger btn-sm" onclick="deleteExam('${e.id}')">删除</button></td>
       </tr>`;
@@ -1879,10 +1878,9 @@ function renderExams() {
       {name:'新闻播读', key:'news'},
       {name:'文学朗诵', key:'literature'},
       {name:'即兴评述', key:'comment'},
-      {name:'模拟主持', key:'host'},
     ].map(d=>{
       const scores = list.map(e=>e[d.key]).filter(v=>v);
-      const avg = scores.length>0 ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : null;
+      const avg = scores.length>0 ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2) : null;
       return {...d, avg, count:scores.length};
     }).filter(d=>d.avg);
     if(dimAvgs.length>0) {
@@ -1919,7 +1917,6 @@ function renderExams() {
               {label:'新闻播读', data:sorted.map(e=>e.news||null), borderColor:'#74B9FF', tension:0.3},
               {label:'文学朗诵', data:sorted.map(e=>e.literature||null), borderColor:'#FD79A8', tension:0.3},
               {label:'即兴评述', data:sorted.map(e=>e.comment||null), borderColor:'#FDCB6E', tension:0.3},
-              {label:'模拟主持', data:sorted.map(e=>e.host||null), borderColor:'#00B894', tension:0.3},
             ]},
             options: { responsive:true, scales:{ y:{beginAtZero:true, max:100} } }
           });
@@ -1949,7 +1946,7 @@ function showExamModal(id) {
           <div class="form-group"><label>即兴评述（0-100）</label><input id="e_comment" type="number" min="0" max="100" value="${e.comment||''}" placeholder="如78"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>总分</label><input id="e_total" type="number" value="${e.total||''}" placeholder="留空自动计算三科平均"></div>
+          <div class="form-group"><label>总分</label><input id="e_total" type="number" value="${e.total||''}" placeholder="留空自动计算三科总和" step="0.01"></div>
           <div class="form-group"><label>班级排名</label><input id="e_rank" type="number" value="${e.rank||''}" placeholder="如第5名"></div>
         </div>
         <div class="form-group"><label>备注</label><textarea id="e_remark" placeholder="考试表现、特殊情况...">${e.remark||''}</textarea></div>
@@ -1962,11 +1959,11 @@ function showExamModal(id) {
     </div>
   </div>`;
   document.getElementById('modalContainer').innerHTML = html;
-  // 自动计算总分
+  // 自动计算总分（三科总和，保留两位小数）
   ['e_news','e_literature','e_comment'].forEach(id=>{
     document.getElementById(id).addEventListener('input', ()=>{
       const vals = ['e_news','e_literature','e_comment'].map(x=>parseFloat(document.getElementById(x).value)).filter(v=>!isNaN(v));
-      if(vals.length>0) document.getElementById('e_total').value = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+      if(vals.length>0) document.getElementById('e_total').value = vals.reduce((a,b)=>a+b,0).toFixed(2);
     });
   });
 }
@@ -1979,7 +1976,7 @@ function saveExam(id) {
   const data = {
     studentId, date, name: val('e_name'),
     news: parseFloat(val('e_news'))||null, literature: parseFloat(val('e_literature'))||null,
-    comment: parseFloat(val('e_comment'))||null, host: parseFloat(val('e_host'))||null,
+    comment: parseFloat(val('e_comment'))||null,
     total: parseFloat(val('e_total'))||null, rank: parseInt(val('e_rank'))||null,
     remark: val('e_remark'),
   };
@@ -2297,7 +2294,6 @@ function renderAnalysis() {
     {key:'news', name:'新闻播读', icon:'📰'},
     {key:'literature', name:'文学作品朗诵', icon:'📖'},
     {key:'comment', name:'即兴评述', icon:'💬'},
-    {key:'host', name:'模拟主持', icon:'🎬'},
   ];
   const dimStats = dims.map(d=>{
     const scores = exams.map(e=>e[d.key]).filter(v=>v!==null && v!==undefined && v!=='');
@@ -2346,8 +2342,8 @@ function renderAnalysis() {
       </div>
     </div>
     <div class="stat-grid" style="margin:0;">
-      <div class="stat-card" style="margin:0;"><div class="stat-icon purple">📊</div><div class="stat-info"><h3>${totalAvg.toFixed(1)}</h3><p>平均总分</p></div></div>
-      <div class="stat-card" style="margin:0;"><div class="stat-icon ${totalTrend>=0?'green':'red'}">${totalTrend>=0?'📈':'📉'}</div><div class="stat-info"><h3>${totalTrend>=0?'+':''}${totalTrend.toFixed(1)}</h3><p>成绩变化</p></div></div>
+      <div class="stat-card" style="margin:0;"><div class="stat-icon purple">📊</div><div class="stat-info"><h3>${totalAvg.toFixed(2)}</h3><p>平均总分</p></div></div>
+      <div class="stat-card" style="margin:0;"><div class="stat-icon ${totalTrend>=0?'green':'red'}">${totalTrend>=0?'📈':'📉'}</div><div class="stat-info"><h3>${totalTrend>=0?'+':''}${totalTrend.toFixed(2)}</h3><p>成绩变化</p></div></div>
       <div class="stat-card" style="margin:0;"><div class="stat-icon blue">🏆</div><div class="stat-info"><h3>${latestRank||'—'}</h3><p>最近排名</p></div></div>
       <div class="stat-card" style="margin:0;"><div class="stat-icon orange">📐</div><div class="stat-info"><h3>${totalStd}</h3><p>成绩稳定性(标准差)</p></div></div>
     </div>
@@ -2417,7 +2413,7 @@ function renderAnalysis() {
         <td>总分</td>
         <td>${totalFirst.toFixed(1)}</td>
         <td style="color:var(--primary);">${totalLatest.toFixed(1)}</td>
-        <td>${totalAvg.toFixed(1)}</td>
+        <td>${totalAvg.toFixed(2)}</td>
         <td>${totalScores.length>0?Math.max(...totalScores).toFixed(1):'—'}</td>
         <td>${totalScores.length>0?Math.min(...totalScores).toFixed(1):'—'}</td>
         <td style="color:${totalTrend>=0?'var(--success)':'var(--danger)'};font-weight:600;">${totalTrend>=0?'↑':'↓'} ${Math.abs(totalTrend).toFixed(1)}</td>
@@ -2437,14 +2433,14 @@ function renderAnalysis() {
   html += `<div class="card">
     <div class="card-title"><span class="icon">📝</span>历次模考成绩明细</div>
     <div class="table-wrapper"><table>
-      <thead><tr><th>日期</th><th>考试名称</th><th>新闻</th><th>朗诵</th><th>评述</th><th>主持</th><th>总分</th><th>排名</th></tr></thead>
+      <thead><tr><th>日期</th><th>考试名称</th><th>新闻</th><th>朗诵</th><th>评述</th><th>总分</th><th>排名</th></tr></thead>
       <tbody>${exams.map((e,i)=>{
-        const total = e.total || ([e.news,e.literature,e.comment,e.host].filter(v=>v).reduce((a,b)=>a+b,0)/( [e.news,e.literature,e.comment,e.host].filter(v=>v).length||1));
+        const total = e.total || ([e.news,e.literature,e.comment].filter(v=>v).reduce((a,b)=>a+b,0)||null);
         return `<tr>
           <td>${formatDate(e.date)}</td>
           <td>${e.name||'第'+(i+1)+'次模考'}</td>
-          <td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td>${e.host||'—'}</td>
-          <td><b style="color:var(--primary);">${total?total.toFixed(1):'—'}</b></td>
+          <td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td>
+          <td><b style="color:var(--primary);">${total?total.toFixed(2):'—'}</b></td>
           <td>${e.rank?'第'+e.rank+'名':'—'}</td>
         </tr>`;
       }).join('')}</tbody>
@@ -2462,7 +2458,7 @@ function renderAnalysis() {
         {label:'总分', data:exams.map(e=>e.total||null), borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.1)', fill:true, tension:0.3, borderWidth:3},
         ...dims.map((d,i)=>({
           label:d.name, data:exams.map(e=>e[d.key]||null),
-          borderColor:['#74B9FF','#FD79A8','#FDCB6E','#00B894'][i],
+          borderColor:['#74B9FF','#FD79A8','#FDCB6E'][i],
           tension:0.3, borderWidth:1.5,
         })),
       ];
@@ -2508,7 +2504,6 @@ function renderAnalysisOverview(content) {
     {key:'news', name:'新闻播读'},
     {key:'literature', name:'文学作品朗诵'},
     {key:'comment', name:'即兴评述'},
-    {key:'host', name:'模拟主持'},
   ].map(d=>{
     const scores = DB.exams.map(e=>e[d.key]).filter(v=>v);
     return {...d, avg: scores.length>0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0};
@@ -2526,9 +2521,9 @@ function renderAnalysisOverview(content) {
           <td><span class="badge ${i<3?'badge-success':'badge-info'}">第${i+1}名</span></td>
           <td><div style="display:flex;align-items:center;gap:6px;"><div class="student-avatar" style="background:${studentAvatarColor(st.student.id)};width:24px;height:24px;font-size:11px;">${studentInitial(st.student.name)}</div>${st.student.name}</div></td>
           <td>${st.examCount}次</td>
-          <td><b style="color:var(--primary);font-size:15px;">${st.avgTotal.toFixed(1)}</b></td>
+          <td><b style="color:var(--primary);font-size:15px;">${st.avgTotal.toFixed(2)}</b></td>
           <td>${st.latestRank?'第'+st.latestRank+'名':'—'}</td>
-          <td style="color:${trendColor};font-weight:600;">${st.trend>0?'↑':'↓'} ${Math.abs(st.trend).toFixed(1)}</td>
+          <td style="color:${trendColor};font-weight:600;">${st.trend>0?'↑':'↓'} ${Math.abs(st.trend).toFixed(2)}</td>
           <td><button class="btn btn-primary btn-sm" onclick="selectAnalysisStudent('${st.student.id}')">查看分析</button></td>
         </tr>`;
       }).join('')}</tbody>
@@ -2574,11 +2569,11 @@ function generateAnalysisReport(student, dimStats, totalAvg, totalTrend, avgRank
 
   // 综合评价
   report += `<div class="alert ${totalAvg>=80?'alert-success':totalAvg>=70?'alert-info':'alert-warning'}" style="margin-bottom:16px;">
-    <div><b>📌 综合评价：</b>${student.name}经过${examCount}次模考，平均总分${totalAvg.toFixed(1)}分`;
+    <div><b>📌 综合评价：</b>${student.name}经过${examCount}次模考，平均总分${totalAvg.toFixed(2)}分`;
   if(latestRank) report += `，班级平均排名约第${avgRank}名`;
   report += `。`;
-  if(totalTrend>2) report += `成绩整体呈<b style="color:var(--success);">上升趋势</b>，较首次提升${totalTrend.toFixed(1)}分，学习效果显著。`;
-  else if(totalTrend<-2) report += `成绩较首次<b style="color:var(--danger);">有所下滑</b>，下降了${Math.abs(totalTrend).toFixed(1)}分，需重点关注原因。`;
+  if(totalTrend>2) report += `成绩整体呈<b style="color:var(--success);">上升趋势</b>，较首次提升${totalTrend.toFixed(2)}分，学习效果显著。`;
+  else if(totalTrend<-2) report += `成绩较首次<b style="color:var(--danger);">有所下滑</b>，下降了${Math.abs(totalTrend).toFixed(2)}分，需重点关注原因。`;
   else report += `成绩<b>相对稳定</b>，波动幅度不大。`;
   report += `</div></div>`;
 
@@ -2600,7 +2595,7 @@ function generateAnalysisReport(student, dimStats, totalAvg, totalTrend, avgRank
     if(worst.key==='news') report += `语音面貌和新闻感进行强化`;
     else if(worst.key==='literature') report += `情感表达和作品理解进行深入`;
     else if(worst.key==='comment') report += `思维逻辑和即兴反应进行重点突破`;
-    else if(worst.key==='host') report += `控场能力和创意表现进行提升`;
+
     report += `。`;
     report += `</div>`;
   }
@@ -3843,7 +3838,7 @@ function downloadExcelTemplate() {
 
   // Sheet2: 模考成绩
   const examData = [
-    ['姓名','考试名称','考试日期','新闻播读','文学作品朗诵','即兴评述','模拟主持','总分','班级排名','备注'],
+    ['姓名','考试名称','考试日期','新闻播读','文学作品朗诵','即兴评述','总分','班级排名','备注'],
     ['林晓阳','第一次全真模拟','2026-01-15',85,88,78,82,'','','状态稳定'],
     ['林晓阳','第二次全真模拟','2026-01-29',87,90,82,85,'','','进步明显'],
     ['张子涵','第一次全真模拟','2026-01-15',82,75,80,83,'','',''],
@@ -3972,10 +3967,10 @@ function handleExcelImport(input) {
               if(rankCol && row[rankCol]) exam.rank = parseInt(row[rankCol])||null;
               if(remarkCol && row[remarkCol]) exam.remark = row[remarkCol].toString().trim();
 
-              // 自动计算总分
+              // 自动计算总分（三科总和）
               if(!exam.total) {
-                const scores = [exam.news, exam.literature, exam.comment, exam.host].filter(v=>v!==null);
-                if(scores.length>0) exam.total = parseFloat((scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1));
+                const scores = [exam.news, exam.literature, exam.comment].filter(v=>v!==null);
+                if(scores.length>0) exam.total = parseFloat(scores.reduce((a,b)=>a+b,0).toFixed(2));
               }
               result.exams.push(exam);
               count++;
@@ -4032,7 +4027,7 @@ function showExcelImportConfirm(result, log, filename) {
 
   // 预览成绩数据
   const examPreview = result.exams.slice(0,5).map(e=>{
-    return `<tr><td>${e.studentName}</td><td>${e.name||'—'}</td><td>${e.date||'—'}</td><td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td>${e.host||'—'}</td><td><b>${e.total||'—'}</b></td></tr>`;
+    return `<tr><td>${e.studentName}</td><td>${e.name||'—'}</td><td>${e.date||'—'}</td><td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td><td><b>${e.total?e.total.toFixed(2):'—'}</b></td></tr>`;
   }).join('');
   const examMore = totalExam>5 ? `<tr><td colspan="8" style="text-align:center;color:var(--text-light);">...还有${totalExam-5}条</td></tr>` : '';
 
@@ -4061,7 +4056,7 @@ function showExcelImportConfirm(result, log, filename) {
         ${totalExam>0?`<div style="margin-bottom:16px;">
           <h4 style="font-size:14px;margin-bottom:8px;">模考成绩预览</h4>
           <div class="table-wrapper"><table>
-            <thead><tr><th>姓名</th><th>考试名称</th><th>日期</th><th>新闻</th><th>朗诵</th><th>评述</th><th>主持</th><th>总分</th></tr></thead>
+            <thead><tr><th>姓名</th><th>考试名称</th><th>日期</th><th>新闻</th><th>朗诵</th><th>评述</th><th>总分</th></tr></thead>
             <tbody>${examPreview}${examMore}</tbody>
           </table></div>
         </div>`:''}

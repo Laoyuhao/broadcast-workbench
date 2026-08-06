@@ -1931,7 +1931,7 @@ function renderExams() {
       </div>
       <div id="examGroup_${gi}" style="display:none;">
         <table style="width:100%;font-size:13px;">
-          <thead><tr style="background:#F0F0F0;"><th style="padding:8px;text-align:left;">排名</th><th style="padding:8px;text-align:left;">学生</th><th style="padding:8px;">新闻播读</th><th style="padding:8px;">文学朗诵</th><th style="padding:8px;">即兴评述</th><th style="padding:8px;">总分</th><th style="padding:8px;">操作</th></tr></thead>
+          <thead><tr style="background:#F0F0F0;"><th style="padding:8px;text-align:left;">排名</th><th style="padding:8px;text-align:left;">学生</th><th style="padding:8px;">新闻播读</th><th style="padding:8px;">文学朗诵</th><th style="padding:8px;">即兴评述</th><th style="padding:8px;">总分</th><th style="padding:8px;">操作</th><th style="padding:8px;">评价</th></tr></thead>
           <tbody>${exams.map((e, idx) => {
             const total = e.total || ([e.news,e.literature,e.comment].filter(v=>v).reduce((a,b)=>a+b,0)||null);
             return `<tr style="border-top:1px solid var(--border);">
@@ -1940,6 +1940,7 @@ function renderExams() {
               <td style="padding:8px;text-align:center;">${e.news||'—'}</td><td style="padding:8px;text-align:center;">${e.literature||'—'}</td><td style="padding:8px;text-align:center;">${e.comment||'—'}</td>
               <td style="padding:8px;text-align:center;"><b style="color:var(--primary);font-size:14px;">${total?total.toFixed(2):'—'}</b></td>
               <td style="padding:8px;text-align:center;"><button class="btn btn-outline btn-sm" onclick="showExamModal('${e.id}')">编辑</button> <button class="btn btn-danger btn-sm" onclick="deleteExam('${e.id}')">删除</button></td>
+              <td style="padding:8px;text-align:center;">${e.remark?`<button class="btn btn-outline btn-sm" onclick="showExamRemark('${e.id}')">查看</button>`:'—'}</td>
             </tr>`;
           }).join('')}</tbody>
         </table>
@@ -2026,7 +2027,7 @@ function showExamModal(id) {
           <div class="form-group"><label>总分</label><input id="e_total" type="number" value="${e.total||''}" placeholder="留空自动计算三科总和" step="0.01"></div>
           <div class="form-group"><label>班级排名</label><input id="e_rank" type="number" value="${e.rank||''}" placeholder="如第5名"></div>
         </div>
-        <div class="form-group"><label>备注</label><textarea id="e_remark" placeholder="考试表现、特殊情况...">${e.remark||''}</textarea></div>
+        <div class="form-group"><label>考试评价</label><textarea id="e_remark" placeholder="考试表现、特殊情况...">${e.remark||''}</textarea></div>
       </div>
       <div class="modal-footer">
         ${isEdit?`<button class="btn btn-danger" onclick="deleteExam('${id}')">删除</button>`:''}
@@ -2067,6 +2068,45 @@ function deleteExam(id) {
   softDelete(DB.exams, id);
   saveDB(); closeModal(); renderExams(); toast('成绩已删除','warning');
   if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
+}
+function showExamRemark(id) {
+  const e = DB.exams.find(x=>x.id===id);
+  if(!e) return;
+  const sname = studentName(e.studentId);
+  const total = e.total || ([e.news,e.literature,e.comment].filter(v=>v).reduce((a,b)=>a+b,0)||null);
+  const html = `<div class="modal-overlay show" onclick="closeModal()">
+    <div class="modal" style="max-width:520px;" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📝 考试评价</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;font-size:14px;">
+            <span><b>学生：</b>${sname}</span>
+            <span><b>考试：</b>${e.name||'—'}</span>
+            <span><b>日期：</b>${formatDate(e.date)}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;font-size:14px;">
+            <span><b>新闻播读：</b>${e.news||'—'}</span>
+            <span><b>文学朗诵：</b>${e.literature||'—'}</span>
+            <span><b>即兴评述：</b>${e.comment||'—'}</span>
+            <span><b>总分：</b><b style="color:var(--primary);">${total?total.toFixed(2):'—'}</b></span>
+            <span><b>排名：</b>${e.rank?'第'+e.rank+'名':'—'}</span>
+          </div>
+          <div style="background:#F8F9FA;border-radius:var(--radius-sm);padding:16px;border-left:4px solid var(--primary);">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">考试评价</div>
+            <div style="font-size:14px;line-height:1.8;white-space:pre-wrap;">${e.remark||'暂无评价'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">关闭</button>
+        <button class="btn btn-primary" onclick="closeModal();showExamModal('${e.id}')">编辑</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
 }
 
 // ============================================================
@@ -2484,7 +2524,7 @@ function renderAnalysis() {
   html += `<div class="card">
     <div class="card-title"><span class="icon">📝</span>历次模考成绩明细</div>
     <div class="table-wrapper"><table>
-      <thead><tr><th>日期</th><th>考试名称</th><th>新闻</th><th>朗诵</th><th>评述</th><th>总分</th><th>排名</th></tr></thead>
+      <thead><tr><th>日期</th><th>考试名称</th><th>新闻</th><th>朗诵</th><th>评述</th><th>总分</th><th>排名</th><th>评价</th></tr></thead>
       <tbody>${exams.map((e,i)=>{
         const total = e.total || ([e.news,e.literature,e.comment].filter(v=>v).reduce((a,b)=>a+b,0)||null);
         return `<tr>
@@ -2493,6 +2533,7 @@ function renderAnalysis() {
           <td>${e.news||'—'}</td><td>${e.literature||'—'}</td><td>${e.comment||'—'}</td>
           <td><b style="color:var(--primary);">${total?total.toFixed(2):'—'}</b></td>
           <td>${e.rank?'第'+e.rank+'名':'—'}</td>
+          <td>${e.remark?`<button class="btn btn-outline btn-sm" onclick="showExamRemark('${e.id}')">查看评价</button>`:'—'}</td>
         </tr>`;
       }).join('')}</tbody>
     </table></div>

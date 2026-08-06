@@ -2074,7 +2074,7 @@ function showExamRemark(id) {
   if(!e) return;
   const sname = studentName(e.studentId);
   const total = e.total || ([e.news,e.literature,e.comment].filter(v=>v).reduce((a,b)=>a+b,0)||null);
-  const html = `<div class="modal-overlay" onclick="closeModal()">
+  const html = `<div class="modal-overlay show" onclick="closeModal()">
     <div class="modal" style="max-width:520px;" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3>📝 考试评价</h3>

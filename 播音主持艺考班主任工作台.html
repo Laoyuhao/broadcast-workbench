@@ -1071,7 +1071,7 @@ function saveDB() {
 function loadDB() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
-    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; if(!DB.teachers) DB.teachers=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[]}}; }
+    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; if(!DB.teachers) DB.teachers=[]; if(!DB._classes) DB._classes=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[]}}; }
   // 清理已标记删除的记录
   ['students','trainings','exams','artexams','statuses','lessons','teachers'].forEach(key => {
     if(DB[key]) DB[key] = DB[key].filter(item => !item._deleted);

@@ -790,7 +790,9 @@ select.filter-select { min-width: 120px; }
           <h2>🗓️ 班级课表</h2>
           <p>按班级编辑集训课表 · 早/中/晚三时段排课</p>
         </div>
-        <div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="showAddClassModal()">➕ 添加班级</button>
+          <button class="btn btn-outline btn-sm" onclick="exportScheduleExcel()">📥 导出课表</button>
           <button class="btn btn-primary btn-sm" onclick="showScheduleModal()">➕ 添加课程</button>
         </div>
       </div>
@@ -836,6 +838,7 @@ select.filter-select { min-width: 120px; }
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-outline btn-sm" onclick="showTeacherListModal()">👩‍🏫 管理老师</button>
+          <button class="btn btn-outline btn-sm" onclick="showLessonExportModal()">📥 导出课表</button>
           <button class="btn btn-primary btn-sm" onclick="showLessonModal(null, {teacher: lessonTeacherFilter})">➕ 快速添加</button>
         </div>
       </div>
@@ -2819,6 +2822,49 @@ function updateScheduleClassFilter() {
   if(current) sel.value = current;
 }
 
+// 添加班级弹窗
+function showAddClassModal() {
+  // 收集已有的班级名称
+  const existingClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh'));
+  const html = `<div class="modal-overlay show">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header"><h3>➕ 添加班级</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>班级名称 <span class="required">*</span></label><input id="ac_className" placeholder="如：集训C班、基础A班" autofocus></div>
+        <div style="margin-top:16px;font-size:13px;color:var(--text-secondary);">
+          <b>已有班级（${existingClasses.length}个）：</b>
+          ${existingClasses.length>0 ? existingClasses.map(c=>`<span class="badge badge-purple" style="margin:2px 4px;">${c}</span>`).join('') : '<span style="color:var(--text-light);">暂无</span>'}
+        </div>
+        <div class="alert alert-info" style="margin-top:12px;">💡 添加班级后，可在课表下拉框中选中该班级进行排课。向班级添加学生时，可在学生档案中设置班级。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveNewClass()">💾 保存</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+function saveNewClass() {
+  const name = document.getElementById('ac_className')?.value?.trim();
+  if(!name) { toast('请输入班级名称','error'); return; }
+  const existing = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
+  if(existing.includes(name)) { toast('该班级已存在','warning'); return; }
+  // 创建一个虚拟学生来"占位"这个班级，使其出现在筛选中
+  // 实际不创建学生，而是维护一个班级列表
+  if(!DB._classes) DB._classes = [];
+  if(DB._classes.includes(name)) { toast('该班级已存在','warning'); return; }
+  DB._classes.push(name);
+  saveDB();
+  closeModal();
+  toast('班级已添加');
+  // 刷新课表筛选
+  updateScheduleClassFilter();
+  const sel = document.getElementById('scheduleClassFilter');
+  if(sel) { sel.value = name; renderSchedule(); }
+}
+
 function quickAddSchedule(classNo, slotKey, dateStr) {
   showScheduleLessonModal(null, {scheduleClass:classNo, trainingSlot:slotKey, date:dateStr});
 }
@@ -2925,6 +2971,93 @@ function deleteScheduleLesson(id) {
   if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
 }
 
+// 课时导出弹窗
+function showLessonExportModal() {
+  const teacherName = lessonTeacherFilter || '全部老师';
+  const today = new Date();
+  const defaultEnd = new Date(today.getFullYear(), today.getMonth()+1, 0);
+  const formatDateFull = (d) => d.toISOString().split('T')[0];
+  
+  const html = `<div class="modal-overlay show">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-header"><h3>📥 导出课表</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div style="margin-bottom:16px;font-size:14px;">当前筛选：<b>${teacherName}</b></div>
+        <div class="form-row">
+          <div class="form-group"><label>开始日期 <span class="required">*</span></label><input id="le_startDate" type="date" value="${formatDateFull(new Date(today.getFullYear(), today.getMonth(), 1))}"></div>
+          <div class="form-group"><label>结束日期 <span class="required">*</span></label><input id="le_endDate" type="date" value="${formatDateFull(defaultEnd)}"></div>
+        </div>
+        <div class="form-group"><label>导出格式</label><select id="le_format">
+          <option value="xlsx">Excel (.xlsx)</option>
+          <option value="csv">CSV (.csv)</option>
+        </select></div>
+        <div class="alert alert-info">💡 将导出所选日期范围内的课程记录，包含课程名称、日期、时段、班级、老师、地点、状态等信息。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="doExportLessons()">📥 导出</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modalContainer').innerHTML = html;
+}
+
+function doExportLessons() {
+  const startDate = document.getElementById('le_startDate')?.value;
+  const endDate = document.getElementById('le_endDate')?.value;
+  const format = document.getElementById('le_format')?.value || 'xlsx';
+  
+  if(!startDate || !endDate) { toast('请选择日期范围','error'); return; }
+  if(startDate > endDate) { toast('开始日期不能晚于结束日期','error'); return; }
+  
+  // 按当前老师筛选课程
+  let lessons = getFilteredLessons().filter(l => l.date >= startDate && l.date <= endDate);
+  // 按日期+时段排序
+  lessons.sort((a,b) => {
+    if(a.date !== b.date) return a.date.localeCompare(b.date);
+    const slotOrder = {morning:0, afternoon:1, evening:2};
+    return (slotOrder[a.trainingSlot]||0) - (slotOrder[b.trainingSlot]||0);
+  });
+  
+  if(lessons.length === 0) { toast('所选日期范围内无课程记录','warning'); return; }
+  
+  const teacherName = lessonTeacherFilter || '全部老师';
+  const weekdayNames = ['周日','周一','周二','周三','周四','周五','周六'];
+  
+  const rows = [['日期', '星期', '时段', '课程名称', '授课班级', '授课老师', '地点', '状态', '课时', '备注']];
+  lessons.forEach(l => {
+    const dt = new Date(l.date);
+    const wd = weekdayNames[dt.getDay()];
+    const slot = TRAINING_SLOTS.find(s=>s.key===l.trainingSlot);
+    const slotLabel = slot ? `${slot.icon} ${slot.label}(${l.timeSlot||slot.defaultTime})` : (l.timeSlot||'—');
+    rows.push([
+      l.date, wd, slotLabel,
+      l.name||l.content||'课程', l.scheduleClass||l.students||'—', l.teacher||'—',
+      l.location||'—', l.status||'未上', l.status==='已完成'?'2':'0', l.remark||''
+    ]);
+  });
+  
+  const filename = `${teacherName}_课表_${startDate}_至_${endDate}`;
+  
+  if(format === 'xlsx' && typeof XLSX !== 'undefined') {
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:12},{wch:8},{wch:22},{wch:22},{wch:14},{wch:12},{wch:16},{wch:10},{wch:8},{wch:24}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '课表');
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+    toast(`已导出 ${lessons.length} 条课程记录`);
+  } else {
+    const csv = rows.map(r=>r.map(c=>'"'+(c||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${filename}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast(`已导出 ${lessons.length} 条课程记录`);
+  }
+  closeModal();
+}
+
 // ============================================================
 //  第九部分C：课时工作台
 // ============================================================
@@ -2960,6 +3093,61 @@ function changeScheduleMonth(delta) {
 function goToScheduleToday() {
   scheduleCurrentMonth = new Date();
   renderSchedule();
+}
+
+// 导出班级课表为Excel
+function exportScheduleExcel() {
+  const classNo = document.getElementById('scheduleClassFilter')?.value||'';
+  if(!classNo) { toast('请先选择班级','error'); return; }
+  
+  const year = scheduleCurrentMonth.getFullYear();
+  const month = scheduleCurrentMonth.getMonth();
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const schedules = DB.lessons.filter(l=>l.scheduleClass===classNo && new Date(l.date).getFullYear()===year && new Date(l.date).getMonth()===month);
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const weekdayNames = ['周日','周一','周二','周三','周四','周五','周六'];
+  
+  // 构建导出数据
+  const rows = [['日期', '星期', '时段', '课程名称', '授课老师', '地点', '状态', '备注']];
+  for(let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dt = new Date(year, month, d);
+    const wd = weekdayNames[dt.getDay()];
+    
+    TRAINING_SLOTS.forEach(slot => {
+      const slotLessons = schedules.filter(l=>l.date===dateStr && l.trainingSlot===slot.key);
+      if(slotLessons.length === 0) {
+        rows.push([`${month+1}月${d}日`, wd, `${slot.icon} ${slot.label}(${slot.defaultTime})`, '', '', '', '', '']);
+      } else {
+        slotLessons.forEach(l => {
+          rows.push([
+            `${month+1}月${d}日`, wd, `${slot.icon} ${slot.label}(${l.timeSlot||slot.defaultTime})`,
+            l.name||l.content||'课程', l.teacher||'', l.location||'', l.status||'未上', l.remark||''
+          ]);
+        });
+      }
+    });
+  }
+  
+  // 生成Excel (使用SheetJS的XLSX，如果已加载)
+  if(typeof XLSX !== 'undefined') {
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    // 设置列宽
+    ws['!cols'] = [{wch:12},{wch:8},{wch:20},{wch:22},{wch:12},{wch:16},{wch:10},{wch:20}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `${classNo}_${year}年${monthNames[month]}`);
+    XLSX.writeFile(wb, `${classNo}_${year}年${monthNames[month]}课表.xlsx`);
+    toast('课表已导出');
+  } else {
+    // 备用：导出CSV
+    const csv = rows.map(r=>r.map(c=>'"'+(c||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${classNo}_${year}年${monthNames[month]}课表.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast('课表已导出为CSV');
+  }
 }
 
 function renderLessons() {

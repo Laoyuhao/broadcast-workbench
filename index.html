@@ -1568,8 +1568,12 @@ function showStudentModal(id) {
           <div class="form-group"><label>年龄</label><input id="s_age" type="number" value="${s.age||''}" placeholder="如17"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>班级</label><input id="s_classNo" value="${s.classNo||''}" placeholder="如：1班、集训A班" list="classList"></div>
-          <datalist id="classList">${[...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].map(c=>`<option value="${c}">`).join('')}</datalist>
+          <div class="form-group"><label>班级</label><select id="s_classNo">${(()=>{
+            const studentClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
+            const manualClasses = (DB._classes || []);
+            const allClasses = [...new Set([...studentClasses, ...manualClasses])].sort((a,b)=>a.localeCompare(b,'zh'));
+            return '<option value="">请选择班级</option>' + allClasses.map(c=>`<option value="${c}" ${s.classNo===c?'selected':''}>${c}</option>`).join('');
+          })()}</select></div>
           <div class="form-group"><label>招生老师</label><input id="s_recruitTeacher" value="${s.recruitTeacher||''}" placeholder="如：王老师"></div>
           <div class="form-group"><label>文化分</label><input id="s_cultureScore" type="number" value="${s.cultureScore||''}" placeholder="如420" min="0" max="750"></div>
           <div class="form-group"><label>综合水平</label><select id="s_level"><option value="">请选择</option><option value="优秀" ${s.level==='优秀'?'selected':''}>优秀</option><option value="良好" ${s.level==='良好'?'selected':''}>良好</option><option value="一般" ${s.level==='一般'?'selected':''}>一般</option><option value="薄弱" ${s.level==='薄弱'?'selected':''}>薄弱</option></select></div>
@@ -2817,49 +2821,78 @@ function updateScheduleClassFilter() {
   const sel = document.getElementById('scheduleClassFilter');
   if(!sel) return;
   const current = sel.value;
-  const classes = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh'));
+  // 合并学生班级和手动添加的班级
+  const studentClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
+  const manualClasses = (DB._classes || []);
+  const classes = [...new Set([...studentClasses, ...manualClasses])].sort((a,b)=>a.localeCompare(b,'zh'));
   sel.innerHTML = '<option value="">请选择班级</option>' + classes.map(c=>`<option value="${c}">${c}</option>`).join('');
-  if(current) sel.value = current;
+  if(current && classes.includes(current)) sel.value = current;
 }
 
 // 添加班级弹窗
 function showAddClassModal() {
-  // 收集已有的班级名称
-  const existingClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh'));
+  // 收集所有班级名称（学生+手动）
+  const studentClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
+  const manualClasses = (DB._classes || []);
+  const allClasses = [...new Set([...studentClasses, ...manualClasses])].sort((a,b)=>a.localeCompare(b,'zh'));
   const html = `<div class="modal-overlay show">
     <div class="modal" style="max-width:520px;">
-      <div class="modal-header"><h3>➕ 添加班级</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-header"><h3>➕ 班级管理</h3><button class="modal-close" onclick="closeModal()">×</button></div>
       <div class="modal-body">
-        <div class="form-group"><label>班级名称 <span class="required">*</span></label><input id="ac_className" placeholder="如：集训C班、基础A班" autofocus></div>
-        <div style="margin-top:16px;font-size:13px;color:var(--text-secondary);">
-          <b>已有班级（${existingClasses.length}个）：</b>
-          ${existingClasses.length>0 ? existingClasses.map(c=>`<span class="badge badge-purple" style="margin:2px 4px;">${c}</span>`).join('') : '<span style="color:var(--text-light);">暂无</span>'}
-        </div>
-        <div class="alert alert-info" style="margin-top:12px;">💡 添加班级后，可在课表下拉框中选中该班级进行排课。向班级添加学生时，可在学生档案中设置班级。</div>
+        <div class="form-group"><label>新增班级名称</label><input id="ac_className" placeholder="如：集训C班、基础A班" autofocus></div>
+        <button class="btn btn-primary btn-sm" onclick="saveNewClass()" style="margin-bottom:16px;">💾 添加班级</button>
+        ${allClasses.length>0 ? `<div style="margin-top:16px;font-size:13px;color:var(--text-secondary);">
+          <b>已有班级（${allClasses.length}个）：</b>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+            ${allClasses.map(c=>{
+              const isManual = manualClasses.includes(c) && !studentClasses.includes(c);
+              const isFromStudent = studentClasses.includes(c);
+              return `<div style="display:flex;align-items:center;gap:4px;background:#F0F0F0;border-radius:6px;padding:4px 8px;">
+                <span style="font-weight:600;">${c}</span>
+                ${isFromStudent ? '<span style="font-size:10px;color:var(--text-light);">(学生)</span>' : ''}
+                ${isManual ? `<button class="btn btn-danger btn-sm" style="padding:2px 6px;font-size:10px;" onclick="deleteManualClass('${c.replace(/'/g,"\\'")}')">✕</button>` : ''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : '<p style="color:var(--text-light);margin-top:16px;">暂无班级</p>'}
+        <div class="alert alert-info" style="margin-top:12px;">💡 手动添加的班级可删除；来自学生档案的班级（标注"学生"）需修改学生档案来移除。</div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal()">取消</button>
-        <button class="btn btn-primary" onclick="saveNewClass()">💾 保存</button>
+        <button class="btn btn-outline" onclick="closeModal()">关闭</button>
       </div>
     </div>
   </div>`;
   document.getElementById('modalContainer').innerHTML = html;
 }
 
+function deleteManualClass(className) {
+  if(!confirm(`确定删除班级「${className}」？\n（该班级的课程记录不会被删除）`)) return;
+  if(DB._classes) {
+    DB._classes = DB._classes.filter(c => c !== className);
+    saveDB();
+    toast(`班级「${className}」已删除`);
+    closeModal();
+    showAddClassModal(); // 刷新弹窗
+    updateScheduleClassFilter();
+    renderSchedule();
+  }
+}
+
 function saveNewClass() {
   const name = document.getElementById('ac_className')?.value?.trim();
   if(!name) { toast('请输入班级名称','error'); return; }
-  const existing = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
-  if(existing.includes(name)) { toast('该班级已存在','warning'); return; }
-  // 创建一个虚拟学生来"占位"这个班级，使其出现在筛选中
-  // 实际不创建学生，而是维护一个班级列表
+  // 检查学生班级中是否已有
+  const studentClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
+  const manualClasses = (DB._classes || []);
+  const allClasses = [...new Set([...studentClasses, ...manualClasses])];
+  if(allClasses.includes(name)) { toast('该班级已存在','warning'); return; }
   if(!DB._classes) DB._classes = [];
-  if(DB._classes.includes(name)) { toast('该班级已存在','warning'); return; }
   DB._classes.push(name);
   saveDB();
-  closeModal();
   toast('班级已添加');
-  // 刷新课表筛选
+  // 刷新弹窗和筛选
+  closeModal();
+  showAddClassModal();
   updateScheduleClassFilter();
   const sel = document.getElementById('scheduleClassFilter');
   if(sel) { sel.value = name; renderSchedule(); }

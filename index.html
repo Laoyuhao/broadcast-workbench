@@ -671,7 +671,28 @@ select.filter-select { min-width: 120px; }
   .main { margin-left: 60px; padding: 16px; }
 }
 </style>
-</head>
+<script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
+<script>
+(function(){
+  try{
+    var beacon=new BeaconAction({
+      appkey:'0WEB06U85YBSLJNL',
+      versionCode:'1.0.0',
+      channelID:'share',
+      delay:1000,
+      sessionDuration:30*60*1000,
+      isOversea:false,
+      needReportRqdEvent:false
+    });
+    beacon.onDirectUserAction('preview_page_view',{
+      'url':location.href,
+      'referrer':document.referrer,
+      'title':document.title,
+      'sandbox_id':'ef08a374345d434cab9db3a86bffaff1'
+    });
+  }catch(e){}
+})();
+</script></head>
 <body>
 <div class="app">
   <!-- ========== 侧边栏 ========== -->
@@ -793,7 +814,6 @@ select.filter-select { min-width: 120px; }
         <div style="display:flex;gap:8px;">
           <button class="btn btn-outline btn-sm" onclick="showAddClassModal()">➕ 添加班级</button>
           <button class="btn btn-outline btn-sm" onclick="exportScheduleExcel()">📥 导出课表</button>
-          <button class="btn btn-primary btn-sm" onclick="showScheduleModal()">➕ 添加课程</button>
         </div>
       </div>
       <div class="toolbar">
@@ -904,6 +924,15 @@ select.filter-select { min-width: 120px; }
         </div>
       </div>
       <div class="card">
+        <div class="card-title"><span class="icon">🚀</span>推送代码到GitHub</div>
+        <p style="margin-bottom:12px; color:var(--text-secondary); font-size:13px;">将最新版本的工作台 HTML 推送到 GitHub 仓库的 GitHub Pages，更新后刷新即可生效。使用上方同步配置的 Token 和用户名。</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px;">
+          <button class="btn btn-primary" onclick="pushHtmlToGitHub()">🚀 推送最新代码</button>
+          <span style="font-size:12px;color:var(--text-light);">推送到 <b id="ghRepoHint">broadcast-workbench</b> 仓库</span>
+        </div>
+        <div id="pushResult" style="margin-top:12px;"></div>
+      </div>
+      <div class="card">
         <div class="card-title"><span class="icon">📊</span>Excel 导入</div>
         <p style="margin-bottom:12px; color:var(--text-secondary); font-size:13px;">支持直接上传 <b>.xlsx / .xls / .csv</b> 格式的Excel表格，自动匹配列名导入学生信息和模考成绩。</p>
         <div class="alert alert-info" style="margin-bottom:16px;">
@@ -986,6 +1015,7 @@ let DB = {
   statuses: [],
   lessons: [],
   teachers: [],  // {id, name, phone, remark, createdAt, updatedAt}
+  _classes: [],  // 手动添加的班级列表 [{id, name, createdAt, updatedAt}]
 };
 
 const SYNC_CONFIG_KEY = 'broadcast_art_workbench_sync_config';
@@ -1057,13 +1087,14 @@ function updateSyncUI() {
 }
 
 // ===== 核心：保存到本地 =====
-function saveDB() {
+function saveDB(immediate) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
   // 如果开启同步，标记本地有变更，防抖推送
   if(SYNC_ENABLED) {
     LOCAL_DIRTY = true;
     clearTimeout(window._syncPushTimer);
-    window._syncPushTimer = setTimeout(()=>syncPush(), 2000);
+    const delay = immediate ? 0 : 300;
+    window._syncPushTimer = setTimeout(()=>syncPush(), delay);
   }
 }
 
@@ -1073,9 +1104,11 @@ function loadDB() {
   if (raw) {
     try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; if(!DB.teachers) DB.teachers=[]; if(!DB._classes) DB._classes=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[]}}; }
   // 清理已标记删除的记录
-  ['students','trainings','exams','artexams','statuses','lessons','teachers'].forEach(key => {
+  ['students','trainings','exams','artexams','statuses','lessons','teachers','_classes'].forEach(key => {
     if(DB[key]) DB[key] = DB[key].filter(item => !item._deleted);
   });
+  // 迁移 _classes：旧版纯字符串 → 新版对象数组
+  migrateClasses();
   }
   // 加载同步配置
   loadSyncConfig();
@@ -1086,10 +1119,36 @@ function loadDB() {
   }
 }
 
+// ===== 迁移 _classes 数据结构 =====
+// 旧版: ['集训A班', '集训B班']  →  新版: [{id, name, createdAt, updatedAt}]
+function migrateClasses() {
+  if (!DB._classes || DB._classes.length === 0) return;
+  const first = DB._classes[0];
+  // 如果第一个元素已经是对象（有 name 属性），说明已迁移
+  if (typeof first === 'object' && first.name) return;
+  // 旧格式：纯字符串数组
+  const now = new Date().toISOString();
+  DB._classes = DB._classes.map(name => ({
+    id: 'cls_' + Math.random().toString(36).slice(2, 10),
+    name: name,
+    createdAt: now,
+    updatedAt: now
+  }));
+  saveDB();
+}
+
 // ===== 为记录打时间戳 =====
 function stampRecord(item) {
   item.updatedAt = new Date().toISOString();
   return item;
+}
+
+// ===== 从 _classes 提取班级名称列表（兼容新旧格式）======
+function getClassNames() {
+  return (DB._classes || [])
+    .filter(c => c && !c._deleted)
+    .map(c => typeof c === 'object' ? c.name : c)
+    .filter(Boolean);
 }
 
 // ===== 自动修复乱码（latin1误读UTF-8）======
@@ -1114,9 +1173,8 @@ function autoFixMojibake(obj) {
 }
 
 // ===== 合并两份数据（本地 + 云端），基于ID和updatedAt，支持墓碑删除 =====
-// syncMode: true=同步模式（以updatedAt为准，双方合并，删除靠墓碑传播）
 function mergeDB(localDB, remoteDB, syncMode) {
-  const collections = ['students','trainings','exams','artexams','statuses','lessons','teachers'];
+  const collections = ['students','trainings','exams','artexams','statuses','lessons','teachers','_classes'];
   const result = {};
   collections.forEach(key => {
     const local = localDB[key] || [];
@@ -1145,11 +1203,6 @@ function mergeDB(localDB, remoteDB, syncMode) {
     // 过滤掉标记删除的记录（合并后清理）
     result[key] = Array.from(map.values()).filter(item => !item._deleted);
   });
-  // 合并非集合字段（如 _classes）
-  // 取本地和云端的并集，不会因为同步而丢失班级
-  const localClasses = localDB._classes || [];
-  const remoteClasses = remoteDB._classes || [];
-  result._classes = [...new Set([...localClasses, ...remoteClasses])];
   return result;
 }
 
@@ -1164,7 +1217,7 @@ function softDelete(arr, id) {
 
 // 物理清理：移除所有_deleted记录（可选，减少数据量）
 function purgeDeleted() {
-  const collections = ['students','trainings','exams','artexams','statuses','lessons','teachers'];
+  const collections = ['students','trainings','exams','artexams','statuses','lessons','teachers','_classes'];
   collections.forEach(key => {
     if(DB[key]) DB[key] = DB[key].filter(item => !item._deleted);
   });
@@ -1240,7 +1293,6 @@ async function syncPull() {
     // 合并（统一用合并模式：双方记录都保留，按updatedAt判断新旧）
     const merged = mergeDB(DB, remoteDB, false);
     const oldLen = JSON.stringify(DB).length;
-    // 保留 _classes 的合并结果
     Object.assign(DB, merged);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
     const newLen = JSON.stringify(DB).length;
@@ -1343,6 +1395,96 @@ function manualSync() {
   }).catch(() => {
     toast('同步失败，请重试','error');
   });
+}
+
+// ===== 推送HTML代码到GitHub仓库 =====
+async function pushHtmlToGitHub() {
+  if(!SYNC_CONFIG || !SYNC_CONFIG.token || !SYNC_CONFIG.owner) {
+    toast('请先在上方配置GitHub Token和用户名','error');
+    return;
+  }
+  const { token, owner } = SYNC_CONFIG;
+  const repo = SYNC_REPO; // broadcast-workbench
+  const fileName = 'index.html';
+  const resultDiv = document.getElementById('pushResult');
+  if(resultDiv) resultDiv.innerHTML = '<div class="alert alert-info" style="font-size:13px;">⏳ 正在推送，请稍候...</div>';
+
+  try {
+    // 1. 获取当前页面的完整HTML
+    const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const content = btoa(unescape(encodeURIComponent(htmlContent)));
+
+    // 2. 获取现有文件的sha（如果存在）
+    let sha = null;
+    const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${fileName}`;
+    try {
+      const getRes = await fetch(getUrl, {
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if(getRes.ok) { const d = await getRes.json(); sha = d.sha; }
+    } catch(e) {}
+
+    // 3. 推送文件
+    const body = {
+      message: `更新工作台代码 ${new Date().toLocaleString('zh-CN')}`,
+      content: content,
+    };
+    if(sha) body.sha = sha;
+
+    const putRes = await fetch(getUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if(!putRes.ok) {
+      let errMsg = '推送失败';
+      try { const err = await putRes.json(); errMsg = err.message || errMsg; } catch(e) {}
+      throw new Error(`${errMsg} (${putRes.status})`);
+    }
+
+    // 4. 同时推送 data.json（当前数据）
+    try {
+      const dataContent = btoa(unescape(encodeURIComponent(JSON.stringify(DB))));
+      let dataSha = null;
+      const dataUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${SYNC_FILE}`;
+      try {
+        const dRes = await fetch(dataUrl, {
+          headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+        });
+        if(dRes.ok) { const d = await dRes.json(); dataSha = d.sha; }
+      } catch(e) {}
+      const dBody = { message: `数据同步 ${new Date().toISOString()}`, content: dataContent };
+      if(dataSha) dBody.sha = dataSha;
+      await fetch(dataUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dBody),
+      });
+    } catch(e) { console.warn('data.json push failed:', e); }
+
+    // 5. 成功提示
+    const pagesUrl = `https://${owner}.github.io/${repo}/`;
+    if(resultDiv) resultDiv.innerHTML = `
+      <div class="alert alert-success" style="font-size:13px;">
+        ✅ 代码已推送到 GitHub！<br>
+        📄 文件：${owner}/${repo}/${fileName}<br>
+        🔗 GitHub Pages 地址：<a href="${pagesUrl}" target="_blank" style="color:inherit;text-decoration:underline;">${pagesUrl}</a><br>
+        <span style="font-size:11px;color:var(--text-light);">GitHub Pages 可能需要 1-2 分钟生效，请稍后刷新。</span>
+      </div>`;
+    toast('代码推送成功 ✓');
+  } catch(e) {
+    if(resultDiv) resultDiv.innerHTML = `<div class="alert alert-danger" style="font-size:13px;">❌ 推送失败：${e.message}</div>`;
+    toast('推送失败：'+e.message, 'error');
+  }
 }
 
 // ===== 自动同步（每60秒拉取一次）=====
@@ -1608,7 +1750,7 @@ function showStudentModal(id) {
         <div class="form-row">
           <div class="form-group"><label>班级</label><select id="s_classNo">${(()=>{
             const studentClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
-            const manualClasses = (DB._classes || []);
+            const manualClasses = getClassNames();
             const allClasses = [...new Set([...studentClasses, ...manualClasses])].sort((a,b)=>a.localeCompare(b,'zh'));
             return '<option value="">请选择班级</option>' + allClasses.map(c=>`<option value="${c}" ${s.classNo===c?'selected':''}>${c}</option>`).join('');
           })()}</select></div>
@@ -2861,7 +3003,7 @@ function updateScheduleClassFilter() {
   const current = sel.value;
   // 合并学生班级和手动添加的班级
   const studentClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
-  const manualClasses = (DB._classes || []);
+  const manualClasses = getClassNames();
   const classes = [...new Set([...studentClasses, ...manualClasses])].sort((a,b)=>a.localeCompare(b,'zh'));
   sel.innerHTML = '<option value="">请选择班级</option>' + classes.map(c=>`<option value="${c}">${c}</option>`).join('');
   if(current && classes.includes(current)) sel.value = current;
@@ -2871,7 +3013,7 @@ function updateScheduleClassFilter() {
 function showAddClassModal() {
   // 收集所有班级名称（学生+手动）
   const studentClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
-  const manualClasses = (DB._classes || []);
+  const manualClasses = getClassNames();
   const allClasses = [...new Set([...studentClasses, ...manualClasses])].sort((a,b)=>a.localeCompare(b,'zh'));
   const html = `<div class="modal-overlay show">
     <div class="modal" style="max-width:520px;">
@@ -2906,8 +3048,16 @@ function showAddClassModal() {
 function deleteManualClass(className) {
   if(!confirm(`确定删除班级「${className}」？\n（该班级的课程记录不会被删除）`)) return;
   if(DB._classes) {
-    DB._classes = DB._classes.filter(c => c !== className);
-    saveDB();
+    const item = DB._classes.find(c => (typeof c === 'object' ? c.name : c) === className);
+    if (item && typeof item === 'object') {
+      // 新版对象格式：墓碑删除
+      stampRecord(item);
+      item._deleted = true;
+    } else {
+      // 旧版字符串格式兼容
+      DB._classes = DB._classes.filter(c => c !== className);
+    }
+    saveDB(true); // 立即同步，避免回退
     toast(`班级「${className}」已删除`);
     closeModal();
     showAddClassModal(); // 刷新弹窗
@@ -2921,12 +3071,13 @@ function saveNewClass() {
   if(!name) { toast('请输入班级名称','error'); return; }
   // 检查学生班级中是否已有
   const studentClasses = [...new Set(DB.students.map(s=>s.classNo).filter(Boolean))];
-  const manualClasses = (DB._classes || []);
-  const allClasses = [...new Set([...studentClasses, ...manualClasses])];
-  if(allClasses.includes(name)) { toast('该班级已存在','warning'); return; }
+  const manualClassNames = (DB._classes || []).map(c => typeof c === 'object' ? c.name : c).filter(Boolean);
+  const allClassNames = [...new Set([...studentClasses, ...manualClassNames])];
+  if(allClassNames.includes(name)) { toast('该班级已存在','warning'); return; }
   if(!DB._classes) DB._classes = [];
-  DB._classes.push(name);
-  saveDB();
+  const now = new Date().toISOString();
+  DB._classes.push({id: 'cls_' + Math.random().toString(36).slice(2, 10), name, createdAt: now, updatedAt: now});
+  saveDB(true); // 立即同步，避免回退
   toast('班级已添加');
   // 刷新弹窗和筛选
   closeModal();
@@ -4093,6 +4244,8 @@ function doImport() {
       if(!DB.artexams) DB.artexams = [];
       if(!DB.statuses) DB.statuses = [];
       if(!DB.lessons) DB.lessons = [];
+      if(!DB.teachers) DB.teachers = [];
+      if(!DB._classes) DB._classes = [];
       saveDB(); closeModal();
       renderStudents(); renderDashboard();
       toast('数据导入成功');
@@ -4409,10 +4562,7 @@ function confirmExcelImport(merge) {
 
   if(!merge) {
     // 替换模式
-    DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[]};
-  }
-
-  // 导入学生（按姓名去重/更新）
+    DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[]};
   let newStudentCount = 0, updateStudentCount = 0;
   data.students.forEach(ns=>{
     const existing = DB.students.find(s=>s.name===ns.name);
@@ -4461,10 +4611,7 @@ function confirmExcelImport(merge) {
 function confirmClearData() {
   if(!confirm('确定要清空全部数据吗？此操作不可撤销，请确保已导出备份！')) return;
   if(!confirm('再次确认：清空所有学生、训练、成绩、考试、状态、课时记录？')) return;
-  DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[]};
-  saveDB();
-  renderStudents(); renderDashboard();
-  toast('全部数据已清空','warning');
+  DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[]};
 }
 
 // ============================================================

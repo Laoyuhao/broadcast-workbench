@@ -1146,12 +1146,10 @@ function mergeDB(localDB, remoteDB, syncMode) {
     result[key] = Array.from(map.values()).filter(item => !item._deleted);
   });
   // 合并非集合字段（如 _classes）
-  // 以云端为准，如果云端有就覆盖，没有就保留本地
-  if(remoteDB._classes !== undefined) {
-    result._classes = [...(remoteDB._classes || [])];
-  } else if(localDB._classes) {
-    result._classes = [...localDB._classes];
-  }
+  // 取本地和云端的并集，不会因为同步而丢失班级
+  const localClasses = localDB._classes || [];
+  const remoteClasses = remoteDB._classes || [];
+  result._classes = [...new Set([...localClasses, ...remoteClasses])];
   return result;
 }
 

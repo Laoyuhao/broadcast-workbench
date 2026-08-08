@@ -942,6 +942,169 @@ body.nav-open { overflow: hidden; }
   to   { transform: translateY(0); opacity: 1; }
 }
 </style>
+
+<style>
+/* ---------- 全局动效关键帧 ---------- */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastSlide {
+  from { opacity: 0; transform: translateY(-14px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 页面切换：淡入 + 轻微上滑 */
+.page.active { animation: pageIn .32s cubic-bezier(.22,1,.36,1) both; }
+
+/* 按钮/卡片统一按压反馈 */
+.btn, .quick-item, .student-card, .calendar-day, .training-slot,
+.nav-item, .tab, .filter-select {
+  transition: transform .16s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .2s ease,
+              background-color .2s ease,
+              border-color .2s ease;
+}
+.btn:active, .quick-item:active, .student-card:active,
+.calendar-day:active, .training-slot:active, .tab:active {
+  transform: scale(0.96) !important;
+}
+
+/* Toast 滑入 */
+.toast { animation: toastSlide .35s cubic-bezier(.22,1,.36,1) both; }
+
+/* 移动端专属优化 */
+@media (max-width: 768px) {
+  /* 抽屉遮罩淡入淡出（替代直接 display 切换） */
+  .mobile-backdrop {
+    display: block !important;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity .28s ease, visibility .28s ease;
+  }
+  .mobile-backdrop.show { visibility: visible; opacity: 1; }
+
+  /* 页面内容区更紧凑 */
+  .main { padding-top: calc(var(--topbar-h) + env(safe-area-inset-top) + 8px); }
+  .page-header { margin-bottom: 12px; gap: 6px; }
+  .page-header > div:last-child { gap: 6px; }
+
+  /* 卡片与按钮进一步收紧 */
+  .card { padding: 12px; border-radius: 14px; margin-bottom: 10px; }
+  .card-title { font-size: 13.5px; margin-bottom: 10px; }
+  .btn { min-height: 36px; font-size: 13px; padding: 7px 12px; border-radius: 10px; }
+  .btn-sm { min-height: 32px; font-size: 12px; padding: 6px 10px; }
+
+  /* 表单控件更适合单手 */
+  input, select, textarea { padding: 9px 11px; font-size: 15px; min-height: 38px; }
+  .form-group { margin-bottom: 10px; }
+
+  /* 学生档案：搜索框独占一行，4 个下拉改为 2x2 网格，减少垂直占用 */
+  #page-students .toolbar-left {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  #page-students .toolbar-left .search-box {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  #page-students .toolbar-left select,
+  #page-students .toolbar-left input {
+    width: 100%;
+    min-height: 36px;
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  /* 课时工作台头部 3 按钮均分 */
+  #page-lessons .page-header .btn {
+    flex: 1 1 0;
+    min-height: 34px;
+    font-size: 11.5px;
+    padding: 6px 4px;
+  }
+
+  /* ---------- 日历（日常模式）彻底修复 ---------- */
+  /* 让 7 列始终平分宽度，内容再长也不会把格子撑大 */
+  .calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    min-width: 0;
+    border-radius: 10px;
+  }
+  .calendar-weekday {
+    padding: 5px 1px;
+    font-size: 10px;
+  }
+  .calendar-day {
+    min-width: 0;
+    min-height: 54px;
+    padding: 3px 2px 4px;
+    overflow: hidden;
+  }
+  .calendar-day-date {
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+  .calendar-day-lessons {
+    min-width: 0;
+    overflow: hidden;
+    gap: 1px;
+  }
+  .calendar-lesson-tag {
+    font-size: 9px;
+    padding: 1px 2px;
+    border-radius: 3px;
+    max-width: 100%;
+    min-width: 0;
+    line-height: 1.35;
+  }
+  /* 隐藏课程标签里的班级/地点小字，避免撑宽日期格子 */
+  .calendar-lesson-tag > div { display: none; }
+  .calendar-day-more { font-size: 8.5px; margin-top: 1px; }
+
+  /* 集训模式日程卡再紧凑 */
+  .training-day-card { padding: 11px; border-radius: 12px; margin-bottom: 10px; }
+  .training-day-header { margin-bottom: 8px; }
+  .training-day-title { font-size: 14px; }
+  .training-slot { min-height: 60px; padding: 9px; border-radius: 10px; }
+  .training-slot-label { font-size: 11px; }
+  .training-slot-content { font-size: 12px; }
+
+  /* Tab 更小 */
+  .tabs { gap: 2px; }
+  .tab { padding: 9px 11px; font-size: 12px; border-radius: 10px; }
+
+  /* 统计卡片紧凑 */
+  .stat-grid { gap: 8px; margin-bottom: 12px; }
+  .stat-card { padding: 10px; border-radius: 12px; }
+  .stat-icon { width: 34px; height: 34px; font-size: 16px; }
+  .stat-info h3 { font-size: 17px; }
+  .stat-info p { font-size: 10.5px; }
+
+  /* 主页快捷入口 */
+  .hero-card { padding: 16px; border-radius: 16px; }
+  .hero-num { font-size: 36px; }
+  .hero-label { font-size: 13px; }
+  .quick-grid { gap: 8px; }
+  .quick-item { padding: 11px; border-radius: 13px; }
+  .quick-icon { width: 36px; height: 36px; font-size: 17px; }
+
+  /* 空状态图标缩小 */
+  .empty-state .icon { font-size: 42px; }
+
+  /* 模态框底部弹出更紧凑 */
+  .modal { border-radius: 16px 16px 0 0; }
+  .modal-header { padding: 14px 14px 10px; }
+  .modal-body { padding: 2px 14px 12px; }
+  .modal-footer { padding: 10px 14px calc(12px + env(safe-area-inset-bottom)); }
+}
+</style>
+
 </head>
 <body>
 <div class="app">

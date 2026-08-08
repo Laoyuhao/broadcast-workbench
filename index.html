@@ -1346,8 +1346,10 @@ function mergeDB(localDB, remoteDB, syncMode) {
     // 过滤掉标记删除的记录（合并后清理）
     result[key] = Array.from(map.values()).filter(item => !item._deleted);
   });
-  // 合并 _classes：始终以本地为准，避免删除操作被云端旧数据"复活"
-  result._classes = [...(localDB._classes || [])];
+  // 合并 _classes：本地与云端取并集（按班级名去重），各端新建的班级都能互相同步
+  const localClasses = localDB._classes || [];
+  const remoteClasses = remoteDB._classes || [];
+  result._classes = Array.from(new Set([...localClasses, ...remoteClasses])).filter(Boolean);
   return result;
 }
 

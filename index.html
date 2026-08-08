@@ -663,38 +663,219 @@ select.filter-select { min-width: 120px; }
   .sidebar, .toolbar, .btn { display: none !important; }
   .main { margin-left: 0; }
 }
-/* ========== 响应式 ========== */
+/* =====================================================================
+   移动端（iPhone）重制样式
+   说明：仅重做 UI 与布局，所有 JS / 数据逻辑保持不变，功能完全一致。
+   ===================================================================== */
+/* 桌面端隐藏移动端专属元素，确保大屏仍为原版侧边栏体验 */
+@media (min-width: 769px) {
+  .mobile-topbar, .mobile-menu-btn, .mobile-backdrop { display: none !important; }
+}
+
+/* 抽屉打开时锁定背景滚动 */
+body.nav-open { overflow: hidden; }
+
 @media (max-width: 768px) {
-  .sidebar { width: 60px; }
-  .sidebar-header h1, .sidebar-header p, .sidebar-logo-box, .nav-item span:not(.nav-icon) { display: none; }
-  .nav-item { justify-content: center; padding: 12px; }
-  .main { margin-left: 60px; padding: 16px; }
+  /* ---------- 基础 ---------- */
+  html, body { height: 100%; }
+  body { overflow-x: hidden; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+  :root { --topbar-h: 52px; }
+
+  /* ---------- 顶部栏 ---------- */
+  .mobile-topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: calc(var(--topbar-h) + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 12px 0;
+    background: #fff;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.07), 0 2px 12px rgba(0,0,0,0.04);
+    z-index: 1300;
+  }
+  .mobile-menu-btn {
+    width: 38px; height: 38px; flex-shrink: 0;
+    border: none; background: rgba(108,92,231,0.10); color: var(--primary);
+    border-radius: 11px; font-size: 19px; line-height: 1;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .mobile-menu-btn:active { background: rgba(108,92,231,0.20); }
+  .mobile-topbar-title {
+    font-size: 17px; font-weight: 700; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ---------- 抽屉式侧边栏（原 sidebar 改造为左侧滑出菜单） ---------- */
+  .sidebar {
+    top: 0; bottom: 0; left: 0;
+    width: 280px; max-width: 82vw; height: 100%;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    z-index: 1200;
+    box-shadow: 4px 0 28px rgba(0,0,0,0.20);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-header { padding: calc(env(safe-area-inset-top) + 22px) 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+  .sidebar-header h1 { display: block; }
+  .sidebar-header p { display: block; }
+  .sidebar-logo-box { display: flex; margin-bottom: 14px; }
+  .nav-item span:not(.nav-icon) { display: inline; }
+  .nav { padding: 10px 12px 28px; }
+  .nav-item {
+    padding: 15px 16px; border-radius: 13px; margin-bottom: 5px;
+    border-left: 3px solid transparent; font-size: 15px;
+  }
+  .nav-item:active { background: rgba(255,255,255,0.10); }
+  .nav-item.active { background: rgba(255,255,255,0.16); border-left-color: var(--accent); }
+  .nav-icon { font-size: 19px; width: 26px; }
+
+  /* ---------- 背景遮罩 ---------- */
+  .mobile-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(15,12,41,0.45); z-index: 1100;
+  }
+  .mobile-backdrop.show { display: block; }
+
+  /* ---------- 主内容 ---------- */
+  .main {
+    margin-left: 0;
+    padding: calc(var(--topbar-h) + env(safe-area-inset-top) + 12px) 14px 30px;
+    min-width: 0;       /* 防止 flex 子项被宽表格撑开 */
+    overflow-x: hidden;
+  }
+
+  /* ---------- 页面标题 ---------- */
+  .page-header { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 18px; }
+  .page-header h2 { font-size: 20px; display: none; }            /* 标题已由顶部栏统一展示 */
+  .page-header > div:last-child { display: flex; gap: 8px; }
+  .page-header .btn { flex: 1; justify-content: center; min-height: 44px; }
+
+  /* ---------- 卡片与间距 ---------- */
+  .card { padding: 16px; border-radius: 15px; margin-bottom: 14px; box-shadow: 0 2px 14px rgba(0,0,0,0.05); }
+  .card-title { font-size: 15px; margin-bottom: 14px; }
+
+  /* ---------- 统计卡片：两列 ---------- */
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-card { padding: 14px; border-radius: 15px; gap: 12px; }
+  .stat-icon { width: 44px; height: 44px; font-size: 20px; border-radius: 12px; }
+  .stat-info h3 { font-size: 22px; }
+
+  /* ---------- 图表区堆叠 ---------- */
+  #dashboardCharts { grid-template-columns: 1fr !important; gap: 14px; }
+  .chart-container, .radar-container { overflow-x: auto; }
+
+  /* ---------- 学生卡片单列 ---------- */
+  .student-grid { grid-template-columns: 1fr; gap: 12px; }
+  .student-card { padding: 15px; }
+  .student-card:active { transform: scale(0.99); }
+
+  /* ---------- 工具栏堆叠 ---------- */
+  .toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+  .toolbar-left { flex-direction: column; align-items: stretch; gap: 9px; width: 100%; }
+  .toolbar-right { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
+  .search-box { width: 100%; min-width: 0; }
+  .toolbar select, .toolbar input { width: 100%; }
+  .toolbar-right .btn { width: 100%; justify-content: center; min-height: 46px; }
+
+  /* 课表页：下拉框独占一行，月份按钮排成一行，避免过度纵向堆叠 */
+  #page-schedule .toolbar-left { flex-direction: row; flex-wrap: wrap; }
+  #page-schedule .toolbar-left select { width: 100%; }
+  #page-schedule .toolbar-left .btn,
+  #page-schedule .toolbar-left span[id^="scheduleMonthLabel"] { flex: 1 1 0; text-align: center; }
+
+  /* ---------- 通用按钮触摸尺寸 ---------- */
+  .btn { min-height: 44px; font-size: 14px; border-radius: 11px; }
+  .btn-sm { min-height: 40px; }
+  .btn-icon { width: 40px; height: 40px; }
+
+  /* ---------- 表单 ---------- */
+  .form-row { grid-template-columns: 1fr; gap: 12px; }
+  input, select, textarea { padding: 12px 13px; font-size: 16px; border-radius: 11px; }  /* 16px 防 iOS 聚焦缩放 */
+  .form-group { margin-bottom: 14px; }
+
+  /* ---------- 设置页内联按钮组：纵向铺满 ---------- */
+  .card div[style*="display:flex"] { flex-direction: column; align-items: stretch !important; }
+  .card div[style*="display:flex"] .btn { width: 100% !important; justify-content: center; }
+
+  /* ---------- 快速排课面板 ---------- */
+  .quick-schedule { flex-direction: column; align-items: stretch; padding: 14px; }
+  .quick-schedule select, .quick-schedule input { width: 100%; min-width: 0; }
+
+  /* ---------- 表格：横向滚动容器美化 ---------- */
+  .table-wrapper { margin: 0; border-radius: 12px; -webkit-overflow-scrolling: touch; }
+  table { font-size: 12px; }
+  thead th { padding: 10px; position: static; white-space: nowrap; }
+  tbody td { padding: 10px; white-space: nowrap; }
+  tbody tr:active { background: #EEF0FF; }
+
+  /* ---------- 标签 / 徽章 ---------- */
+  .badge { font-size: 11px; padding: 3px 9px; border-radius: 6px; }
+
+  /* ---------- Tab 横向滚动 ---------- */
+  .tabs { gap: 2px; }
+  .tab { padding: 11px 15px; font-size: 13px; }
+
+  /* ---------- 日历 ---------- */
+  .calendar-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .calendar-nav { justify-content: space-between; }
+  .calendar-nav h3 { min-width: 0; flex: 1; }
+  .calendar-weekday { padding: 7px 1px; font-size: 10px; }
+  .calendar-day { min-height: 62px; padding: 4px; }
+  .calendar-day-date { font-size: 11px; }
+  .calendar-lesson-tag { font-size: 9px; padding: 1px 3px; border-radius: 3px; }
+  .training-slot-grid { grid-template-columns: 1fr; gap: 10px; }
+  .training-slot { min-height: 76px; padding: 11px; border-radius: 11px; }
+  .training-day-card { padding: 14px; }
+
+  /* ---------- 模态框：改为底部弹出抽屉（sheet） ---------- */
+  .modal-overlay { padding: 0; align-items: flex-end; z-index: 1400; }
+  .modal {
+    position: relative;
+    max-width: 100%; width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.22);
+    animation: sheetUp .32s cubic-bezier(.4,0,.2,1);
+  }
+  .modal::before {                       /* 顶部抓取条 */
+    content: ''; position: absolute; top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 38px; height: 4px; border-radius: 2px; background: #E2E6EA;
+  }
+  .modal-header { padding: 20px 18px 14px; }
+  .modal-header h3 { font-size: 17px; padding-right: 20px; }
+  .modal-body { padding: 6px 18px 18px; max-height: 76vh; }
+  .modal-footer {
+    flex-direction: column; gap: 10px;
+    padding: 14px 18px calc(18px + env(safe-area-inset-bottom));
+  }
+  .modal-footer .btn { width: 100%; justify-content: center; min-height: 48px; }
+
+  /* ---------- Toast：移到顶部栏下方、整宽 ---------- */
+  .toast-container {
+    top: calc(var(--topbar-h) + env(safe-area-inset-top) + 10px);
+    left: 12px; right: 12px;
+  }
+  .toast { min-width: 0; width: 100%; border-radius: 11px; }
+
+  /* ---------- 时间线 / 进度 ---------- */
+  .timeline { padding-left: 20px; }
+  .timeline-item { padding-left: 16px; }
+  .progress-bar { height: 9px; }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); opacity: .5; }
+  to   { transform: translateY(0); opacity: 1; }
 }
 </style>
-<script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
-<script>
-(function(){
-  try{
-    var beacon=new BeaconAction({
-      appkey:'0WEB06U85YBSLJNL',
-      versionCode:'1.0.0',
-      channelID:'share',
-      delay:1000,
-      sessionDuration:30*60*1000,
-      isOversea:false,
-      needReportRqdEvent:false
-    });
-    beacon.onDirectUserAction('preview_page_view',{
-      'url':location.href,
-      'referrer':document.referrer,
-      'title':document.title,
-      'sandbox_id':'ef08a374345d434cab9db3a86bffaff1'
-    });
-  }catch(e){}
-})();
-</script></head>
+</head>
 <body>
 <div class="app">
+  <!-- ========== 移动端顶部栏（仅手机端显示） ========== -->
+  <header class="mobile-topbar">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="打开菜单">☰</button>
+    <span class="mobile-topbar-title" id="mobileTopTitle">数据总览</span>
+  </header>
+  <div class="mobile-backdrop" id="mobileBackdrop"></div>
   <!-- ========== 侧边栏 ========== -->
   <aside class="sidebar">
     <div class="sidebar-header">
@@ -4615,5 +4796,41 @@ populateStudentFilters();
 populateAnalysisStudentFilter();
 updateSyncUI();
 </script>
+
+<!-- ========== 移动端交互（仅负责抽屉开关与标题，不改动原功能逻辑） ========== -->
+<script>
+(function () {
+  var btn = document.getElementById('mobileMenuBtn');
+  var backdrop = document.getElementById('mobileBackdrop');
+  var sidebar = document.querySelector('.sidebar');
+  if (!btn || !sidebar) return;
+  var labels = {
+    dashboard: '数据总览', students: '学生档案', analysis: '成绩分析',
+    exams: '模考成绩', schedule: '班级课表', lessons: '课时工作台',
+    review: '教学复盘', settings: '数据管理'
+  };
+  function openNav()  { sidebar.classList.add('open');  backdrop.classList.add('show'); document.body.classList.add('nav-open'); }
+  function closeNav() { sidebar.classList.remove('open'); backdrop.classList.remove('show'); document.body.classList.remove('nav-open'); }
+  btn.addEventListener('click', function () {
+    sidebar.classList.contains('open') ? closeNav() : openNav();
+  });
+  if (backdrop) backdrop.addEventListener('click', closeNav);
+  // 复用原导航项的点击：切换页面后关闭抽屉并同步顶部标题
+  document.querySelectorAll('.nav-item').forEach(function (item) {
+    item.addEventListener('click', function () {
+      closeNav();
+      var t = document.getElementById('mobileTopTitle');
+      if (t && item.dataset.page) t.textContent = labels[item.dataset.page] || item.textContent.trim();
+    });
+  });
+  // 初始标题与默认激活页保持一致
+  var active = document.querySelector('.nav-item.active');
+  if (active && active.dataset.page) {
+    var t0 = document.getElementById('mobileTopTitle');
+    if (t0) t0.textContent = labels[active.dataset.page] || active.textContent.trim();
+  }
+})();
+</script>
+
 </body>
 </html>

@@ -2758,18 +2758,6 @@ function renderAnalysis() {
 
 
 
-  // 图表区域
-  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
-    <div class="card" style="margin:0;">
-      <div class="card-title"><span class="icon">📉</span>成绩趋势图</div>
-      <div class="chart-container"><canvas id="analysisTrendChart" height="200"></canvas></div>
-    </div>
-    <div class="card" style="margin:0;">
-      <div class="card-title"><span class="icon">🎯</span>各科能力雷达图</div>
-      <div class="radar-container"><canvas id="analysisRadarChart" height="200"></canvas></div>
-    </div>
-  </div>`;
-
   // 各科详细分析
   html += `<div class="card">
     <div class="card-title"><span class="icon">📋</span>各科详细分析</div>
@@ -2831,38 +2819,6 @@ function renderAnalysis() {
 
   content.innerHTML = html;
 
-  // 绘制图表
-  if(window.chartLoaded) {
-    // 趋势图
-    const trendCtx = document.getElementById('analysisTrendChart');
-    if(trendCtx) {
-      const datasets = [
-        {label:'总分', data:exams.map(e=>e.total||null), borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.1)', fill:true, tension:0.3, borderWidth:3},
-        ...dims.map((d,i)=>({
-          label:d.name, data:exams.map(e=>e[d.key]||null),
-          borderColor:['#74B9FF','#FD79A8','#FDCB6E'][i],
-          tension:0.3, borderWidth:1.5,
-        })),
-      ];
-      analysisCharts.trend = new Chart(trendCtx, {
-        type:'line',
-        data:{labels:exams.map(e=>formatDate(e.date)), datasets},
-        options:{responsive:true, scales:{y:{beginAtZero:true,max:100}}, plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}},
-      });
-    }
-    // 雷达图
-    const radarCtx = document.getElementById('analysisRadarChart');
-    if(radarCtx) {
-      analysisCharts.radar = new Chart(radarCtx, {
-        type:'radar',
-        data:{labels:dims.map(d=>d.name), datasets:[
-          {label:'平均分', data:dimStats.map(d=>d.avg.toFixed(1)), borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.2)', pointBackgroundColor:'#6C5CE7', borderWidth:2},
-          {label:'最近成绩', data:dimStats.map(d=>d.latest.toFixed(1)), borderColor:'#FD79A8', backgroundColor:'rgba(253,121,168,0.15)', pointBackgroundColor:'#FD79A8', borderWidth:2},
-        ]},
-        options:{responsive:true, scales:{r:{beginAtZero:true,max:100}}, plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}},
-      });
-    }
-  }
 }
 
 // 班级整体分析概览

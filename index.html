@@ -679,53 +679,53 @@ body.nav-open { overflow: hidden; }
   /* ---------- 基础 ---------- */
   html, body { height: 100%; }
   body { overflow-x: hidden; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
-  :root { --topbar-h: 52px; }
+  :root { --topbar-h: 48px; }
 
   /* ---------- 顶部栏 ---------- */
   .mobile-topbar {
     position: fixed; top: 0; left: 0; right: 0;
     height: calc(var(--topbar-h) + env(safe-area-inset-top));
-    padding: env(safe-area-inset-top) 12px 0;
+    padding: env(safe-area-inset-top) 10px 0;
     background: #fff;
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; gap: 10px;
     box-shadow: 0 1px 0 rgba(0,0,0,0.07), 0 2px 12px rgba(0,0,0,0.04);
     z-index: 1300;
   }
   .mobile-menu-btn {
-    width: 38px; height: 38px; flex-shrink: 0;
+    width: 34px; height: 34px; flex-shrink: 0;
     border: none; background: rgba(108,92,231,0.10); color: var(--primary);
-    border-radius: 11px; font-size: 19px; line-height: 1;
+    border-radius: 10px; font-size: 17px; line-height: 1;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
   .mobile-menu-btn:active { background: rgba(108,92,231,0.20); }
   .mobile-topbar-title {
-    font-size: 17px; font-weight: 700; color: var(--text);
+    font-size: 16px; font-weight: 700; color: var(--text);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
-  /* ---------- 抽屉式侧边栏（原 sidebar 改造为左侧滑出菜单） ---------- */
+  /* ---------- 抽屉式侧边栏 ---------- */
   .sidebar {
     top: 0; bottom: 0; left: 0;
-    width: 280px; max-width: 82vw; height: 100%;
+    width: 268px; max-width: 80vw; height: 100%;
     transform: translateX(-100%);
     transition: transform .28s cubic-bezier(.4,0,.2,1);
     z-index: 1200;
     box-shadow: 4px 0 28px rgba(0,0,0,0.20);
   }
   .sidebar.open { transform: translateX(0); }
-  .sidebar-header { padding: calc(env(safe-area-inset-top) + 22px) 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
-  .sidebar-header h1 { display: block; }
-  .sidebar-header p { display: block; }
-  .sidebar-logo-box { display: flex; margin-bottom: 14px; }
+  .sidebar-header { padding: calc(env(safe-area-inset-top) + 18px) 18px 14px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+  .sidebar-header h1 { display: block; font-size: 17px; }
+  .sidebar-header p { display: block; font-size: 12px; }
+  .sidebar-logo-box { display: flex; margin-bottom: 12px; }
   .nav-item span:not(.nav-icon) { display: inline; }
-  .nav { padding: 10px 12px 28px; }
+  .nav { padding: 8px 10px 24px; }
   .nav-item {
-    padding: 15px 16px; border-radius: 13px; margin-bottom: 5px;
-    border-left: 3px solid transparent; font-size: 15px;
+    padding: 12px 14px; border-radius: 12px; margin-bottom: 4px;
+    border-left: 3px solid transparent; font-size: 14px;
   }
   .nav-item:active { background: rgba(255,255,255,0.10); }
   .nav-item.active { background: rgba(255,255,255,0.16); border-left-color: var(--accent); }
-  .nav-icon { font-size: 19px; width: 26px; }
+  .nav-icon { font-size: 18px; width: 24px; }
 
   /* ---------- 背景遮罩 ---------- */
   .mobile-backdrop {
@@ -737,129 +737,134 @@ body.nav-open { overflow: hidden; }
   /* ---------- 主内容 ---------- */
   .main {
     margin-left: 0;
-    padding: calc(var(--topbar-h) + env(safe-area-inset-top) + 12px) 14px 30px;
-    min-width: 0;       /* 防止 flex 子项被宽表格撑开 */
+    padding: calc(var(--topbar-h) + env(safe-area-inset-top) + 10px) 12px 26px;
+    min-width: 0;
     overflow-x: hidden;
   }
 
   /* ---------- 页面标题 ---------- */
-  .page-header { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 18px; }
-  .page-header h2 { font-size: 20px; display: none; }            /* 标题已由顶部栏统一展示 */
+  .page-header { flex-direction: column; align-items: stretch; gap: 8px; margin-bottom: 14px; }
+  .page-header h2 { font-size: 20px; display: none; }
   .page-header > div:last-child { display: flex; gap: 8px; }
-  .page-header .btn { flex: 1; justify-content: center; min-height: 44px; }
+  .page-header .btn { flex: 1; justify-content: center; min-height: 40px; }
 
   /* ---------- 卡片与间距 ---------- */
-  .card { padding: 16px; border-radius: 15px; margin-bottom: 14px; box-shadow: 0 2px 14px rgba(0,0,0,0.05); }
-  .card-title { font-size: 15px; margin-bottom: 14px; }
+  .card { padding: 13px; border-radius: 14px; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+  .card-title { font-size: 14px; margin-bottom: 12px; font-weight: 700; color: var(--text); padding-left: 10px; border-left: 3px solid var(--primary); line-height: 1.3; }
 
   /* ---------- 统计卡片：两列 ---------- */
-  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
-  .stat-card { padding: 14px; border-radius: 15px; gap: 12px; }
-  .stat-icon { width: 44px; height: 44px; font-size: 20px; border-radius: 12px; }
-  .stat-info h3 { font-size: 22px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat-card { padding: 12px; border-radius: 14px; gap: 10px; border-left: 3px solid var(--primary); }
+  .stat-icon { width: 38px; height: 38px; font-size: 18px; border-radius: 10px; }
+  .stat-info h3 { font-size: 19px; }
+  .stat-info p { font-size: 11px; margin: 2px 0 0; }
 
   /* ---------- 图表区堆叠 ---------- */
-  #dashboardCharts { grid-template-columns: 1fr !important; gap: 14px; }
+  #dashboardCharts { grid-template-columns: 1fr !important; gap: 12px; }
   .chart-container, .radar-container { overflow-x: auto; }
 
   /* ---------- 学生卡片单列 ---------- */
-  .student-grid { grid-template-columns: 1fr; gap: 12px; }
-  .student-card { padding: 15px; }
+  .student-grid { grid-template-columns: 1fr; gap: 10px; }
+  .student-card { padding: 13px; border-radius: 14px; }
   .student-card:active { transform: scale(0.99); }
 
   /* ---------- 工具栏堆叠 ---------- */
-  .toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
-  .toolbar-left { flex-direction: column; align-items: stretch; gap: 9px; width: 100%; }
-  .toolbar-right { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
+  .toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .toolbar-left { flex-direction: column; align-items: stretch; gap: 8px; width: 100%; }
+  .toolbar-right { display: grid; grid-template-columns: 1fr; gap: 7px; width: 100%; }
   .search-box { width: 100%; min-width: 0; }
   .toolbar select, .toolbar input { width: 100%; }
-  .toolbar-right .btn { width: 100%; justify-content: center; min-height: 46px; }
+  .toolbar-right .btn { width: 100%; justify-content: center; min-height: 40px; }
 
-  /* 课表页：下拉框独占一行，月份按钮排成一行，避免过度纵向堆叠 */
+  /* 课表页：下拉框独占一行，月份按钮排成一行 */
   #page-schedule .toolbar-left { flex-direction: row; flex-wrap: wrap; }
   #page-schedule .toolbar-left select { width: 100%; }
   #page-schedule .toolbar-left .btn,
   #page-schedule .toolbar-left span[id^="scheduleMonthLabel"] { flex: 1 1 0; text-align: center; }
 
   /* ---------- 通用按钮触摸尺寸 ---------- */
-  .btn { min-height: 44px; font-size: 14px; border-radius: 11px; }
-  .btn-sm { min-height: 40px; }
-  .btn-icon { width: 40px; height: 40px; }
+  .btn { min-height: 38px; font-size: 13.5px; border-radius: 10px; padding: 8px 14px; }
+  .btn-sm { min-height: 34px; font-size: 12.5px; }
+  .btn-icon { width: 36px; height: 36px; }
 
   /* ---------- 表单 ---------- */
-  .form-row { grid-template-columns: 1fr; gap: 12px; }
-  input, select, textarea { padding: 12px 13px; font-size: 16px; border-radius: 11px; }  /* 16px 防 iOS 聚焦缩放 */
-  .form-group { margin-bottom: 14px; }
+  .form-row { grid-template-columns: 1fr; gap: 10px; }
+  input, select, textarea { padding: 11px 12px; font-size: 16px; border-radius: 10px; }
+  .form-group { margin-bottom: 12px; }
 
   /* ---------- 设置页内联按钮组：纵向铺满 ---------- */
   .card div[style*="display:flex"] { flex-direction: column; align-items: stretch !important; }
   .card div[style*="display:flex"] .btn { width: 100% !important; justify-content: center; }
 
   /* ---------- 快速排课面板 ---------- */
-  .quick-schedule { flex-direction: column; align-items: stretch; padding: 14px; }
+  .quick-schedule { flex-direction: column; align-items: stretch; padding: 12px; }
   .quick-schedule select, .quick-schedule input { width: 100%; min-width: 0; }
 
   /* ---------- 表格：横向滚动容器美化 ---------- */
-  .table-wrapper { margin: 0; border-radius: 12px; -webkit-overflow-scrolling: touch; }
-  table { font-size: 12px; }
-  thead th { padding: 10px; position: static; white-space: nowrap; }
-  tbody td { padding: 10px; white-space: nowrap; }
+  .table-wrapper { margin: 0; border-radius: 10px; -webkit-overflow-scrolling: touch; }
+  table { font-size: 11.5px; }
+  thead th { padding: 8px; position: static; white-space: nowrap; }
+  tbody td { padding: 8px; white-space: nowrap; }
   tbody tr:active { background: #EEF0FF; }
 
+  /* 模考成绩明细：该表为裸 <table>（无 .table-wrapper），桌面端被容器裁剪；
+     移动端改为块级 + 横向滚动，保证所有列可滑动查看 */
+  #page-exams table { display: block; width: max-content; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; }
+
   /* ---------- 标签 / 徽章 ---------- */
-  .badge { font-size: 11px; padding: 3px 9px; border-radius: 6px; }
+  .badge { font-size: 10.5px; padding: 2px 7px; border-radius: 5px; }
 
   /* ---------- Tab 横向滚动 ---------- */
   .tabs { gap: 2px; }
-  .tab { padding: 11px 15px; font-size: 13px; }
+  .tab { padding: 10px 13px; font-size: 12.5px; }
 
   /* ---------- 日历 ---------- */
   .calendar-header { flex-direction: column; align-items: stretch; gap: 10px; }
   .calendar-nav { justify-content: space-between; }
   .calendar-nav h3 { min-width: 0; flex: 1; }
-  .calendar-weekday { padding: 7px 1px; font-size: 10px; }
-  .calendar-day { min-height: 62px; padding: 4px; }
+  .calendar-weekday { padding: 6px 1px; font-size: 10px; }
+  .calendar-day { min-height: 58px; padding: 4px; }
   .calendar-day-date { font-size: 11px; }
   .calendar-lesson-tag { font-size: 9px; padding: 1px 3px; border-radius: 3px; }
-  .training-slot-grid { grid-template-columns: 1fr; gap: 10px; }
-  .training-slot { min-height: 76px; padding: 11px; border-radius: 11px; }
-  .training-day-card { padding: 14px; }
+  .training-slot-grid { grid-template-columns: 1fr; gap: 8px; }
+  .training-slot { min-height: 68px; padding: 10px; border-radius: 11px; }
+  .training-day-card { padding: 12px; }
 
-  /* ---------- 模态框：改为底部弹出抽屉（sheet） ---------- */
+  /* ---------- 模态框：底部弹出抽屉 ---------- */
   .modal-overlay { padding: 0; align-items: flex-end; z-index: 1400; }
   .modal {
     position: relative;
     max-width: 100%; width: 100%;
-    border-radius: 20px 20px 0 0;
-    max-height: 92vh;
+    border-radius: 18px 18px 0 0;
+    max-height: 94vh;
     box-shadow: 0 -8px 40px rgba(0,0,0,0.22);
     animation: sheetUp .32s cubic-bezier(.4,0,.2,1);
   }
-  .modal::before {                       /* 顶部抓取条 */
+  .modal::before {
     content: ''; position: absolute; top: 8px; left: 50%;
     transform: translateX(-50%);
     width: 38px; height: 4px; border-radius: 2px; background: #E2E6EA;
   }
-  .modal-header { padding: 20px 18px 14px; }
-  .modal-header h3 { font-size: 17px; padding-right: 20px; }
-  .modal-body { padding: 6px 18px 18px; max-height: 76vh; }
+  .modal-header { padding: 16px 15px 12px; }
+  .modal-header h3 { font-size: 16px; padding-right: 20px; }
+  .modal-body { padding: 4px 15px 15px; max-height: 78vh; }
   .modal-footer {
-    flex-direction: column; gap: 10px;
-    padding: 14px 18px calc(18px + env(safe-area-inset-bottom));
+    flex-direction: column; gap: 8px;
+    padding: 12px 15px calc(15px + env(safe-area-inset-bottom));
   }
-  .modal-footer .btn { width: 100%; justify-content: center; min-height: 48px; }
+  .modal-footer .btn { width: 100%; justify-content: center; min-height: 44px; }
 
-  /* ---------- Toast：移到顶部栏下方、整宽 ---------- */
+  /* ---------- Toast：顶部栏下方整宽 ---------- */
   .toast-container {
-    top: calc(var(--topbar-h) + env(safe-area-inset-top) + 10px);
-    left: 12px; right: 12px;
+    top: calc(var(--topbar-h) + env(safe-area-inset-top) + 8px);
+    left: 10px; right: 10px;
   }
-  .toast { min-width: 0; width: 100%; border-radius: 11px; }
+  .toast { min-width: 0; width: 100%; border-radius: 10px; }
 
   /* ---------- 时间线 / 进度 ---------- */
-  .timeline { padding-left: 20px; }
-  .timeline-item { padding-left: 16px; }
-  .progress-bar { height: 9px; }
+  .timeline { padding-left: 18px; }
+  .timeline-item { padding-left: 14px; }
+  .progress-bar { height: 8px; }
 }
 
 @keyframes sheetUp {
@@ -1272,7 +1277,7 @@ function saveDB() {
 function loadDB() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
-    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; if(!DB.teachers) DB.teachers=[]; if(!DB._classes) DB._classes=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[]}}; }
+    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; if(!DB.teachers) DB.teachers=[]; if(!DB._classes) DB._classes=[]; if(!DB._deletedClasses) DB._deletedClasses=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[],_deletedClasses:[]}}; }
   // 清理已标记删除的记录
   ['students','trainings','exams','artexams','statuses','lessons','teachers'].forEach(key => {
     if(DB[key]) DB[key] = DB[key].filter(item => !item._deleted);
@@ -1346,10 +1351,15 @@ function mergeDB(localDB, remoteDB, syncMode) {
     // 过滤掉标记删除的记录（合并后清理）
     result[key] = Array.from(map.values()).filter(item => !item._deleted);
   });
-  // 合并 _classes：本地与云端取并集（按班级名去重），各端新建的班级都能互相同步
+  // 合并 _classes：本地与云端取并集（增加同步），再减去双方已删除集合（删除同步）
   const localClasses = localDB._classes || [];
   const remoteClasses = remoteDB._classes || [];
-  result._classes = Array.from(new Set([...localClasses, ...remoteClasses])).filter(Boolean);
+  const localDel = localDB._deletedClasses || [];
+  const remoteDel = remoteDB._deletedClasses || [];
+  const unionClasses = Array.from(new Set([...localClasses, ...remoteClasses])).filter(Boolean);
+  const unionDel = Array.from(new Set([...localDel, ...remoteDel])).filter(Boolean);
+  result._classes = unionClasses.filter(c => !unionDel.includes(c));
+  result._deletedClasses = unionDel;
   return result;
 }
 
@@ -3105,6 +3115,8 @@ function showAddClassModal() {
 
 function deleteManualClass(className) {
   if(!confirm(`确定删除班级「${className}」？\n（该班级的课程记录不会被删除）`)) return;
+  if(!DB._deletedClasses) DB._deletedClasses = [];
+  if(!DB._deletedClasses.includes(className)) DB._deletedClasses.push(className);
   if(DB._classes) {
     DB._classes = DB._classes.filter(c => c !== className);
     saveDB();
@@ -4817,7 +4829,6 @@ updateSyncUI();
     sidebar.classList.contains('open') ? closeNav() : openNav();
   });
   if (backdrop) backdrop.addEventListener('click', closeNav);
-  // 复用原导航项的点击：切换页面后关闭抽屉并同步顶部标题
   document.querySelectorAll('.nav-item').forEach(function (item) {
     item.addEventListener('click', function () {
       closeNav();
@@ -4825,7 +4836,6 @@ updateSyncUI();
       if (t && item.dataset.page) t.textContent = labels[item.dataset.page] || item.textContent.trim();
     });
   });
-  // 初始标题与默认激活页保持一致
   var active = document.querySelector('.nav-item.active');
   if (active && active.dataset.page) {
     var t0 = document.getElementById('mobileTopTitle');

@@ -4464,6 +4464,8 @@ function confirmExcelImport(merge) {
   if(!merge) {
     // 替换模式
     DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[]};
+  }
+
   let newStudentCount = 0, updateStudentCount = 0;
   data.students.forEach(ns=>{
     const existing = DB.students.find(s=>s.name===ns.name);
@@ -4513,6 +4515,9 @@ function confirmClearData() {
   if(!confirm('确定要清空全部数据吗？此操作不可撤销，请确保已导出备份！')) return;
   if(!confirm('再次确认：清空所有学生、训练、成绩、考试、状态、课时记录？')) return;
   DB = {students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[]};
+  saveDB();
+  renderStudents(); renderDashboard();
+  toast('全部数据已清空','warning');
 }
 
 // ============================================================

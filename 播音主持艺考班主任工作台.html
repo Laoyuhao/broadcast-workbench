@@ -1114,7 +1114,7 @@ function autoFixMojibake(obj) {
 }
 
 // ===== 合并两份数据（本地 + 云端），基于ID和updatedAt，支持墓碑删除 =====
-// syncMode: true=同步模式（云端为准，本地有但云端没有的旧记录视为已删除）
+// syncMode: true=同步模式（以updatedAt为准，双方合并，删除靠墓碑传播）
 function mergeDB(localDB, remoteDB, syncMode) {
   const collections = ['students','trainings','exams','artexams','statuses','lessons','teachers'];
   const result = {};
@@ -1122,25 +1122,13 @@ function mergeDB(localDB, remoteDB, syncMode) {
     const local = localDB[key] || [];
     const remote = remoteDB[key] || [];
     const map = new Map();
-    // 同步模式：以云端ID集合为准
-    if(syncMode) {
-      const remoteIds = new Set(remote.filter(r=>r.id).map(r=>r.id));
-      // 只保留本地有且云端也有、或者本地比云端更新的记录
-      local.forEach(item => {
-        if(item.id && remoteIds.has(item.id)) {
-          map.set(item.id, {...item});
-        }
-        // 本地有但云端没有的记录，直接丢弃（已被其他设备删除）
-      });
-    } else {
-      // 非同步模式：先放入本地全部
-      local.forEach(item => {
-        if(item.id) map.set(item.id, {...item});
-      });
-    }
+    // 放入本地全部记录
+    local.forEach(item => {
+      if(item && item.id) map.set(item.id, {...item});
+    });
     // 用云端覆盖/补充
     remote.forEach(item => {
-      if(!item.id) return;
+      if(!item || !item.id) return;
       const existing = map.get(item.id);
       if(!existing) {
         // 本地没有，如果云端标记删除则跳过，否则加入
@@ -1157,6 +1145,13 @@ function mergeDB(localDB, remoteDB, syncMode) {
     // 过滤掉标记删除的记录（合并后清理）
     result[key] = Array.from(map.values()).filter(item => !item._deleted);
   });
+  // 合并非集合字段（如 _classes）
+  // 以云端为准，如果云端有就覆盖，没有就保留本地
+  if(remoteDB._classes !== undefined) {
+    result._classes = [...(remoteDB._classes || [])];
+  } else if(localDB._classes) {
+    result._classes = [...localDB._classes];
+  }
   return result;
 }
 
@@ -1187,13 +1182,26 @@ async function syncPush(initialPush) {
     // 先拉取云端数据做合并（保留其他设备的变更）
     const remoteDB = await fetchRemoteData(token, owner);
     if(remoteDB) {
-      // syncPush用非同步模式合并（本地新记录要保留），但删除标记会传播
+      // 用合并模式（双方记录都保留，按updatedAt判断新旧）
       const merged = mergeDB(DB, remoteDB, false);
       Object.assign(DB, merged);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
     }
-    // 推送本地（已合并）数据到云端，直接覆盖
-    await pushRemoteData(token, owner, DB);
+    // 推送本地（已合并）数据到云端，带重试
+    let pushOK = false;
+    for(let attempt = 0; attempt < 3 && !pushOK; attempt++) {
+      try {
+        await pushRemoteData(token, owner, DB);
+        pushOK = true;
+      } catch(e) {
+        if(attempt < 2) {
+          console.warn(`推送失败(尝试${attempt+1})，重试中...`, e.message);
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+        } else {
+          throw e;
+        }
+      }
+    }
     LOCAL_DIRTY = false;
     SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
     if(initialPush) toast('初始化同步完成 ✓');
@@ -1201,6 +1209,7 @@ async function syncPush(initialPush) {
     refreshCurrentPage();
   } catch(e) {
     console.error('syncPush error:', e);
+    // 推送失败时保持 LOCAL_DIRTY=true，下次会重试
     if(initialPush) toast('同步失败：'+e.message, 'error');
     setSyncError();
   } finally {
@@ -1215,6 +1224,7 @@ async function syncPull() {
   // 如果本地有未推送的变更，先推送再拉取，避免覆盖
   if(LOCAL_DIRTY) {
     await syncPush();
+    // syncPush已经做了合并和推送，不需要再pull
     return;
   }
   SYNC_IN_PROGRESS = true;
@@ -1223,14 +1233,16 @@ async function syncPull() {
     const {token, owner} = SYNC_CONFIG;
     const remoteDB = await fetchRemoteData(token, owner);
     if(!remoteDB) {
+      // 云端无数据，推送本地
       await pushRemoteData(token, owner, DB);
       SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
       updateSyncUI();
       return;
     }
-    // 合并（同步模式：云端为准，本地有但云端没有的旧记录视为已删除）
-    const merged = mergeDB(DB, remoteDB, true);
+    // 合并（统一用合并模式：双方记录都保留，按updatedAt判断新旧）
+    const merged = mergeDB(DB, remoteDB, false);
     const oldLen = JSON.stringify(DB).length;
+    // 保留 _classes 的合并结果
     Object.assign(DB, merged);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
     const newLen = JSON.stringify(DB).length;
@@ -1295,16 +1307,44 @@ async function pushRemoteData(token, owner, data) {
     body: JSON.stringify(body),
   });
   if(!res2.ok) {
-    const err = await res2.json();
-    throw new Error(err.message || `推送失败: ${res2.status}`);
+    // 如果是sha冲突(409)，说明其他设备刚推送过，需要重新获取sha
+    if(res2.status === 409) {
+      // 重新获取sha并重试一次
+      const res3 = await fetch(url, {headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
+      if(res3.ok) { const d = await res3.json(); body.sha = d.sha; }
+      const res4 = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if(!res4.ok) {
+        let errMsg = '推送失败';
+        try { const err = await res4.json(); errMsg = err.message || errMsg; } catch(e) {}
+        throw new Error(`${errMsg} (${res4.status})`);
+      }
+      return;
+    }
+    let errMsg = '推送失败';
+    try { const err = await res2.json(); errMsg = err.message || errMsg; } catch(e) {}
+    throw new Error(`${errMsg} (${res2.status})`);
   }
 }
 
 // ===== 手动同步 =====
 function manualSync() {
   if(!SYNC_ENABLED) { toast('请先配置同步','warning'); return; }
+  if(SYNC_IN_PROGRESS) { toast('正在同步中，请稍候...','warning'); return; }
   toast('正在同步...');
-  syncPull().then(()=>syncPush());
+  // 直接走 syncPush（它会先拉取云端合并，再推送）
+  syncPush().then(() => {
+    toast('同步完成 ✓');
+  }).catch(() => {
+    toast('同步失败，请重试','error');
+  });
 }
 
 // ===== 自动同步（每60秒拉取一次）=====

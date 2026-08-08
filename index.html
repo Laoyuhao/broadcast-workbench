@@ -675,6 +675,61 @@ select.filter-select { min-width: 120px; }
 /* 抽屉打开时锁定背景滚动 */
 body.nav-open { overflow: hidden; }
 
+/* =====================================================================
+   主页（数据总览）：班级总人数 Hero + 功能快捷入口宫格
+   ===================================================================== */
+.hero-card {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #6C5CE7 0%, #8E7CF0 52%, #A29BFE 100%);
+  border-radius: 18px; padding: 22px; margin-bottom: 16px;
+  color: #fff; box-shadow: 0 8px 26px rgba(108,92,231,0.30);
+}
+.hero-card::after {
+  content: ''; position: absolute; right: -38px; top: -50px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(255,255,255,0.13);
+}
+.hero-card::before {
+  content: ''; position: absolute; right: 30px; bottom: -58px;
+  width: 106px; height: 106px; border-radius: 50%;
+  background: rgba(255,255,255,0.09);
+}
+.hero-inner { position: relative; z-index: 1; }
+.hero-num { font-size: 46px; font-weight: 800; line-height: 1; letter-spacing: -1px; }
+.hero-label { font-size: 15px; font-weight: 600; margin-top: 9px; opacity: .96; }
+.hero-meta {
+  display: inline-block; margin-top: 12px; padding: 4px 11px;
+  font-size: 12px; border-radius: 20px;
+  background: rgba(255,255,255,0.18); backdrop-filter: blur(4px);
+}
+
+.quick-title {
+  font-size: 13px; font-weight: 700; color: var(--text-secondary);
+  margin: 0 0 10px 2px; letter-spacing: .5px;
+}
+.quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 12px; }
+.quick-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px;
+  cursor: pointer; transition: var(--transition);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  -webkit-tap-highlight-color: transparent;
+}
+.quick-item:hover { transform: translateY(-2px); border-color: rgba(108,92,231,0.35); box-shadow: 0 8px 20px rgba(108,92,231,0.14); }
+.quick-item:active { transform: scale(0.98); }
+.quick-icon {
+  width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.quick-text { flex: 1; min-width: 0; }
+.quick-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.quick-desc {
+  font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.quick-arrow { color: var(--text-light); font-size: 20px; line-height: 1; flex-shrink: 0; }
+
 @media (max-width: 768px) {
   /* ---------- 基础 ---------- */
   html, body { height: 100%; }
@@ -760,8 +815,23 @@ body.nav-open { overflow: hidden; }
   .stat-info p { font-size: 11px; margin: 2px 0 0; }
 
   /* ---------- 图表区堆叠 ---------- */
-  #dashboardCharts { grid-template-columns: 1fr !important; gap: 12px; }
   .chart-container, .radar-container { overflow-x: auto; }
+
+  /* ---------- 主页 Hero + 快捷入口（手机端收紧） ---------- */
+  .hero-card { padding: 18px; border-radius: 16px; margin-bottom: 14px; }
+  .hero-card::after { right: -40px; top: -54px; width: 140px; height: 140px; }
+  .hero-num { font-size: 40px; }
+  .hero-label { font-size: 14px; margin-top: 7px; }
+  .hero-meta { font-size: 11.5px; margin-top: 10px; padding: 3px 10px; }
+  .quick-title { font-size: 12px; margin-bottom: 9px; }
+  .quick-grid { grid-template-columns: repeat(2, 1fr); gap: 9px; }
+  .quick-item { flex-direction: column; align-items: flex-start; gap: 9px; padding: 12px 11px; border-radius: 14px; }
+  .quick-icon { width: 38px; height: 38px; font-size: 18px; border-radius: 11px; }
+  .quick-name { font-size: 13.5px; }
+  .quick-desc { font-size: 10.5px; }
+  .quick-arrow { display: none; }
+  /* 末项（数据管理）横跨整行，排布更整齐 */
+  .quick-item:last-child { grid-column: 1 / -1; flex-direction: row; align-items: center; }
 
   /* ---------- 学生卡片单列 ---------- */
   .student-grid { grid-template-columns: 1fr; gap: 10px; }
@@ -911,26 +981,10 @@ body.nav-open { overflow: hidden; }
           <h2>📊 数据总览</h2>
           <p>班级整体情况一览</p>
         </div>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="exportData()">📥 导出数据</button>
-          <button class="btn btn-primary btn-sm" onclick="navToSettings()">📊 Excel导入</button>
-        </div>
       </div>
-      <div class="stat-grid" id="dashboardStats"></div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;" id="dashboardCharts">
-        <div class="card">
-          <div class="card-title"><span class="icon">📉</span>模考成绩趋势（班级均分）</div>
-          <div class="chart-container"><canvas id="chartExamTrend" height="200"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-title"><span class="icon">🎯</span>专业技能雷达图（班级均分）</div>
-          <div class="radar-container"><canvas id="chartSkillRadar" height="200"></canvas></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title"><span class="icon">⚠️</span>需关注学生</div>
-        <div id="dashboardAlerts"></div>
-      </div>
+      <div id="dashboardStats"></div>
+      <div class="quick-title">功能入口</div>
+      <div class="quick-grid" id="dashboardQuick"></div>
     </div>
 
     <!-- ====== 学生档案页 ====== -->
@@ -1649,74 +1703,55 @@ let charts = {};
 function refreshCharts() {
   if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
 }
+// 主页功能快捷入口配置（page 与左侧导航 data-page 一一对应）
+const DASHBOARD_SHORTCUTS = [
+  {page:'students', icon:'👥', name:'学生档案', desc:'基本信息 · 目标院校', bg:'rgba(108,92,231,0.12)',  color:'#6C5CE7'},
+  {page:'analysis', icon:'🔬', name:'成绩分析', desc:'个人画像 · 班级对比', bg:'rgba(0,184,148,0.12)',   color:'#00B894'},
+  {page:'exams',    icon:'📝', name:'模考成绩', desc:'成绩录入与明细',     bg:'rgba(9,132,227,0.12)',   color:'#0984E3'},
+  {page:'schedule', icon:'🗓️', name:'班级课表', desc:'排课 · 日历视图',    bg:'rgba(225,112,85,0.13)',  color:'#E17055'},
+  {page:'lessons',  icon:'📚', name:'课时工作台', desc:'课时记录与统计',   bg:'rgba(232,67,147,0.12)',  color:'#E84393'},
+  {page:'review',   icon:'📈', name:'教学复盘', desc:'阶段总结 · 改进',    bg:'rgba(0,168,165,0.13)',   color:'#00A8A5'},
+  {page:'settings', icon:'⚙️', name:'数据管理', desc:'导入导出 · 云端同步', bg:'rgba(99,110,114,0.13)', color:'#636E72'}
+];
+
+// 一键跳转对应页面：复用左侧导航项的原生点击逻辑，
+// 页面渲染、导航高亮、移动端抽屉与标题联动全部保持一致
+function goPage(page) {
+  const item = document.querySelector('.nav-item[data-page="' + page + '"]');
+  if (item) item.click();
+}
+
 function renderDashboard() {
   const total = DB.students.length;
-  const examAvg = DB.exams.length > 0 ? (DB.exams.reduce((s,e)=>s+(e.total||0),0)/DB.exams.length).toFixed(1) : '—';
-  const trainingCount = DB.trainings.length;
-  const alertCount = DB.statuses.filter(s=>s.level==='需关注'||s.level==='重点关注'||s.level==='紧急').length;
-  const upcomingExams = DB.artexams.filter(e=>new Date(e.date)>=new Date(new Date().toDateString())).length;
-  const levelDist = {优秀:0,良好:0,一般:0,薄弱:0};
-  DB.students.forEach(s=>{ if(s.level) levelDist[s.level]=(levelDist[s.level]||0)+1; });
+  const classSet = new Set();
+  (DB._classes || []).forEach(c => { if (c) classSet.add(c); });
+  DB.students.forEach(s => { if (s.classNo) classSet.add(s.classNo); });
+  const classCount = classSet.size;
 
-  document.getElementById('dashboardStats').innerHTML = `
-    <div class="stat-card"><div class="stat-icon purple">👥</div><div class="stat-info"><h3>${total}</h3><p>班级总人数</p></div></div>
-    <div class="stat-card"><div class="stat-icon blue">📝</div><div class="stat-info"><h3>${examAvg}</h3><p>模考均分</p></div></div>
-    <div class="stat-card"><div class="stat-icon green">🎤</div><div class="stat-info"><h3>${trainingCount}</h3><p>训练记录数</p></div></div>
-    <div class="stat-card"><div class="stat-icon orange">📅</div><div class="stat-info"><h3>${upcomingExams}</h3><p>待考科目</p></div></div>
-    <div class="stat-card"><div class="stat-icon red">⚠️</div><div class="stat-info"><h3>${alertCount}</h3><p>需关注学生</p></div></div>
-  `;
-
-  // 图表
-  Object.values(charts).forEach(c=>{ try{c.destroy();}catch(e){} });
-  charts = {};
-  if(window.chartLoaded && total>0) {
-    // 模考趋势
-    const examDates = [...new Set(DB.exams.map(e=>e.date))].sort();
-    if(examDates.length>0) {
-      const trendData = examDates.map(d=>{
-        const exams = DB.exams.filter(e=>e.date===d);
-        return (exams.reduce((s,e)=>s+(e.total||0),0)/exams.length).toFixed(1);
-      });
-      charts.trend = new Chart(document.getElementById('chartExamTrend'), {
-        type: 'line',
-        data: { labels: examDates.map(formatDate), datasets: [{ label:'班级均分', data:trendData, borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.1)', fill:true, tension:0.3, pointRadius:5, pointBackgroundColor:'#6C5CE7'}] },
-        options: { responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, max:100 } } }
-      });
-    }
-    // 技能雷达
-    const skillAvgs = SKILL_TYPES.map(sk=>{
-      const trs = DB.trainings.filter(t=>t.type===sk.key);
-      if(trs.length===0) return 0;
-      const allScores = trs.flatMap(t=>(t.scores||[]).map(s=>s.score));
-      if(allScores.length===0) return 0;
-      return (allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1);
-    });
-    charts.radar = new Chart(document.getElementById('chartSkillRadar'), {
-      type: 'radar',
-      data: { labels: SKILL_TYPES.map(s=>s.name), datasets: [{ label:'班级均分', data:skillAvgs, borderColor:'#6C5CE7', backgroundColor:'rgba(108,92,231,0.2)', pointBackgroundColor:'#6C5CE7'}] },
-      options: { responsive:true, plugins:{ legend:{display:false} }, scales:{ r:{ beginAtZero:true, max:100 } } }
-    });
+  const statsEl = document.getElementById('dashboardStats');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="hero-card">
+        <div class="hero-inner">
+          <div class="hero-num">${total}</div>
+          <div class="hero-label">班级总人数</div>
+          <div class="hero-meta">${classCount > 0 ? ('共 ' + classCount + ' 个班级') : '尚未创建班级'}</div>
+        </div>
+      </div>`;
   }
 
-  // 需关注学生
-  const alertStudents = DB.statuses
-    .filter(s=>s.level==='需关注'||s.level==='重点关注'||s.level==='紧急')
-    .sort((a,b)=>new Date(b.date)-new Date(a.date))
-    .slice(0,5);
-  const alertsHtml = alertStudents.length===0
-    ? '<div class="empty-state"><div class="icon">✅</div><p>暂无需关注的学生状态记录</p></div>'
-    : alertStudents.map(s=>{
-      const color = STATUS_COLORS[s.level]||'#FDCB6E';
-      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-        <div class="student-avatar" style="background:${studentAvatarColor(s.studentId)};width:36px;height:36px;font-size:14px;">${studentInitial(studentName(s.studentId))}</div>
-        <div style="flex:1;">
-          <div><b>${studentName(s.studentId)}</b> <span class="badge" style="background:${color}22;color:${color};">${s.level}</span></div>
-          <div style="font-size:12px;color:var(--text-secondary);">${s.note||''}</div>
+  const quickEl = document.getElementById('dashboardQuick');
+  if (quickEl) {
+    quickEl.innerHTML = DASHBOARD_SHORTCUTS.map(q => `
+      <div class="quick-item" onclick="goPage('${q.page}')">
+        <div class="quick-icon" style="background:${q.bg};color:${q.color};">${q.icon}</div>
+        <div class="quick-text">
+          <div class="quick-name">${q.name}</div>
+          <div class="quick-desc">${q.desc}</div>
         </div>
-        <div style="font-size:12px;color:var(--text-light);">${formatDate(s.date)}</div>
-      </div>`;
-    }).join('');
-  document.getElementById('dashboardAlerts').innerHTML = alertsHtml;
+        <div class="quick-arrow">›</div>
+      </div>`).join('');
+  }
 }
 
 // ============================================================

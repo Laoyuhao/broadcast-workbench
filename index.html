@@ -924,15 +924,6 @@ select.filter-select { min-width: 120px; }
         </div>
       </div>
       <div class="card">
-        <div class="card-title"><span class="icon">🚀</span>推送代码到GitHub</div>
-        <p style="margin-bottom:12px; color:var(--text-secondary); font-size:13px;">将最新版本的工作台 HTML 推送到 GitHub 仓库的 GitHub Pages，更新后刷新即可生效。使用上方同步配置的 Token 和用户名。</p>
-        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px;">
-          <button class="btn btn-primary" onclick="pushHtmlToGitHub()">🚀 推送最新代码</button>
-          <span style="font-size:12px;color:var(--text-light);">推送到 <b id="ghRepoHint">broadcast-workbench</b> 仓库</span>
-        </div>
-        <div id="pushResult" style="margin-top:12px;"></div>
-      </div>
-      <div class="card">
         <div class="card-title"><span class="icon">📊</span>Excel 导入</div>
         <p style="margin-bottom:12px; color:var(--text-secondary); font-size:13px;">支持直接上传 <b>.xlsx / .xls / .csv</b> 格式的Excel表格，自动匹配列名导入学生信息和模考成绩。</p>
         <div class="alert alert-info" style="margin-bottom:16px;">
@@ -1395,96 +1386,6 @@ function manualSync() {
   }).catch(() => {
     toast('同步失败，请重试','error');
   });
-}
-
-// ===== 推送HTML代码到GitHub仓库 =====
-async function pushHtmlToGitHub() {
-  if(!SYNC_CONFIG || !SYNC_CONFIG.token || !SYNC_CONFIG.owner) {
-    toast('请先在上方配置GitHub Token和用户名','error');
-    return;
-  }
-  const { token, owner } = SYNC_CONFIG;
-  const repo = SYNC_REPO; // broadcast-workbench
-  const fileName = 'index.html';
-  const resultDiv = document.getElementById('pushResult');
-  if(resultDiv) resultDiv.innerHTML = '<div class="alert alert-info" style="font-size:13px;">⏳ 正在推送，请稍候...</div>';
-
-  try {
-    // 1. 获取当前页面的完整HTML
-    const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    const content = btoa(unescape(encodeURIComponent(htmlContent)));
-
-    // 2. 获取现有文件的sha（如果存在）
-    let sha = null;
-    const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${fileName}`;
-    try {
-      const getRes = await fetch(getUrl, {
-        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-      });
-      if(getRes.ok) { const d = await getRes.json(); sha = d.sha; }
-    } catch(e) {}
-
-    // 3. 推送文件
-    const body = {
-      message: `更新工作台代码 ${new Date().toLocaleString('zh-CN')}`,
-      content: content,
-    };
-    if(sha) body.sha = sha;
-
-    const putRes = await fetch(getUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-
-    if(!putRes.ok) {
-      let errMsg = '推送失败';
-      try { const err = await putRes.json(); errMsg = err.message || errMsg; } catch(e) {}
-      throw new Error(`${errMsg} (${putRes.status})`);
-    }
-
-    // 4. 同时推送 data.json（当前数据）
-    try {
-      const dataContent = btoa(unescape(encodeURIComponent(JSON.stringify(DB))));
-      let dataSha = null;
-      const dataUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${SYNC_FILE}`;
-      try {
-        const dRes = await fetch(dataUrl, {
-          headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-        });
-        if(dRes.ok) { const d = await dRes.json(); dataSha = d.sha; }
-      } catch(e) {}
-      const dBody = { message: `数据同步 ${new Date().toISOString()}`, content: dataContent };
-      if(dataSha) dBody.sha = dataSha;
-      await fetch(dataUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dBody),
-      });
-    } catch(e) { console.warn('data.json push failed:', e); }
-
-    // 5. 成功提示
-    const pagesUrl = `https://${owner}.github.io/${repo}/`;
-    if(resultDiv) resultDiv.innerHTML = `
-      <div class="alert alert-success" style="font-size:13px;">
-        ✅ 代码已推送到 GitHub！<br>
-        📄 文件：${owner}/${repo}/${fileName}<br>
-        🔗 GitHub Pages 地址：<a href="${pagesUrl}" target="_blank" style="color:inherit;text-decoration:underline;">${pagesUrl}</a><br>
-        <span style="font-size:11px;color:var(--text-light);">GitHub Pages 可能需要 1-2 分钟生效，请稍后刷新。</span>
-      </div>`;
-    toast('代码推送成功 ✓');
-  } catch(e) {
-    if(resultDiv) resultDiv.innerHTML = `<div class="alert alert-danger" style="font-size:13px;">❌ 推送失败：${e.message}</div>`;
-    toast('推送失败：'+e.message, 'error');
-  }
 }
 
 // ===== 自动同步（每60秒拉取一次）=====

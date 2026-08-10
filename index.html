@@ -462,19 +462,19 @@ select.filter-select { min-width: 120px; }
 .btn-sm { padding: 6px 12px; font-size: 13px; }
 .photo-hint { font-size: 11px; color: var(--text-secondary); }
 .avatar-clickable { cursor: pointer; }
-.photo-lightbox {
+.modal-overlay.photo-lightbox {
   position: fixed; inset: 0; z-index: 2000;
   background: rgba(0,0,0,0.88);
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
   animation: fadeIn .2s ease;
 }
-.photo-lightbox img {
+.modal-overlay.photo-lightbox img {
   max-width: 100%; max-height: 82vh;
   border-radius: 12px; object-fit: contain;
   box-shadow: 0 12px 40px rgba(0,0,0,0.35);
 }
-.lightbox-close {
+.modal-overlay.photo-lightbox .lightbox-close {
   position: absolute; top: 16px; right: 16px;
   width: 40px; height: 40px; border-radius: 50%;
   background: rgba(255,255,255,0.15); color: #fff; border: none;

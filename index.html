@@ -1848,6 +1848,8 @@ function studentAvatarColor(id) {
 }
 function studentInitial(name) { return name ? name.charAt(0) : '?'; }
 let pendingPhoto = null;
+let pendingFull = null;
+const PHOTO_FULL_KEY = (id) => 'baw_photofull_' + id;
 function compressImage(file, maxSize, quality, cb) {
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -1868,26 +1870,37 @@ function compressImage(file, maxSize, quality, cb) {
 function handleStudentPhoto(input) {
   const file = input.files && input.files[0];
   if (!file) return;
-  compressImage(file, 256, 0.6, (dataUrl) => {
-    pendingPhoto = dataUrl;
+  // 缩略图：随档案一起云同步（最长边 256px，JPEG 0.6，体积小）
+  compressImage(file, 256, 0.6, (thumb) => {
+    pendingPhoto = thumb;
     let prev = document.getElementById('photoPreview');
     if (!prev) {
       const av = document.getElementById('modalAvatar');
-      if (av) { av.innerHTML = '<img src="' + dataUrl + '" class="avatar-img" id="photoPreview">'; prev = document.getElementById('photoPreview'); }
+      if (av) { av.innerHTML = '<img src="' + thumb + '" class="avatar-img" id="photoPreview">'; prev = document.getElementById('photoPreview'); }
     } else {
-      prev.src = dataUrl;
+      prev.src = thumb;
     }
   });
+  // 高清版：仅存本机，用于点开大图查看（最长边 512px，JPEG 0.8，清晰）
+  compressImage(file, 512, 0.8, (full) => { pendingFull = full; });
 }
-function removeStudentPhoto() {
+function removeStudentPhoto(id) {
   pendingPhoto = null;
+  pendingFull = null;
+  if (id) { try { localStorage.removeItem(PHOTO_FULL_KEY(id)); } catch(e){} }
   const av = document.getElementById('modalAvatar');
   if (av) av.innerHTML = '👤';
 }
-function showPhotoLightbox(src) {
-  if (!src) return;
+function getFullPhoto(id) {
+  try { return localStorage.getItem(PHOTO_FULL_KEY(id)); } catch(e) { return null; }
+}
+function showPhotoLightbox(src, id) {
+  // 优先显示本机高清版，没有则回退缩略图
+  let big = src;
+  if (id) { const f = getFullPhoto(id); if (f) big = f; }
+  if (!big) return;
   const html = `<div class="modal-overlay photo-lightbox show" onclick="if(event.target===this)closePhotoLightbox()">
-    <img src="${src}" alt="照片">
+    <img src="${big}" alt="照片">
     <button class="lightbox-close" onclick="closePhotoLightbox();event.stopPropagation();">×</button>
   </div>`;
   document.getElementById('modalContainer').insertAdjacentHTML('beforeend', html);
@@ -2063,7 +2076,7 @@ function renderStudentCard(s) {
     const color = LEVEL_COLORS[s.level]||'#B2BEC3';
     return `<div class="student-card" onclick="showStudentDetail('${s.id}')">
       <div class="student-card-header">
-        <div class="student-avatar ${s.photo?'avatar-clickable':''}" style="background:${studentAvatarColor(s.id)};" ${s.photo?`onclick="event.stopPropagation();showPhotoLightbox('${s.photo}')"`:''}>${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
+        <div class="student-avatar ${s.photo?'avatar-clickable':''}" style="background:${studentAvatarColor(s.id)};" ${s.photo?`onclick="event.stopPropagation();showPhotoLightbox('${s.photo}','${s.id}')"`:''}>${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
         <div style="flex:1;">
           <div class="student-name">${s.name}</div>
           <div class="student-meta">${s.age||'?'}岁 · ${s.gender||'—'} · ${s.source||'—'}</div>
@@ -2094,6 +2107,7 @@ function showStudentModal(id) {
   const s = id ? getStudent(id) : {};
   const isEdit = !!id;
   pendingPhoto = id ? (getStudent(id).photo || null) : null;
+  pendingFull = id ? getFullPhoto(id) : null;
   const html = `<div class="modal-overlay show">
     <div class="modal">
       <div class="modal-header">
@@ -2102,12 +2116,12 @@ function showStudentModal(id) {
       </div>
       <div class="modal-body">
         <div class="photo-upload">
-          <div class="student-avatar ${s.photo?'avatar-clickable':''}" id="modalAvatar" style="background:${s.id?studentAvatarColor(s.id):'#6C5CE7'};" ${s.photo?`onclick="showPhotoLightbox('${s.photo}')"`:''}>
+          <div class="student-avatar ${s.photo?'avatar-clickable':''}" id="modalAvatar" style="background:${s.id?studentAvatarColor(s.id):'#6C5CE7'};" ${s.photo?`onclick="showPhotoLightbox('${s.photo}','${s.id}')"`:''}>
             ${s.photo ? `<img src="${s.photo}" class="avatar-img" id="photoPreview">` : `<span id="photoPlaceholder">${s.name?studentInitial(s.name):'👤'}</span>`}
           </div>
           <div class="photo-upload-actions">
             <label class="btn btn-outline btn-sm">📷 上传照片<input type="file" accept="image/*" hidden onchange="handleStudentPhoto(this)"></label>
-            ${s.photo ? `<button type="button" class="btn btn-outline btn-sm" onclick="removeStudentPhoto()">移除</button>` : ''}
+            ${s.photo ? `<button type="button" class="btn btn-outline btn-sm" onclick="removeStudentPhoto('${id}')">移除</button>` : ''}
           </div>
           <span class="photo-hint">建议正面照，自动压缩</span>
         </div>
@@ -2181,6 +2195,8 @@ function saveStudent(id) {
     toast('学生已添加');
   }
   stampRecord(data);
+  const sid = data.id || id;
+  if (sid && pendingFull) { try { localStorage.setItem(PHOTO_FULL_KEY(sid), pendingFull); } catch(e){} }
   saveDB(); closeModal(); renderStudents();
 }
 function val(id) { return document.getElementById(id)?.value?.trim()||''; }
@@ -2194,6 +2210,7 @@ function deleteStudent(id) {
     : `确定删除学生「${s.name}」？\n\n此操作不可撤销。`;
   if(!confirm(msg)) return;
   // 软删除：标记_deleted，同步时不会被恢复
+  try { localStorage.removeItem(PHOTO_FULL_KEY(id)); } catch(e){}
   softDelete(DB.students, id);
   DB.trainings.filter(t=>t.studentId===id).forEach(t => softDelete(DB.trainings, t.id));
   DB.exams.filter(e=>e.studentId===id).forEach(e => softDelete(DB.exams, e.id));
@@ -2224,7 +2241,7 @@ function showStudentDetail(id) {
       </div>
       <div class="modal-body">
         <div style="display:flex;justify-content:center;margin-bottom:16px;">
-          <div class="student-avatar avatar-lg ${s.photo?'avatar-clickable':''}" style="background:${studentAvatarColor(s.id)};" ${s.photo?`onclick="showPhotoLightbox('${s.photo}')"`:''}>${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
+          <div class="student-avatar avatar-lg ${s.photo?'avatar-clickable':''}" style="background:${studentAvatarColor(s.id)};" ${s.photo?`onclick="showPhotoLightbox('${s.photo}','${s.id}')"`:''}>${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
         </div>
         <div class="student-detail-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
           <div class="card" style="margin:0;">

@@ -1805,6 +1805,43 @@ function studentAvatarColor(id) {
   return AVATAR_COLORS[idx % AVATAR_COLORS.length] || '#6C5CE7';
 }
 function studentInitial(name) { return name ? name.charAt(0) : '?'; }
+let pendingPhoto = null;
+function compressImage(file, maxSize, quality, cb) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      let {width, height} = img;
+      if (width > height && width > maxSize) { height = Math.round(height * maxSize / width); width = maxSize; }
+      else if (height > maxSize) { width = Math.round(width * maxSize / height); height = maxSize; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      cb(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function handleStudentPhoto(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  compressImage(file, 256, 0.6, (dataUrl) => {
+    pendingPhoto = dataUrl;
+    let prev = document.getElementById('photoPreview');
+    if (!prev) {
+      const av = document.getElementById('modalAvatar');
+      if (av) { av.innerHTML = '<img src="' + dataUrl + '" class="avatar-img" id="photoPreview">'; prev = document.getElementById('photoPreview'); }
+    } else {
+      prev.src = dataUrl;
+    }
+  });
+}
+function removeStudentPhoto() {
+  pendingPhoto = null;
+  const av = document.getElementById('modalAvatar');
+  if (av) av.innerHTML = '👤';
+}
 function formatDate(d) {
   if(!d) return '';
   const dt = new Date(d);
@@ -1971,7 +2008,7 @@ function renderStudentCard(s) {
     const color = LEVEL_COLORS[s.level]||'#B2BEC3';
     return `<div class="student-card" onclick="showStudentDetail('${s.id}')">
       <div class="student-card-header">
-        <div class="student-avatar" style="background:${studentAvatarColor(s.id)};">${studentInitial(s.name)}</div>
+        <div class="student-avatar" style="background:${studentAvatarColor(s.id)};">${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
         <div style="flex:1;">
           <div class="student-name">${s.name}</div>
           <div class="student-meta">${s.age||'?'}岁 · ${s.gender||'—'} · ${s.source||'—'}</div>
@@ -2001,6 +2038,7 @@ function updateClassFilter() {
 function showStudentModal(id) {
   const s = id ? getStudent(id) : {};
   const isEdit = !!id;
+  pendingPhoto = id ? (getStudent(id).photo || null) : null;
   const html = `<div class="modal-overlay show">
     <div class="modal">
       <div class="modal-header">
@@ -2008,6 +2046,16 @@ function showStudentModal(id) {
         <button class="modal-close" onclick="closeModal()">×</button>
       </div>
       <div class="modal-body">
+        <div class="photo-upload">
+          <div class="student-avatar" id="modalAvatar" style="background:${s.id?studentAvatarColor(s.id):'#6C5CE7'};">
+            ${s.photo ? `<img src="${s.photo}" class="avatar-img" id="photoPreview">` : `<span id="photoPlaceholder">${s.name?studentInitial(s.name):'👤'}</span>`}
+          </div>
+          <div class="photo-upload-actions">
+            <label class="btn btn-outline btn-sm">📷 上传照片<input type="file" accept="image/*" hidden onchange="handleStudentPhoto(this)"></label>
+            ${s.photo ? `<button type="button" class="btn btn-outline btn-sm" onclick="removeStudentPhoto()">移除</button>` : ''}
+          </div>
+          <span class="photo-hint">建议正面照，自动压缩</span>
+        </div>
         <div class="form-row">
           <div class="form-group"><label>姓名 <span class="required">*</span></label><input id="s_name" value="${s.name||''}" placeholder="学生姓名"></div>
           <div class="form-group"><label>性别</label><select id="s_gender"><option value="男" ${s.gender==='男'?'selected':''}>男</option><option value="女" ${s.gender==='女'?'selected':''}>女</option></select></div>
@@ -2066,6 +2114,7 @@ function saveStudent(id) {
     voiceType: val('s_voiceType'), targetSchools: val('s_targetSchools'),
     specialty: val('s_specialty'), weakness: val('s_weakness'),
     parent: val('s_parent'), remark: val('s_remark'),
+    photo: pendingPhoto,
   };
   if(id) {
     Object.assign(getStudent(id), data);
@@ -2119,6 +2168,9 @@ function showStudentDetail(id) {
         <button class="modal-close" onclick="closeModal()">×</button>
       </div>
       <div class="modal-body">
+        <div style="display:flex;justify-content:center;margin-bottom:16px;">
+          <div class="student-avatar avatar-lg" style="background:${studentAvatarColor(s.id)};">${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
           <div class="card" style="margin:0;">
             <div class="card-title">基本信息</div>

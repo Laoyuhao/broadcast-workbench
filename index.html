@@ -441,6 +441,44 @@ select.filter-select { min-width: 120px; }
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+.avatar-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+}
+.avatar-lg { width: 88px; height: 88px; font-size: 34px; }
+.photo-upload {
+  display: flex; align-items: center; gap: 14px;
+  padding: 4px 2px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.photo-upload .student-avatar { width: 64px; height: 64px; font-size: 24px; }
+.photo-upload-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+.photo-hint { font-size: 11px; color: var(--text-secondary); }
+.avatar-clickable { cursor: pointer; }
+.photo-lightbox {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0.88);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn .2s ease;
+}
+.photo-lightbox img {
+  max-width: 100%; max-height: 82vh;
+  border-radius: 12px; object-fit: contain;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+}
+.lightbox-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); color: #fff; border: none;
+  font-size: 22px; display: flex; align-items: center; justify-content: center;
 }
 .student-name { font-size: 15px; font-weight: 600; }
 .student-meta { font-size: 12px; color: var(--text-secondary); }
@@ -906,23 +944,27 @@ body.nav-open { overflow: hidden; }
     position: relative;
     max-width: 100%; width: 100%;
     border-radius: 18px 18px 0 0;
-    max-height: 94vh;
+    max-height: 90vh;
     box-shadow: 0 -8px 40px rgba(0,0,0,0.22);
     animation: sheetUp .32s cubic-bezier(.4,0,.2,1);
+    display: flex; flex-direction: column;
+    overflow: hidden;
   }
   .modal::before {
     content: ''; position: absolute; top: 8px; left: 50%;
     transform: translateX(-50%);
     width: 38px; height: 4px; border-radius: 2px; background: #E2E6EA;
   }
-  .modal-header { padding: 16px 15px 12px; }
+  .modal-header { padding: 16px 15px 12px; flex: 0 0 auto; }
   .modal-header h3 { font-size: 16px; padding-right: 20px; }
-  .modal-body { padding: 4px 15px 15px; max-height: 78vh; }
+  .modal-body { padding: 4px 15px 15px; flex: 1 1 auto; overflow-y: auto; max-height: none; min-height: 0; }
   .modal-footer {
     flex-direction: column; gap: 8px;
     padding: 12px 15px calc(15px + env(safe-area-inset-bottom));
+    flex: 0 0 auto;
   }
   .modal-footer .btn { width: 100%; justify-content: center; min-height: 44px; }
+  .student-detail-grid { grid-template-columns: 1fr !important; }
 
   /* ---------- Toast：顶部栏下方整宽 ---------- */
   .toast-container {
@@ -1842,6 +1884,19 @@ function removeStudentPhoto() {
   const av = document.getElementById('modalAvatar');
   if (av) av.innerHTML = '👤';
 }
+function showPhotoLightbox(src) {
+  if (!src) return;
+  const html = `<div class="modal-overlay photo-lightbox show" onclick="if(event.target===this)closePhotoLightbox()">
+    <img src="${src}" alt="照片">
+    <button class="lightbox-close" onclick="closePhotoLightbox();event.stopPropagation();">×</button>
+  </div>`;
+  document.getElementById('modalContainer').insertAdjacentHTML('beforeend', html);
+  document.body.style.overflow = 'hidden';
+}
+function closePhotoLightbox() {
+  const lb = document.querySelector('.photo-lightbox');
+  if (lb) { lb.remove(); document.body.style.overflow = ''; }
+}
 function formatDate(d) {
   if(!d) return '';
   const dt = new Date(d);
@@ -2008,7 +2063,7 @@ function renderStudentCard(s) {
     const color = LEVEL_COLORS[s.level]||'#B2BEC3';
     return `<div class="student-card" onclick="showStudentDetail('${s.id}')">
       <div class="student-card-header">
-        <div class="student-avatar" style="background:${studentAvatarColor(s.id)};">${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
+        <div class="student-avatar ${s.photo?'avatar-clickable':''}" style="background:${studentAvatarColor(s.id)};" ${s.photo?`onclick="event.stopPropagation();showPhotoLightbox('${s.photo}')"`:''}>${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
         <div style="flex:1;">
           <div class="student-name">${s.name}</div>
           <div class="student-meta">${s.age||'?'}岁 · ${s.gender||'—'} · ${s.source||'—'}</div>
@@ -2047,7 +2102,7 @@ function showStudentModal(id) {
       </div>
       <div class="modal-body">
         <div class="photo-upload">
-          <div class="student-avatar" id="modalAvatar" style="background:${s.id?studentAvatarColor(s.id):'#6C5CE7'};">
+          <div class="student-avatar ${s.photo?'avatar-clickable':''}" id="modalAvatar" style="background:${s.id?studentAvatarColor(s.id):'#6C5CE7'};" ${s.photo?`onclick="showPhotoLightbox('${s.photo}')"`:''}>
             ${s.photo ? `<img src="${s.photo}" class="avatar-img" id="photoPreview">` : `<span id="photoPlaceholder">${s.name?studentInitial(s.name):'👤'}</span>`}
           </div>
           <div class="photo-upload-actions">
@@ -2169,9 +2224,9 @@ function showStudentDetail(id) {
       </div>
       <div class="modal-body">
         <div style="display:flex;justify-content:center;margin-bottom:16px;">
-          <div class="student-avatar avatar-lg" style="background:${studentAvatarColor(s.id)};">${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
+          <div class="student-avatar avatar-lg ${s.photo?'avatar-clickable':''}" style="background:${studentAvatarColor(s.id)};" ${s.photo?`onclick="showPhotoLightbox('${s.photo}')"`:''}>${s.photo ? `<img src="${s.photo}" class="avatar-img">` : studentInitial(s.name)}</div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="student-detail-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
           <div class="card" style="margin:0;">
             <div class="card-title">基本信息</div>
             <table>

@@ -1536,7 +1536,7 @@ function saveDB() {
 function loadDB() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
-    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; if(!DB.teachers) DB.teachers=[]; if(!DB._classes) DB._classes=[]; if(!DB._deletedClasses) DB._deletedClasses=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[],_deletedClasses:[]}}; }
+    try { DB = JSON.parse(raw); if(!DB.lessons) DB.lessons=[]; if(!DB.teachers) DB.teachers=[]; if(!DB._classes) DB._classes=[]; if(!DB._deletedClasses) DB._deletedClasses=[]; if(!DB._deletedRecords) DB._deletedRecords=[]; } catch(e) { DB = {...{students:[],trainings:[],exams:[],artexams:[],statuses:[],lessons:[],teachers:[],_classes:[],_deletedClasses:[],_deletedRecords:[]}}; }
   // 清理已标记删除的记录
   ['students','trainings','exams','artexams','statuses','lessons','teachers'].forEach(key => {
     if(DB[key]) DB[key] = DB[key].filter(item => !item._deleted);
@@ -1610,6 +1610,14 @@ function mergeDB(localDB, remoteDB, syncMode) {
     // 过滤掉标记删除的记录（合并后清理）
     result[key] = Array.from(map.values()).filter(item => !item._deleted);
   });
+  // 合并各集合的删除墓碑（_deletedRecords），保证删除跨设备同步
+  const localDelRec = localDB._deletedRecords || [];
+  const remoteDelRec = remoteDB._deletedRecords || [];
+  const unionDelRec = Array.from(new Set([...localDelRec, ...remoteDelRec]));
+  result._deletedRecords = unionDelRec;
+  collections.forEach(key => {
+    result[key] = (result[key] || []).filter(item => !unionDelRec.includes(key + ':' + (item.id || '')));
+  });
   // 合并 _classes：本地与云端取并集（增加同步），再减去双方已删除集合（删除同步）
   const localClasses = localDB._classes || [];
   const remoteClasses = remoteDB._classes || [];
@@ -1623,11 +1631,18 @@ function mergeDB(localDB, remoteDB, syncMode) {
 }
 
 // 软删除：标记记录为_deleted而非物理删除
-function softDelete(arr, id) {
+function softDelete(arr, id, coll) {
   const item = arr.find(x => x.id === id);
   if(item) {
     item._deleted = true;
     item.updatedAt = new Date().toISOString();
+    // 记录删除墓碑，保证删除能跨设备同步（mergeDB 会据此过滤）
+    if(coll && DB._deletedRecords && !DB._deletedRecords.includes(coll + ':' + id)) {
+      DB._deletedRecords.push(coll + ':' + id);
+    }
+    // 立即从本地数组移除，界面即时隐藏
+    const idx = arr.indexOf(item);
+    if(idx >= 0) arr.splice(idx, 1);
   }
 }
 
@@ -2195,10 +2210,10 @@ function deleteStudent(id) {
   if(!confirm(msg)) return;
   // 软删除：标记_deleted，同步时不会被恢复
   try { localStorage.removeItem(PHOTO_FULL_KEY(id)); } catch(e){}
-  softDelete(DB.students, id);
-  DB.trainings.filter(t=>t.studentId===id).forEach(t => softDelete(DB.trainings, t.id));
-  DB.exams.filter(e=>e.studentId===id).forEach(e => softDelete(DB.exams, e.id));
-  DB.statuses.filter(x=>x.studentId===id).forEach(x => softDelete(DB.statuses, x.id));
+  softDelete(DB.students, id, 'students');
+  DB.trainings.filter(t=>t.studentId===id).forEach(t => softDelete(DB.trainings, t.id, 'trainings'));
+  DB.exams.filter(e=>e.studentId===id).forEach(e => softDelete(DB.exams, e.id, 'exams'));
+  DB.statuses.filter(x=>x.studentId===id).forEach(x => softDelete(DB.statuses, x.id, 'statuses'));
   saveDB(); closeModal(); renderStudents(); toast('学生已删除','warning');
   if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100); // 立即推送删除
 }
@@ -2626,7 +2641,7 @@ function saveExam(id) {
 }
 function deleteExam(id) {
   if(!confirm('确定删除该模考成绩？')) return;
-  softDelete(DB.exams, id);
+  softDelete(DB.exams, id, 'exams');
   saveDB(); closeModal(); renderExams(); toast('成绩已删除','warning');
   if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
 }
@@ -3511,7 +3526,7 @@ function saveScheduleLesson(id) {
 
 function deleteScheduleLesson(id) {
   if(!confirm('确定删除该课程记录？')) return;
-  softDelete(DB.lessons, id);
+  softDelete(DB.lessons, id, 'lessons');
   saveDB(); closeModal(); renderSchedule(); toast('已删除','warning');
   if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
 }
@@ -3925,8 +3940,8 @@ function confirmDeleteTeacher(id) {
     : `确定删除老师「${t.name}」？`;
   if(!confirm(msg)) return;
   // 软删除：标记老师及其课程为_deleted
-  softDelete(DB.teachers, id);
-  DB.lessons.filter(l=>l.teacher===t.name).forEach(l => softDelete(DB.lessons, l.id));
+  softDelete(DB.teachers, id, 'teachers');
+  DB.lessons.filter(l=>l.teacher===t.name).forEach(l => softDelete(DB.lessons, l.id, 'lessons'));
   if(lessonTeacherFilter===t.name) lessonTeacherFilter='';
   saveDB();
   toast('已删除','warning');
@@ -3987,8 +4002,8 @@ function deleteTeacher(id) {
     ? `该老师名下有 ${lessonCount} 节课程，删除老师后这些课程将一并删除。确定删除？`
     : '确定删除该老师？';
   if(!confirm(msg)) return;
-  softDelete(DB.teachers, id);
-  DB.lessons.filter(l=>l.teacher===t.name).forEach(l => softDelete(DB.lessons, l.id));
+  softDelete(DB.teachers, id, 'teachers');
+  DB.lessons.filter(l=>l.teacher===t.name).forEach(l => softDelete(DB.lessons, l.id, 'lessons'));
   if(lessonTeacherFilter===t.name) lessonTeacherFilter='';
   saveDB(); closeModal(); renderLessons(); toast('已删除','warning');
   if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
@@ -4387,7 +4402,7 @@ function saveLesson(id) {
 
 function deleteLesson(id) {
   if(!confirm('确定删除该课程记录？')) return;
-  softDelete(DB.lessons, id);
+  softDelete(DB.lessons, id, 'lessons');
   saveDB(); closeModal(); renderLessons(); toast('已删除','warning');
   if(SYNC_ENABLED) setTimeout(()=>syncPush(), 100);
 }

@@ -1646,29 +1646,31 @@ async function syncPush(initialPush) {
   updateSyncUI();
   try {
     const {token, owner} = SYNC_CONFIG;
-    // 先拉取云端数据做合并（保留其他设备的变更）
-    const remoteDB = await fetchRemoteData(token, owner);
-    if(remoteDB) {
-      // 用合并模式（双方记录都保留，按updatedAt判断新旧）
-      const merged = mergeDB(DB, remoteDB, false);
-      Object.assign(DB, merged);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
-    }
-    // 推送本地（已合并）数据到云端，带重试
-    let pushOK = false;
-    for(let attempt = 0; attempt < 3 && !pushOK; attempt++) {
+    let pushed = false;
+    // 最多重试 4 次：每次都先拉取云端最新数据并合并，再推送。
+    // 这样即使遇到 409 冲突（其他设备刚推送），本机变更也不会丢失。
+    for(let attempt = 0; attempt < 4 && !pushed; attempt++) {
+      // 1) 先拉取云端数据做合并（保留其他设备的变更）
+      const remoteDB = await fetchRemoteData(token, owner);
+      if(remoteDB) {
+        const merged = mergeDB(DB, remoteDB, false);
+        Object.assign(DB, merged);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+      }
+      // 2) 推送本地（已合并）数据到云端
       try {
         await pushRemoteData(token, owner, DB);
-        pushOK = true;
+        pushed = true;
       } catch(e) {
-        if(attempt < 2) {
-          console.warn(`推送失败(尝试${attempt+1})，重试中...`, e.message);
-          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-        } else {
-          throw e;
+        if(e && e.status === 409) {
+          console.warn(`云端冲突，重新合并后重试(${attempt+1})...`);
+          await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+          continue;
         }
+        throw e;
       }
     }
+    if(!pushed) throw new Error('同步重试次数过多，请稍后重试');
     LOCAL_DIRTY = false;
     SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
     if(initialPush) toast('初始化同步完成 ✓');
@@ -1676,8 +1678,8 @@ async function syncPush(initialPush) {
     refreshCurrentPage();
   } catch(e) {
     console.error('syncPush error:', e);
-    // 推送失败时保持 LOCAL_DIRTY=true，下次会重试
-    if(initialPush) toast('同步失败：'+e.message, 'error');
+    // 推送失败时保持 LOCAL_DIRTY=true，下次会自动重试
+    if(initialPush) toast('同步失败：'+(e.message||e), 'error');
     setSyncError();
   } finally {
     SYNC_IN_PROGRESS = false;
@@ -1732,7 +1734,7 @@ function setSyncError() {
 
 // ===== 通过GitHub API获取云端数据 =====
 async function fetchRemoteData(token, owner) {
-  const url = `https://api.github.com/repos/${owner}/${SYNC_REPO}/contents/${SYNC_FILE}`;
+  const url = `https://api.github.com/repos/${owner}/${SYNC_REPO}/contents/${SYNC_FILE}?t=${Date.now()}`;
   const res = await fetch(url, {
     headers: {
       'Authorization': `token ${token}`,
@@ -1750,55 +1752,37 @@ async function fetchRemoteData(token, owner) {
 
 // ===== 通过GitHub API推送数据 =====
 async function pushRemoteData(token, owner, data) {
-  const url = `https://api.github.com/repos/${owner}/${SYNC_REPO}/contents/${SYNC_FILE}`;
-  // 获取当前文件的sha（用于更新）
-  let sha = null;
-  try {
-    const res = await fetch(url, {headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
-    if(res.ok) { const d = await res.json(); sha = d.sha; }
-  } catch(e) {}
-  // 推送
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  const body = {
-    message: `数据同步 ${new Date().toISOString()}`,
-    content: content,
+  const url = `https://api.github.com/repos/${owner}/${SYNC_REPO}/contents/${SYNC_FILE}?t=${Date.now()}`;
+  const headers = {
+    'Authorization': `token ${token}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json',
   };
-  if(sha) body.sha = sha;
-  const res2 = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `token ${token}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-  if(!res2.ok) {
-    // 如果是sha冲突(409)，说明其他设备刚推送过，需要重新获取sha
-    if(res2.status === 409) {
-      // 重新获取sha并重试一次
-      const res3 = await fetch(url, {headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
-      if(res3.ok) { const d = await res3.json(); body.sha = d.sha; }
-      const res4 = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-      if(!res4.ok) {
-        let errMsg = '推送失败';
-        try { const err = await res4.json(); errMsg = err.message || errMsg; } catch(e) {}
-        throw new Error(`${errMsg} (${res4.status})`);
-      }
-      return;
-    }
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  let lastErr = null;
+  // 遇到 sha 冲突(409) 反复重新获取最新 sha 并重试，最多 4 次
+  for(let attempt = 0; attempt < 4; attempt++) {
+    let sha = null;
+    try {
+      const res = await fetch(url, {headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
+      if(res.ok) { const d = await res.json(); sha = d.sha; }
+    } catch(e) {}
+    const body = { message: `数据同步 ${new Date().toISOString()}`, content: content };
+    if(sha) body.sha = sha;
+    const res2 = await fetch(url, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
+    if(res2.ok) return;
     let errMsg = '推送失败';
     try { const err = await res2.json(); errMsg = err.message || errMsg; } catch(e) {}
-    throw new Error(`${errMsg} (${res2.status})`);
+    lastErr = new Error(`${errMsg} (${res2.status})`);
+    lastErr.status = res2.status;
+    if(res2.status === 409) {
+      // 云端已被其他设备更新，等待后重试（调用方会在重试前重新拉取合并）
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      continue;
+    }
+    throw lastErr;
   }
+  throw lastErr || new Error('推送失败');
 }
 
 // ===== 手动同步 =====

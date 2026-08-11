@@ -1686,6 +1686,12 @@ async function syncPush(initialPush) {
       }
     }
     if(!pushed) throw new Error('同步重试次数过多，请稍后重试');
+    // 推送成功后稍作停顿再补拉一次，对抗 GitHub 云端最终一致性，确保删除等变更落定
+    await new Promise(r => setTimeout(r, 1500));
+    try {
+      const finalRemote = await fetchRemoteData(token, owner);
+      if(finalRemote) { const fm = mergeDB(DB, finalRemote, false); Object.assign(DB, fm); localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); }
+    } catch(e) { /* 补拉失败不影响已完成的推送 */ }
     LOCAL_DIRTY = false;
     SYNC_LAST_TIME = new Date().toLocaleString('zh-CN');
     if(initialPush) toast('初始化同步完成 ✓');
